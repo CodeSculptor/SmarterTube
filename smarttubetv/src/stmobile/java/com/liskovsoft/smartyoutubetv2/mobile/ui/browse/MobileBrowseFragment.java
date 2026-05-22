@@ -2,7 +2,9 @@ package com.liskovsoft.smartyoutubetv2.mobile.ui.browse;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -87,8 +89,9 @@ public class MobileBrowseFragment extends Fragment implements BrowseView {
         view.findViewById(R.id.content_root).setPadding(0, statusBarHeight, 0, 0);
         sectionList.setPadding(sectionList.getPaddingLeft(), sectionList.getPaddingTop() + statusBarHeight,
                 sectionList.getPaddingRight(), sectionList.getPaddingBottom());
-        // Widen the drawer's edge-swipe zone so swipe-right reliably opens the menu.
-        enlargeDrawerEdge();
+        // Open the menu with an on-screen right-swipe — the left screen edge belongs to
+        // the system Back gesture and must not be used for this. See mSwipeToOpenMenu.
+        mContentList.addOnItemTouchListener(mSwipeToOpenMenu);
 
         mPresenter = BrowsePresenter.instance(getContext());
         mPresenter.setView(this);
@@ -323,27 +326,74 @@ public class MobileBrowseFragment extends Fragment implements BrowseView {
     }
 
     /**
-     * DrawerLayout's default left-edge drag zone is ~20dp, which is hard to hit and loses
-     * to horizontal shelves. Widen it via reflection so a swipe-right opens the menu.
+     * Opens the drawer on an on-screen right-swipe. Registered on the outer content
+     * RecyclerView, so it is consulted before the inner shelves: a shelf that can still
+     * scroll toward its start keeps the gesture; a shelf already at its start (or a grid
+     * section with no horizontal scroller) yields it to open the menu.
      */
-    private void enlargeDrawerEdge() {
-        if (mDrawer == null) {
-            return;
-        }
-        try {
-            java.lang.reflect.Field draggerField = DrawerLayout.class.getDeclaredField("mLeftDragger");
-            draggerField.setAccessible(true);
-            androidx.customview.widget.ViewDragHelper dragger =
-                    (androidx.customview.widget.ViewDragHelper) draggerField.get(mDrawer);
-            java.lang.reflect.Field edgeSizeField =
-                    androidx.customview.widget.ViewDragHelper.class.getDeclaredField("mEdgeSize");
-            edgeSizeField.setAccessible(true);
-            int wanted = (int) (64 * getResources().getDisplayMetrics().density);
-            if (dragger != null && wanted > edgeSizeField.getInt(dragger)) {
-                edgeSizeField.setInt(dragger, wanted);
+    private final RecyclerView.OnItemTouchListener mSwipeToOpenMenu = new RecyclerView.OnItemTouchListener() {
+        private float mDownX;
+        private float mDownY;
+        private boolean mDecided;
+        private boolean mTriggered;
+
+        @Override
+        public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+            switch (e.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    mDownX = e.getX();
+                    mDownY = e.getY();
+                    mDecided = false;
+                    mTriggered = false;
+                    return false;
+                case MotionEvent.ACTION_MOVE:
+                    if (mDecided) {
+                        return mTriggered;
+                    }
+                    float dx = e.getX() - mDownX;
+                    float dy = e.getY() - mDownY;
+                    int slop = ViewConfiguration.get(rv.getContext()).getScaledTouchSlop();
+                    if (Math.abs(dx) < slop * 2 && Math.abs(dy) < slop * 2) {
+                        return false; // wait for a clear direction
+                    }
+                    mDecided = true;
+                    if (dx > 0 && dx > Math.abs(dy) && shelfAtStart(rv, mDownX, mDownY)) {
+                        mTriggered = true;
+                        if (mDrawer != null) {
+                            mDrawer.openDrawer(GravityCompat.START);
+                        }
+                    }
+                    return mTriggered;
+                default:
+                    return false;
             }
-        } catch (Exception e) {
-            // Best effort: fall back to the default edge size.
         }
+
+        @Override
+        public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+            // Gesture is fully handled in onInterceptTouchEvent.
+        }
+
+        @Override
+        public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+            // no-op
+        }
+    };
+
+    /**
+     * True if a right-swipe at (x, y) should open the menu: either there is no horizontal
+     * shelf under the finger (grid section or empty area), or the shelf there is already
+     * at its start and cannot scroll further toward it.
+     */
+    private boolean shelfAtStart(RecyclerView contentList, float x, float y) {
+        View child = contentList.findChildViewUnder(x, y);
+        if (child == null) {
+            return true;
+        }
+        View shelfList = child.findViewById(R.id.shelf_list);
+        if (shelfList == null) {
+            return true;
+        }
+        return !shelfList.canScrollHorizontally(-1);
     }
 }
