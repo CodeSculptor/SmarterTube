@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.SignInPresenter;
+import com.liskovsoft.smartyoutubetv2.common.app.presenters.YTSignInPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.SignInView;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
 import com.liskovsoft.smartyoutubetv2.tv.R;
@@ -37,7 +38,11 @@ public class MobileSignInFragment extends Fragment implements SignInView {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mPresenter = SignInPresenter.instance(getContext());
+        // Use YTSignInPresenter directly. The base SignInPresenter is only a dispatcher:
+        // it drives nothing unless a sub-presenter was pre-"armed" by a start() call,
+        // which never happens when the screen is opened via startView(). Going direct
+        // runs the OAuth device-code flow (updateUserCode) immediately.
+        mPresenter = YTSignInPresenter.instance(getContext());
         mPresenter.setView(this);
     }
 
