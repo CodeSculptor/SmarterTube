@@ -29,6 +29,9 @@ Thumbs.db
 .idea
 *.iml
 
+# Visual Studio
+.vs/
+
 #.idea/workspace.xml - remove # and delete .idea if it better suit your needs.
 .gradle
 .google

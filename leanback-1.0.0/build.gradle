@@ -2,6 +2,8 @@ apply from: gradle.ext.sharedModulesConstants
 apply plugin: 'com.android.library'
 
 android {
+    namespace "androidx.leanback"
+
     // FIX: Default interface methods are only supported starting with Android N (--min-api 24)
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8

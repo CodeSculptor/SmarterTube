@@ -48,7 +48,9 @@ public class MainApplication extends MultiDexApplication { // fix: Didn't find c
         setupViewManager();
     }
 
-    private void setupViewManager() {
+    // protected (not private) so the stmobile flavor's MobileApplication can override
+    // view routing to point BrowseView at the phone's MobileBrowseActivity.
+    protected void setupViewManager() {
         ViewManager viewManager = ViewManager.instance(this);
 
         viewManager.setRoot(BrowseActivity.class);

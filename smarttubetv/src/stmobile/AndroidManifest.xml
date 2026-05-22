@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phone/portrait flavor manifest. Merged OVER src/main/AndroidManifest.xml.
+    Keep all overrides here so the TV manifest stays untouched and upstream merges stay clean.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
+          package="com.liskovsoft.smartyoutubetv2.tv">
+
+    <!-- Make the app installable on non-TV (phone/tablet) devices -->
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false"
+        tools:replace="android:required" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="true"
+        tools:replace="android:required" />
+
+    <!-- Point the phone build at its own Application class (routing seam for later phases) -->
+    <application
+        android:name="com.liskovsoft.smartyoutubetv2.mobile.ui.main.MobileApplication"
+        tools:replace="android:name">
+
+        <!-- Lock content screens to portrait on phones -->
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.tv.ui.main.SplashActivity"
+            android:screenOrientation="portrait"
+            tools:node="merge"
+            tools:replace="android:screenOrientation" />
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.tv.ui.browse.BrowseActivity"
+            android:screenOrientation="portrait"
+            tools:node="merge"
+            tools:replace="android:screenOrientation" />
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.tv.ui.channel.ChannelActivity"
+            android:screenOrientation="portrait"
+            tools:node="merge"
+            tools:replace="android:screenOrientation" />
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.tv.ui.channeluploads.ChannelUploadsActivity"
+            android:screenOrientation="portrait"
+            tools:node="merge"
+            tools:replace="android:screenOrientation" />
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.tv.ui.search.regular.SearchActivity"
+            android:screenOrientation="portrait"
+            tools:node="merge"
+            tools:replace="android:screenOrientation" />
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.tv.ui.search.tags.SearchTagsActivity"
+            android:screenOrientation="portrait"
+            tools:node="merge"
+            tools:replace="android:screenOrientation" />
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.tv.ui.signin.SignInActivity"
+            android:screenOrientation="portrait"
+            tools:node="merge"
+            tools:replace="android:screenOrientation" />
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.tv.ui.adddevice.AddDeviceActivity"
+            android:screenOrientation="portrait"
+            tools:node="merge"
+            tools:replace="android:screenOrientation" />
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.tv.ui.webbrowser.WebBrowserActivity"
+            android:screenOrientation="portrait"
+            tools:node="merge"
+            tools:replace="android:screenOrientation" />
+
+        <!-- Video plays landscape, following the device sensor -->
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.tv.ui.playback.PlaybackActivity"
+            android:screenOrientation="sensorLandscape"
+            tools:node="merge"
+            tools:replace="android:screenOrientation" />
+
+    </application>
+
+</manifest>

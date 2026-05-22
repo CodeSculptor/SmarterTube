@@ -1,6 +1,12 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 apply from: gradle.ext.sharedModulesConstants
 
+// Override versions that constants.gradle (submodule, cannot edit) pins to older values.
+ext {
+    kotlinVersion = '1.9.24'
+    kotlinxVersion = '1.7.3'
+}
+
 // NOT working
 // Running 'gradle wrapper' will generate gradlew
 wrapper {
@@ -19,8 +25,8 @@ buildscript {
         //jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:' + androidGradleVersion
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:' + kotlinVersion
+        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -37,6 +43,20 @@ allprojects {
         // https://stackoverflow.com/questions/74258160/is-jcenter-down-permanently-31-oct
         //jcenter()
     }
+    // Keep Kotlin JVM target consistent with Java compileOptions (1.8) across all modules,
+    // including submodules that only set compileOptions but not kotlinOptions.
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions { jvmTarget = "1.8" }
+    }
+    // Compile Java with JDK 11 (via Gradle toolchain) to avoid a D8 4.0.52 NullPointerException.
+    // JDK 21 compiled anonymous/inner classes (even with -target 8) carry attributes that
+    // D8 4.0.52 (bundled with AGP 7.4.2) can't process. JDK 11 produces clean Java 8 bytecode.
+    // Gradle itself still runs on JDK 21; only javac uses JDK 11 (auto-discovered by Gradle).
+    tasks.withType(JavaCompile).configureEach {
+        javaCompiler = javaToolchains.compilerFor {
+            languageVersion = JavaLanguageVersion.of(11)
+        }
+    }
     configurations.all {
         // WorkManager conflict resolution
         resolutionStrategy.force 'androidx.lifecycle:lifecycle-livedata-core:' + liveDataVersion
@@ -44,11 +64,13 @@ allprojects {
         resolutionStrategy.force 'androidx.lifecycle:lifecycle-runtime:' + liveDataVersion
         // Force Android 4 compatible okHttp version
         resolutionStrategy.force 'com.squareup.okhttp3:okhttp:' + okhttpVersion
-        // Downgrade kotlin version for WorkManager
-        resolutionStrategy.force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:' + kotlinVersion
-        resolutionStrategy.force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:' + kotlinVersion
-        resolutionStrategy.force 'org.jetbrains.kotlin:kotlin-stdlib:' + kotlinVersion
-        resolutionStrategy.force 'org.jetbrains.kotlinx:kotlinx-coroutines-android:' + kotlinxVersion
+        // Pin Kotlin stdlib to 1.9.24 (matching kotlin-gradle-plugin in buildscript).
+        // Hardcoded because each submodule re-applies constants.gradle which resets
+        // kotlinVersion/kotlinxVersion to old values in subproject ext scope.
+        resolutionStrategy.force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.24'
+        resolutionStrategy.force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.24'
+        resolutionStrategy.force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.24'
+        resolutionStrategy.force 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
         resolutionStrategy.force 'androidx.core:core-ktx:' + kotlinCoreXVersion
         resolutionStrategy.force 'androidx.core:core:' + coreXLibraryVersion
         resolutionStrategy.force 'androidx.annotation:annotation:' + annotationXLibraryVersion

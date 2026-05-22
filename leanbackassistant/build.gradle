@@ -2,6 +2,7 @@ apply from: gradle.ext.sharedModulesConstants
 apply plugin: 'com.android.library'
 
 android {
+    namespace "com.liskovsoft.leanbackassistant"
     compileSdkVersion project.ext.compileSdkVersion
     buildToolsVersion project.ext.buildToolsVersion
     testOptions.unitTests.includeAndroidResources = true

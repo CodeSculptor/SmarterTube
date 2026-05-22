@@ -3,6 +3,8 @@ apply plugin: 'kotlin-android'
 apply plugin: 'com.android.library'
 
 android {
+    namespace "com.liskovsoft.smartyoutubetv2.common"
+
     // FIX: Default interface methods are only supported starting with Android N (--min-api 24)
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -47,6 +49,11 @@ android {
         stredboxtv {}
         stsibsetru {}
         stamazon {}
+        stmobile {
+            // Fall back to ststable for submodule deps (e.g. appupdatechecker2)
+            // that don't declare an stmobile flavor.
+            matchingFallbacks = ['ststable']
+        }
     }
 }
 
@@ -108,4 +115,5 @@ dependencies {
     stredboxtvImplementation project(':appupdatechecker2')
     stsibsetruImplementation project(':appupdatechecker2')
     stamazonImplementation project(':appupdatechecker2')
+    stmobileImplementation project(':appupdatechecker2') // common/src/main hard-references AppUpdateChecker
 }

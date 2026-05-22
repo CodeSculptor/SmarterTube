@@ -1,8 +1,8 @@
 apply from: gradle.ext.sharedModulesConstants
 apply plugin: 'com.android.library'
-apply plugin: 'maven-publish'
 
 android {
+    namespace "com.stfalcon.chatkit"
     compileSdkVersion project.properties.compileSdkVersion
     buildToolsVersion project.properties.buildToolsVersion
 
@@ -13,32 +13,14 @@ android {
         versionName '0.4.1'
         consumerProguardFiles 'proguard.txt'
     }
-    android {
-        lintOptions {
-            abortOnError false
-        }
+
+    lintOptions {
+        abortOnError false
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    afterEvaluate {
-        publishing {
-            publications {
-                // Creates a Maven publication called "release".
-                release(MavenPublication) {
-                    // Applies the component for the release build variant.
-                    //from components.release
-
-                    // You can then customize attributes of the publication as shown below.
-                    groupId = 'com.github.stfalcon'
-                    artifactId = 'chatkit'
-                    version = '0.4.1'
-                }
-            }
-        }
     }
 }
 

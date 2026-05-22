@@ -4,21 +4,11 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        jcenter()
     }
 
     dependencies {
-        // These docs use an open ended version so that our plugin
-        // can be updated quickly in response to Android tooling updates
-
-        // Check that you have the Google Services Gradle plugin v4.3.2 or later
-        // (if not, add it).
-        classpath 'com.google.gms:google-services:4.3.10'
-
-        // Add the Crashlytics Gradle plugin.
-        // https://firebase.google.com/docs/crashlytics/get-started?platform=android
-        // https://firebase.google.com/docs/android/setup
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.7.1'
+        classpath 'com.google.gms:google-services:4.3.15'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.9'
     }
 }
 
@@ -35,6 +25,9 @@ if (new File("${projectDir}/google-services.json").exists() && (getGradle().getS
 }
 
 android {
+    namespace "com.liskovsoft.smartyoutubetv2.tv"
+    buildFeatures { buildConfig true }
+
     // Use same key for release and debug
     // signingConfigs {
     //     release {
@@ -130,22 +123,18 @@ android {
             // matchingFallbacks = ['lite']
             applicationId "com.amazon.firetv.youtube"
         }
-    }
-
-    // naming example: SmartYouTubeTV_Xwalk_v6.8.12_r.apk
-    // https://stackoverflow.com/questions/18332474/how-to-set-versionname-in-apk-filename-using-gradle
-    applicationVariants.all { variant ->
-        variant.outputs.each { output ->
-            def project = "SmartTube"
-            def flavor = variant.productFlavors[-1].name.substring(2) // remove st prefix
-            def buildType = variant.buildType.name.take(1)
-            def version = variant.versionName
-            def arch = output.getFilter(com.android.build.OutputFile.ABI)
-
-            def newApkName = sprintf("%s_%s_%s_%s.apk", [project, flavor, version, arch])
-
-            // gradle 4.6 migration
-            output.outputFileName = new File(newApkName)
+        stmobile {
+            // Phone/portrait build. Co-installable alongside the TV build.
+            // This is the shipped product; the TV flavors are upstream-sync only.
+            isDefault true
+            applicationIdSuffix ".mobile"
+            // Fall back to ststable for dependency modules that don't
+            // declare an stmobile flavor.
+            matchingFallbacks = ['ststable']
+            // Override targetSdk (constants.gradle pins it to 26 for old Android TV
+            // boxes). 33 stops modern phones showing the "built for an older version
+            // of Android" warning. Capped at 33 = compileSdkVersion.
+            targetSdkVersion 33
         }
     }
 
@@ -158,6 +147,21 @@ android {
 
     lintOptions {
         checkReleaseBuilds false // fix for ClassNotFoundException: com.android.tools.lint.client.api.Vendor
+    }
+}
+
+// AGP 8.x: rename APKs per flavor + ABI
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        variant.outputs.forEach { output ->
+            def flavor = variant.flavorName.replaceFirst("^st", "")
+            def arch = output.filters.find { it.filterType.name() == "ABI" }?.identifier
+            if (arch) {
+                output.outputFileName.set(
+                    "SmartTube_${flavor}_${android.defaultConfig.versionName}_${arch}.apk"
+                )
+            }
+        }
     }
 }
 
