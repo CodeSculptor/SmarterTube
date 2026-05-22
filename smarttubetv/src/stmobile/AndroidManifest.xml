@@ -85,6 +85,15 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.SmarterTube.Mobile" />
 
+        <!-- Native phone sign-in screen -->
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.mobile.ui.signin.MobileSignInActivity"
+            android:exported="false"
+            android:launchMode="singleInstance"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|layoutDirection|keyboardHidden"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.SmarterTube.Mobile" />
+
     </application>
 
 </manifest>

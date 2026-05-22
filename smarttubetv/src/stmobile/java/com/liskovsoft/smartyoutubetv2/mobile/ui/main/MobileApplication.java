@@ -12,6 +12,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.views.SplashView;
 import com.liskovsoft.smartyoutubetv2.common.app.views.ViewManager;
 import com.liskovsoft.smartyoutubetv2.common.app.views.WebBrowserView;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.browse.MobileBrowseActivity;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.signin.MobileSignInActivity;
 import com.liskovsoft.smartyoutubetv2.tv.ui.adddevice.AddDeviceActivity;
 import com.liskovsoft.smartyoutubetv2.tv.ui.channel.ChannelActivity;
 import com.liskovsoft.smartyoutubetv2.tv.ui.channeluploads.ChannelUploadsActivity;
@@ -20,7 +21,6 @@ import com.liskovsoft.smartyoutubetv2.tv.ui.main.MainApplication;
 import com.liskovsoft.smartyoutubetv2.tv.ui.main.SplashActivity;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.PlaybackActivity;
 import com.liskovsoft.smartyoutubetv2.tv.ui.search.tags.SearchTagsActivity;
-import com.liskovsoft.smartyoutubetv2.tv.ui.signin.SignInActivity;
 import com.liskovsoft.smartyoutubetv2.tv.ui.webbrowser.WebBrowserActivity;
 
 /**
@@ -41,7 +41,7 @@ public class MobileApplication extends MainApplication {
         viewManager.register(PlaybackView.class, PlaybackActivity.class, MobileBrowseActivity.class);
         viewManager.register(AppDialogView.class, AppDialogActivity.class, PlaybackActivity.class);
         viewManager.register(SearchView.class, SearchTagsActivity.class, MobileBrowseActivity.class);
-        viewManager.register(SignInView.class, SignInActivity.class, MobileBrowseActivity.class);
+        viewManager.register(SignInView.class, MobileSignInActivity.class, MobileBrowseActivity.class);
         viewManager.register(AddDeviceView.class, AddDeviceActivity.class, MobileBrowseActivity.class);
         viewManager.register(ChannelView.class, ChannelActivity.class, MobileBrowseActivity.class);
         viewManager.register(ChannelUploadsView.class, ChannelUploadsActivity.class, MobileBrowseActivity.class);
