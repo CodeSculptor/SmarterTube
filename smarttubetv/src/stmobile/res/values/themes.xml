@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Phone flavor theme. AppCompat (not Leanback) so touch widgets render correctly. -->
+    <style name="Theme.SmarterTube.Mobile" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/mobile_primary</item>
+        <item name="colorPrimaryDark">@color/mobile_primary_dark</item>
+        <item name="colorAccent">@color/mobile_accent</item>
+        <item name="android:windowBackground">@color/mobile_background</item>
+        <item name="android:colorBackground">@color/mobile_background</item>
+    </style>
+</resources>

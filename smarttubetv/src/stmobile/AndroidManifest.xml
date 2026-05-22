@@ -76,6 +76,15 @@
             tools:node="merge"
             tools:replace="android:screenOrientation" />
 
+        <!-- Native phone Home screen (Phase 2) -->
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.mobile.ui.browse.MobileBrowseActivity"
+            android:exported="false"
+            android:launchMode="singleInstance"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|layoutDirection|keyboardHidden"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.SmarterTube.Mobile" />
+
     </application>
 
 </manifest>

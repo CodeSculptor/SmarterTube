@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Card root width and thumbnail height are set in code (VideoCardAdapter). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="4dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:background="?android:attr/selectableItemBackground">
+
+    <ImageView
+        android:id="@+id/card_thumb"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:scaleType="centerCrop"
+        android:background="#000000"
+        android:contentDescription="@null" />
+
+    <TextView
+        android:id="@+id/card_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:textColor="@color/mobile_text_primary"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/card_author"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:textColor="@color/mobile_text_secondary"
+        android:textSize="11sp" />
+</LinearLayout>

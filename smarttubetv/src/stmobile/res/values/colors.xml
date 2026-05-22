@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="mobile_background">#0F0F0F</color>
+    <color name="mobile_surface">#212121</color>
+    <color name="mobile_primary">#0F0F0F</color>
+    <color name="mobile_primary_dark">#000000</color>
+    <color name="mobile_accent">#FF0000</color>
+    <color name="mobile_text_primary">#FFFFFFFF</color>
+    <color name="mobile_text_secondary">#FFAAAAAA</color>
+    <color name="mobile_drawer_selected">#33FFFFFF</color>
+</resources>
