@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Single-phone sign-in. The OAuth device-code flow is mandatory (it is the only flow
+    that yields InnerTube-compatible credentials), but the QR and second-device framing
+    are dropped: the code is pre-filled into the URL and opened in an in-app Custom Tab.
+-->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -17,50 +22,48 @@
             android:id="@+id/signin_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="32dp"
             android:gravity="center"
+            android:text="@string/signin_view_title"
             android:textColor="@color/mobile_text_primary"
             android:textSize="22sp"
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/signin_instructions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:text="@string/mobile_signin_instructions"
+            android:textColor="@color/mobile_text_secondary"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/signin_code_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:gravity="center"
+            android:text="@string/mobile_signin_code_label"
+            android:textColor="@color/mobile_text_secondary"
+            android:textSize="13sp" />
+
+        <TextView
             android:id="@+id/signin_code"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
+            android:layout_marginTop="8dp"
             android:gravity="center"
             android:textColor="@color/mobile_accent"
-            android:textSize="34sp"
+            android:textSize="36sp"
             android:textStyle="bold" />
-
-        <ImageView
-            android:id="@+id/signin_qr"
-            android:layout_width="220dp"
-            android:layout_height="220dp"
-            android:layout_marginTop="24dp"
-            android:background="#FFFFFF"
-            android:padding="6dp"
-            android:contentDescription="@null" />
-
-        <TextView
-            android:id="@+id/signin_description"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:gravity="center"
-            android:textColor="@color/mobile_text_secondary"
-            android:textSize="14sp" />
 
         <Button
             android:id="@+id/signin_browser_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="28dp" />
-
-        <Button
-            android:id="@+id/signin_continue_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="32dp"
+            android:text="@string/mobile_signin_continue" />
     </LinearLayout>
 </ScrollView>

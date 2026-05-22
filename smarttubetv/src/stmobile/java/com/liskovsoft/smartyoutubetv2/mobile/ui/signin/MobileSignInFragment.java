@@ -1,19 +1,19 @@
 package com.liskovsoft.smartyoutubetv2.mobile.ui.signin;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.fragment.app.Fragment;
 
-import com.bumptech.glide.Glide;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.SignInPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.YTSignInPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.SignInView;
@@ -21,18 +21,19 @@ import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 
 /**
- * Native portrait sign-in screen. Implements {@link SignInView} and is driven by the
- * existing {@link SignInPresenter} unchanged.
+ * Single-phone sign-in screen. Implements {@link SignInView}, driven directly by
+ * {@link YTSignInPresenter} (the OAuth device-code flow).
  *
- * The mechanism is the OAuth device-code flow (a code + a URL), exactly as the TV screen:
- * Google blocks OAuth inside embedded WebViews for non-Google apps, so an inline Google
- * login is not possible — only the presentation is made phone-friendly here.
+ * The device-code flow is mandatory — it is the only flow that yields InnerTube-compatible
+ * credentials, and Google blocks OAuth inside embedded WebViews. To make it seamless on a
+ * single phone, the code is pre-filled into the URL and opened in an in-app Chrome Custom
+ * Tab: the user signs in and approves without leaving the app, then the presenter's poll
+ * detects completion and closes this screen automatically.
  */
 public class MobileSignInFragment extends Fragment implements SignInView {
     private SignInPresenter mPresenter;
     private TextView mCodeView;
-    private TextView mDescriptionView;
-    private ImageView mQrView;
+    private Button mBrowserButton;
     private String mFullSignInUrl;
 
     @Override
@@ -58,31 +59,16 @@ public class MobileSignInFragment extends Fragment implements SignInView {
         super.onViewCreated(view, savedInstanceState);
 
         mCodeView = view.findViewById(R.id.signin_code);
-        mDescriptionView = view.findViewById(R.id.signin_description);
-        mQrView = view.findViewById(R.id.signin_qr);
-
-        ((TextView) view.findViewById(R.id.signin_title)).setText(R.string.signin_view_title);
+        mBrowserButton = view.findViewById(R.id.signin_browser_button);
 
         // Drop the content below the status bar (MotherActivity runs TV-style fullscreen).
         View root = view.findViewById(R.id.signin_root);
         root.setPadding(root.getPaddingLeft(), root.getPaddingTop() + getStatusBarHeight(),
                 root.getPaddingRight(), root.getPaddingBottom());
 
-        Button browserButton = view.findViewById(R.id.signin_browser_button);
-        browserButton.setText(R.string.login_from_browser);
-        browserButton.setOnClickListener(v -> {
-            if (mFullSignInUrl != null) {
-                Utils.openLinkExt(getContext(), mFullSignInUrl);
-            }
-        });
-
-        Button continueButton = view.findViewById(R.id.signin_continue_button);
-        continueButton.setText(R.string.signin_view_action_text);
-        continueButton.setOnClickListener(v -> {
-            if (mPresenter != null) {
-                mPresenter.onActionClicked();
-            }
-        });
+        // Disabled until the device code arrives (mFullSignInUrl is set in showCode()).
+        mBrowserButton.setEnabled(false);
+        mBrowserButton.setOnClickListener(v -> openInBrowser());
 
         mPresenter.onViewInitialized();
     }
@@ -101,20 +87,35 @@ public class MobileSignInFragment extends Fragment implements SignInView {
             return;
         }
 
+        // user_code in the query string pre-fills the activation page so the user does
+        // not have to type it (they still confirm it once, for anti-phishing).
         mFullSignInUrl = signInUrl + "?user_code=" + userCode.replace(" ", "-");
         mCodeView.setText(userCode);
-        mDescriptionView.setText(getString(R.string.signin_view_description, signInUrl));
-
-        Glide.with(mQrView)
-                .load(Utils.toQrCodeLink(mFullSignInUrl))
-                .error(R.drawable.activate_account_qrcode)
-                .into(mQrView);
+        mBrowserButton.setEnabled(true);
     }
 
     @Override
     public void close() {
         if (getActivity() != null) {
             getActivity().finish();
+        }
+    }
+
+    /**
+     * Opens the activation URL in an in-app Chrome Custom Tab. Falls back to an external
+     * browser if no Custom Tabs provider is available.
+     */
+    private void openInBrowser() {
+        if (mFullSignInUrl == null || getContext() == null) {
+            return;
+        }
+        try {
+            new CustomTabsIntent.Builder()
+                    .setShowTitle(true)
+                    .build()
+                    .launchUrl(getContext(), Uri.parse(mFullSignInUrl));
+        } catch (Exception e) {
+            Utils.openLinkExt(getContext(), mFullSignInUrl);
         }
     }
 

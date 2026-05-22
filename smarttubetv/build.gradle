@@ -238,4 +238,6 @@ dependencies {
 
     // Phone flavor (stmobile) native touch UI. AppCompat brings DrawerLayout + a non-Leanback theme.
     stmobileImplementation 'androidx.appcompat:appcompat:' + appCompatXLibraryVersion
+    // Chrome Custom Tabs for the in-app sign-in browser.
+    stmobileImplementation 'androidx.browser:browser:' + browserXVersion
 }
