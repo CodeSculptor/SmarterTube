@@ -6,6 +6,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -42,6 +43,8 @@ public class MobileBrowseFragment extends Fragment implements BrowseView {
     private RecyclerView mContentList;
     private ProgressBar mProgressBar;
     private TextView mEmptyMessage;
+    private View mEmptyContainer;
+    private Button mEmptyButton;
     private TextView mToolbarTitle;
     private SectionAdapter mSectionAdapter;
     private VideoCardAdapter mGridAdapter;
@@ -65,6 +68,8 @@ public class MobileBrowseFragment extends Fragment implements BrowseView {
         mContentList = view.findViewById(R.id.content_list);
         mProgressBar = view.findViewById(R.id.progress_bar);
         mEmptyMessage = view.findViewById(R.id.empty_message);
+        mEmptyContainer = view.findViewById(R.id.empty_container);
+        mEmptyButton = view.findViewById(R.id.empty_button);
         mToolbarTitle = view.findViewById(R.id.toolbar_title);
 
         view.findViewById(R.id.btn_menu).setOnClickListener(v -> {
@@ -228,7 +233,18 @@ public class MobileBrowseFragment extends Fragment implements BrowseView {
 
     @Override
     public void showError(ErrorFragmentData data) {
-        showEmptyMessage("Nothing here");
+        if (mEmptyContainer == null) {
+            return;
+        }
+        mEmptyMessage.setText(data != null ? data.getMessage() : "");
+        if (data != null && data.getActionText() != null) {
+            mEmptyButton.setText(data.getActionText());
+            mEmptyButton.setOnClickListener(v -> data.onAction());
+            mEmptyButton.setVisibility(View.VISIBLE);
+        } else {
+            mEmptyButton.setVisibility(View.GONE);
+        }
+        mEmptyContainer.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -308,15 +324,17 @@ public class MobileBrowseFragment extends Fragment implements BrowseView {
     };
 
     private void showEmptyMessage(String message) {
-        if (mEmptyMessage != null) {
-            mEmptyMessage.setText(message);
-            mEmptyMessage.setVisibility(View.VISIBLE);
+        if (mEmptyContainer == null) {
+            return;
         }
+        mEmptyMessage.setText(message);
+        mEmptyButton.setVisibility(View.GONE);
+        mEmptyContainer.setVisibility(View.VISIBLE);
     }
 
     private void hideEmptyMessage() {
-        if (mEmptyMessage != null) {
-            mEmptyMessage.setVisibility(View.GONE);
+        if (mEmptyContainer != null) {
+            mEmptyContainer.setVisibility(View.GONE);
         }
     }
 
