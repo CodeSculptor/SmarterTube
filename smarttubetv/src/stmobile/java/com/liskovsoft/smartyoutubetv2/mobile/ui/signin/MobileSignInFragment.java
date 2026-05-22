@@ -1,5 +1,7 @@
 package com.liskovsoft.smartyoutubetv2.mobile.ui.signin;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -18,6 +20,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.SignInPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.YTSignInPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.SignInView;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.browse.MobileBrowseActivity;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 
 /**
@@ -104,9 +107,19 @@ public class MobileSignInFragment extends Fragment implements SignInView {
 
     @Override
     public void close() {
-        if (getActivity() != null) {
-            getActivity().finish();
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
         }
+
+        // Sign-in finishes while the in-app Custom Tab is still in the foreground showing
+        // YouTube (the OAuth device-code flow has no redirect back to the app). Relaunch the
+        // Home activity with CLEAR_TOP: as the singleTask root of the shared task it pops the
+        // Custom Tab and this sign-in screen, bringing the user back into the app.
+        Intent intent = new Intent(activity, MobileBrowseActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        activity.startActivity(intent);
+        activity.finish();
     }
 
     /**

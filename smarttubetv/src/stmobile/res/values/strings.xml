@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Phone (stmobile) flavor strings. Kept separate from src/main so upstream merges stay clean. -->
+    <!-- Override the launcher name for the phone build (src/main ships it as "SmartTube"). -->
+    <string name="app_name" translatable="false">SmarterTube</string>
     <string name="mobile_signin_instructions">Tap Continue below. A browser opens inside the app — sign in to your Google account, check the code matches, and tap Allow. You\'ll return here automatically.</string>
     <string name="mobile_signin_code_label">Your sign-in code</string>
     <string name="mobile_signin_continue">Continue in browser</string>

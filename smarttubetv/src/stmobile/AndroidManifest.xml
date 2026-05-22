@@ -76,13 +76,20 @@
             tools:node="merge"
             tools:replace="android:screenOrientation,android:launchMode" />
 
-        <!-- Video plays landscape, following the device sensor -->
+        <!-- Phone playback host. Extends the TV PlaybackActivity; screen orientation is
+             chosen at runtime by video type — portrait for Shorts, landscape otherwise.
+             screenOrientation="behind" makes it open in the caller's orientation (Home is
+             portrait) so a Short never flashes landscape before the runtime lock applies. -->
         <activity
-            android:name="com.liskovsoft.smartyoutubetv2.tv.ui.playback.PlaybackActivity"
-            android:screenOrientation="sensorLandscape"
+            android:name="com.liskovsoft.smartyoutubetv2.mobile.ui.playback.MobilePlaybackActivity"
+            android:exported="false"
             android:launchMode="singleTop"
-            tools:node="merge"
-            tools:replace="android:screenOrientation,android:launchMode" />
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|layoutDirection|keyboardHidden"
+            android:screenOrientation="behind"
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
+            android:showWhenLocked="true"
+            android:theme="@style/App.Theme.Leanback.Player" />
 
         <!-- Translucent dialogs (incl. the account picker) must stack within the app task
              so the screen behind them stays visible. Keep screenOrientation="behind". -->
