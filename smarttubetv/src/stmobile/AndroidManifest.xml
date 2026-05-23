@@ -86,13 +86,18 @@
             android:showWhenLocked="true"
             android:theme="@style/App.Theme.Leanback.Player" />
 
-        <!-- Translucent dialogs (incl. the account picker) must stack within the app task
-             so the screen behind them stays visible. Keep screenOrientation="behind". -->
+        <!-- Native phone settings dialog (Phase 4 part 2). screenOrientation="behind" so
+             dialogs opened from the landscape player stay landscape and dialogs opened
+             from Home stay portrait. adjustResize so a software keyboard (e.g. a future
+             text-entry preference) pushes the list instead of covering it. -->
         <activity
-            android:name="com.liskovsoft.smartyoutubetv2.tv.ui.dialogs.AppDialogActivity"
+            android:name="com.liskovsoft.smartyoutubetv2.mobile.ui.dialogs.MobileAppDialogActivity"
+            android:exported="false"
             android:launchMode="singleTop"
-            tools:node="merge"
-            tools:replace="android:launchMode" />
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|layoutDirection|keyboardHidden"
+            android:screenOrientation="behind"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.SmarterTube.Mobile" />
 
         <!-- Native phone Home screen (Phase 2). singleTask = the root of the app task. -->
         <activity
@@ -106,6 +111,26 @@
         <!-- Native phone sign-in screen -->
         <activity
             android:name="com.liskovsoft.smartyoutubetv2.mobile.ui.signin.MobileSignInActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|layoutDirection|keyboardHidden"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.SmarterTube.Mobile" />
+
+        <!-- Native phone Channel-uploads screen (Phase 6). Same task as the rest;
+             singleTop so revisiting from a video card reuses the existing instance. -->
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.mobile.ui.channeluploads.MobileChannelUploadsActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|layoutDirection|keyboardHidden"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.SmarterTube.Mobile" />
+
+        <!-- Native phone Channel screen (Phase 5). singleTop so revisiting a channel from
+             a video card reuses the existing instance rather than stacking duplicates. -->
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.mobile.ui.channel.MobileChannelActivity"
             android:exported="false"
             android:launchMode="singleTop"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|layoutDirection|keyboardHidden"

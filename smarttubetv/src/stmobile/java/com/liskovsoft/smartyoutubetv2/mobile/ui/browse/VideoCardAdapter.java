@@ -51,7 +51,7 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
         notifyDataSetChanged();
     }
 
-    void remove(List<Video> videos) {
+    public void remove(List<Video> videos) {
         if (videos != null && mVideos.removeAll(videos)) {
             notifyDataSetChanged();
         }

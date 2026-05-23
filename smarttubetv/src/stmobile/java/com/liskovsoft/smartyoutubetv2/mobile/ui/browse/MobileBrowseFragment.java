@@ -288,7 +288,8 @@ public class MobileBrowseFragment extends Fragment implements BrowseView {
         hideEmptyMessage();
         mContentList.clearOnScrollListeners();
         if (type == BrowseSection.TYPE_ROW) {
-            mShelfAdapter = new ShelfAdapter(mShelfCardWidth, mVideoClick, mVideoLongClick);
+            mShelfAdapter = new ShelfAdapter(mShelfCardWidth, mVideoClick, mVideoLongClick,
+                    mShelfScrollEnd);
             mGridAdapter = null;
             mSettingsAdapter = null;
             mContentList.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -317,6 +318,12 @@ public class MobileBrowseFragment extends Fragment implements BrowseView {
     private final VideoCardAdapter.OnVideoAction mVideoLongClick = video -> {
         if (mPresenter != null) {
             mPresenter.onVideoItemLongClicked(video);
+        }
+    };
+
+    private final ShelfAdapter.OnShelfScrollEnd mShelfScrollEnd = last -> {
+        if (mPresenter != null && last != null) {
+            mPresenter.onScrollEnd(last);
         }
     };
 

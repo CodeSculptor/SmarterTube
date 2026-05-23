@@ -184,6 +184,12 @@ android {
             // 33 stops modern phones showing the "built for an older version
             // of Android" warning.
             targetSdkVersion 33
+            // Phone-port versioning. Lives in the flavor (not defaultConfig) so
+            // upstream merges don't conflict on versionCode/versionName lines.
+            // versionCode = upstream code * 10 + fork iteration so the fork stays
+            // sortable above the equivalent upstream release.
+            versionCode 23701
+            versionName "31.70-mobile-alpha1"
         }
     }
 }
