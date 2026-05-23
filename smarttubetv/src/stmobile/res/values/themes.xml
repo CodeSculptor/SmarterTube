@@ -2,10 +2,17 @@
 <resources>
     <!-- Phone flavor theme. AppCompat (not Leanback) so touch widgets render correctly. -->
     <style name="Theme.SmarterTube.Mobile" parent="Theme.AppCompat.NoActionBar">
-        <item name="colorPrimary">@color/mobile_primary</item>
-        <item name="colorPrimaryDark">@color/mobile_primary_dark</item>
-        <item name="colorAccent">@color/mobile_accent</item>
-        <item name="android:windowBackground">@color/mobile_background</item>
-        <item name="android:colorBackground">@color/mobile_background</item>
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="colorPrimaryDark">@color/brand_primary_dark</item>
+        <item name="colorAccent">@color/brand_accent</item>
+        <item name="android:windowBackground">@color/brand_primary</item>
+        <item name="android:colorBackground">@color/brand_primary</item>
+    </style>
+
+    <!-- Splash for pre-API-31 devices: the launcher activity opens with this theme so the
+         first frame is the brand background + centered logo instead of a white flash.
+         API-31+ uses the SplashScreen API (see values-v31/themes.xml). -->
+    <style name="Theme.SmarterTube.Splash" parent="Theme.SmarterTube.Mobile">
+        <item name="android:windowBackground">@drawable/splash_window_background</item>
     </style>
 </resources>

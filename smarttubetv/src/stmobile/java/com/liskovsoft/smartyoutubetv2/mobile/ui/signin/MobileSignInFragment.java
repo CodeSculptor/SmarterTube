@@ -37,6 +37,7 @@ public class MobileSignInFragment extends Fragment implements SignInView {
     private SignInPresenter mPresenter;
     private TextView mCodeView;
     private Button mBrowserButton;
+    private Button mDoneButton;
     private String mFullSignInUrl;
 
     @Override
@@ -63,10 +64,15 @@ public class MobileSignInFragment extends Fragment implements SignInView {
 
         mCodeView = view.findViewById(R.id.signin_code);
         mBrowserButton = view.findViewById(R.id.signin_browser_button);
+        mDoneButton = view.findViewById(R.id.signin_done_button);
 
         // Disabled until the device code arrives (mFullSignInUrl is set in showCode()).
         mBrowserButton.setEnabled(false);
         mBrowserButton.setOnClickListener(v -> openInBrowser());
+        // Manual escape hatch: if the user completed sign-in in the Custom Tab and the
+        // polling-detected auto-return is slow, this brings the app's task forward.
+        // Polling continues; close() still fires on success.
+        mDoneButton.setOnClickListener(v -> returnToApp());
 
         mPresenter.onViewInitialized();
     }
@@ -102,24 +108,36 @@ public class MobileSignInFragment extends Fragment implements SignInView {
 
     @Override
     public void close() {
+        returnToApp();
+        Activity activity = getActivity();
+        if (activity != null) {
+            activity.finish();
+        }
+    }
+
+    /**
+     * Bring the app's task to the foreground. The Custom Tab opens YouTube's
+     * activation page in its OWN task (Chrome's), so {@code CLEAR_TOP} alone does not
+     * cover it — {@code REORDER_TO_FRONT} pulls our task on top of Chrome's. Called
+     * both on polling success (via {@link #close()}) and from the manual "Done? Return
+     * to app" escape hatch.
+     */
+    private void returnToApp() {
         Activity activity = getActivity();
         if (activity == null) {
             return;
         }
-
-        // Sign-in finishes while the in-app Custom Tab is still in the foreground showing
-        // YouTube (the OAuth device-code flow has no redirect back to the app). Relaunch the
-        // Home activity with CLEAR_TOP: as the singleTask root of the shared task it pops the
-        // Custom Tab and this sign-in screen, bringing the user back into the app.
         Intent intent = new Intent(activity, MobileBrowseActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         activity.startActivity(intent);
-        activity.finish();
     }
 
     /**
      * Opens the activation URL in an in-app Chrome Custom Tab. Falls back to an external
-     * browser if no Custom Tabs provider is available.
+     * browser if no Custom Tabs provider is available. Reveals the "Done? Return to app"
+     * escape hatch once the tab is launched.
      */
     private void openInBrowser() {
         if (mFullSignInUrl == null || getContext() == null) {
@@ -132,6 +150,9 @@ public class MobileSignInFragment extends Fragment implements SignInView {
                     .launchUrl(getContext(), Uri.parse(mFullSignInUrl));
         } catch (Exception e) {
             Utils.openLinkExt(getContext(), mFullSignInUrl);
+        }
+        if (mDoneButton != null) {
+            mDoneButton.setVisibility(View.VISIBLE);
         }
     }
 }

@@ -65,5 +65,18 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
             android:text="@string/mobile_signin_continue" />
+
+        <!-- Shown after the user has tapped Continue and may have completed sign-in
+             in the Custom Tab. Brings the app back to the foreground manually so the
+             user is not stranded looking at the YouTube activation page if the
+             polling-detected auto-return is slow. -->
+        <Button
+            android:id="@+id/signin_done_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            android:text="@string/mobile_signin_done_return"
+            style="?android:attr/borderlessButtonStyle" />
     </LinearLayout>
 </ScrollView>

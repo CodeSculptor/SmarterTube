@@ -188,8 +188,8 @@ android {
             // upstream merges don't conflict on versionCode/versionName lines.
             // versionCode = upstream code * 10 + fork iteration so the fork stays
             // sortable above the equivalent upstream release.
-            versionCode 23701
-            versionName "31.70-mobile-alpha1"
+            versionCode 23702
+            versionName "31.70-mobile-alpha2"
         }
     }
 }

@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="mobile_background">#0F0F0F</color>
+    <!-- Brand tokens. Use these in layouts and themes; the mobile_* aliases below
+         keep older layout references working unchanged. -->
+    <color name="brand_primary">#0F0F0F</color>
+    <color name="brand_primary_dark">#000000</color>
+    <color name="brand_on_primary">#FFFFFFFF</color>
+    <color name="brand_accent">#FFB300</color>
+    <color name="brand_accent_on">#FF000000</color>
+
+    <color name="mobile_background">@color/brand_primary</color>
     <color name="mobile_surface">#212121</color>
-    <color name="mobile_primary">#0F0F0F</color>
-    <color name="mobile_primary_dark">#000000</color>
-    <color name="mobile_accent">#FF0000</color>
-    <color name="mobile_text_primary">#FFFFFFFF</color>
+    <color name="mobile_primary">@color/brand_primary</color>
+    <color name="mobile_primary_dark">@color/brand_primary_dark</color>
+    <color name="mobile_accent">@color/brand_accent</color>
+    <color name="mobile_text_primary">@color/brand_on_primary</color>
     <color name="mobile_text_secondary">#FFAAAAAA</color>
     <color name="mobile_drawer_selected">#33FFFFFF</color>
 </resources>

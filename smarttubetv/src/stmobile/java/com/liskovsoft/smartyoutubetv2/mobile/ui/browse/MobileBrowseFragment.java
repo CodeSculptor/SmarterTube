@@ -1,5 +1,6 @@
 package com.liskovsoft.smartyoutubetv2.mobile.ui.browse;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -27,6 +28,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.errors.ErrorFragmentData
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.BrowsePresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.SearchPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.BrowseView;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.about.MobileAboutActivity;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 
 /**
@@ -84,6 +86,13 @@ public class MobileBrowseFragment extends Fragment implements BrowseView {
 
         view.findViewById(R.id.btn_search).setOnClickListener(v ->
                 SearchPresenter.instance(getContext()).startSearch(null));
+
+        view.findViewById(R.id.drawer_about).setOnClickListener(v -> {
+            if (mDrawer != null) {
+                mDrawer.closeDrawer(GravityCompat.START);
+            }
+            startActivity(new Intent(getContext(), MobileAboutActivity.class));
+        });
 
         int screenWidth = getResources().getDisplayMetrics().widthPixels;
         mGridCardWidth = screenWidth / 2;

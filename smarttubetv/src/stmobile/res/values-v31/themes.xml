@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- API-31+ splash. Platform-native attributes (no core-splashscreen library
+         dependency needed). The system shows windowSplashScreenAnimatedIcon on
+         windowSplashScreenBackground while the activity inflates, then transitions
+         to the activity's normal theme. -->
+    <style name="Theme.SmarterTube.Splash" parent="Theme.SmarterTube.Mobile">
+        <item name="android:windowSplashScreenBackground">@color/brand_primary</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
+    </style>
+</resources>

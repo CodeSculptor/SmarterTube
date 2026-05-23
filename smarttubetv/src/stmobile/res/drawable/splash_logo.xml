@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash logo: amber play triangle, used both as the Android-12 splash icon and
+     centered inside splash_window_background for pre-31 devices. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="192dp"
+    android:height="192dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFB300"
+        android:pathData="M 40,32 L 40,76 L 76,54 Z" />
+</vector>

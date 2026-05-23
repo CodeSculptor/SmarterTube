@@ -103,15 +103,40 @@
         </FrameLayout>
     </LinearLayout>
 
-    <!-- Drawer menu -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/section_list"
+    <!-- Drawer menu: scrollable section list + pinned About footer at the bottom. -->
+    <LinearLayout
         android:layout_width="280dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
+        android:orientation="vertical"
         android:background="@color/mobile_surface"
-        android:paddingTop="8dp"
         android:clickable="true"
-        android:focusable="true" />
+        android:focusable="true">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/section_list"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingTop="8dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#33FFFFFF" />
+
+        <TextView
+            android:id="@+id/drawer_about"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp"
+            android:text="@string/mobile_about_drawer_entry"
+            android:textColor="@color/mobile_text_primary"
+            android:textSize="15sp"
+            android:background="?android:attr/selectableItemBackground" />
+    </LinearLayout>
 
 </androidx.drawerlayout.widget.DrawerLayout>

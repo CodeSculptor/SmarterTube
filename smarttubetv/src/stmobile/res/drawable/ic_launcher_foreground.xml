@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Adaptive icon foreground. 108dp viewport; only the central 72dp circle is the
+     guaranteed-visible safe zone, so the play triangle stays inside ~60dp. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFB300"
+        android:pathData="M 40,32 L 40,76 L 76,54 Z" />
+</vector>

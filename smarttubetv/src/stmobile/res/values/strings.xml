@@ -6,6 +6,18 @@
     <string name="mobile_signin_instructions">Tap Continue below. A browser opens inside the app — sign in to your Google account, check the code matches, and tap Allow. You\'ll return here automatically.</string>
     <string name="mobile_signin_code_label">Your sign-in code</string>
     <string name="mobile_signin_continue">Continue in browser</string>
+    <string name="mobile_signin_done_return">Done? Return to app</string>
     <string name="mobile_search_hint">Search YouTube</string>
     <string name="mobile_search_no_results">No results found.</string>
+
+    <!-- About screen -->
+    <string name="mobile_about_title">About SmarterTube</string>
+    <string name="mobile_about_drawer_entry">About SmarterTube</string>
+    <string name="mobile_about_tagline">Phone &amp; tablet fork of SmartTube</string>
+    <string name="mobile_about_version">Version %1$s</string>
+    <string name="mobile_about_body">SmarterTube is a phone and tablet fork of SmartTube by yuliskov. The YouTube client code is upstream\'s work, merged from upstream on every release. This fork adds the phone/tablet UI on top.\n\nLicensed under MIT, same as upstream.</string>
+    <string name="mobile_about_link_upstream">Upstream: github.com/yuliskov/SmartTube</string>
+    <string name="mobile_about_link_fork">Fork: github.com/CodeSculptor/SmarterTube</string>
+    <string name="mobile_about_url_upstream" translatable="false">https://github.com/yuliskov/SmartTube</string>
+    <string name="mobile_about_url_fork" translatable="false">https://github.com/CodeSculptor/SmarterTube</string>
 </resources>

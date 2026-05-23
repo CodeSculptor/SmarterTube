@@ -1,3 +1,15 @@
+# SmarterTube
+
+**SmarterTube is a phone and tablet fork of [SmartTube](https://github.com/yuliskov/SmartTube) by yuliskov.** The YouTube-client code is upstream's work, merged from upstream on every release; this fork adds a native portrait UI (Home, Search, Channel, ChannelUploads, Settings, Sign-In, About) on top. Licensed under MIT, same as upstream.
+
+SmarterTube exists because upstream SmartTube is TV-only by design. This fork is for phones and tablets and ships only the `stmobile` build (`app.smarttube.mobile`); it is co-installable with the upstream TV build.
+
+- Downloads: [GitHub Releases](https://github.com/CodeSculptor/SmarterTube/releases)
+- Default branch `master` — fork content. Side branch `upstream-mirror` — clean snapshot of upstream, used only as a merge target.
+- Upstream README and assets are preserved below for context and clean upstream merges.
+
+---
+
 <p align="center">
   <a href="https://f-droid.org/packages/app.smarttube.fdroid/">
     <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on-en.svg" alt="Get it on F-Droid" width="206" style="max-width:100%; height:auto;"/>

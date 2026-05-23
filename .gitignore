@@ -47,6 +47,12 @@ build/
 log.txt
 android.keystore
 android-upd2.keystore
+# Phone-port release signing — kept local-only; if lost no future release can sign as the same identity
+smartertube-release.jks
+keystore.properties
+
+# Local screenshot scratch (alpha2 device-verification captures)
+/alpha2_*.png
 build.log
 notes.txt
 out.txt
