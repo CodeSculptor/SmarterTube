@@ -156,4 +156,5 @@ jobs:
           gh issue create \
             --title "Upstream sync $(date -u +%Y-%m-%d) — manual merge needed" \
             --body-file /tmp/issue-body.md \
-            --label "upstream-sync,conflict"
+            --label "upstream-sync" \
+            --label "conflict"
