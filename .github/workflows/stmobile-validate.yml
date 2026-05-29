@@ -34,8 +34,10 @@ jobs:
 
       - name: Verify integration point 1 — smarttubetv/build.gradle
         run: |
+          # Tolerate both 'matchingFallbacks [...]' and 'matchingFallbacks = [...]'
+          # (smarttubetv/build.gradle uses the '=' assignment form).
           grep -E 'applicationIdSuffix\s+"\.mobile"' smarttubetv/build.gradle
-          grep -E 'matchingFallbacks\s+\[.ststable.\]' smarttubetv/build.gradle
+          grep -E "matchingFallbacks\s*=?\s*\['ststable'\]" smarttubetv/build.gradle
           echo "OK: stmobile flavor present with .mobile suffix and ststable fallback"
 
       - name: Verify integration point 2 — common/build.gradle
