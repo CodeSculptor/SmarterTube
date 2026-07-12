@@ -57,6 +57,7 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | In-panel comments (portrait) | Partially works | Read-only; posting is blocked on auth/PoToken |
 | Comments posting | Not implemented | Blocked on innertube auth + PoToken |
 | Shorts playback | Works | TikTok-style UX: swipe pager, tap-to-pause, vertical action rail (like/dislike/comments/channel), auto-hide chrome, seek bar visible and auto-hides with chrome (#28, fixed beta.8). VERIFIED-ON-DEVICE. |
+| Save to playlist (portrait nav bar) | Works | "Playlists" tab in the portrait bottom nav bar opens a bottom-sheet checklist (same add/remove behaviour as the landscape player's playlist button) for the current video; the panel slides up above the nav bar, is capped to the area below the video (never overlaps it) and scrolls internally when the list is long. VERIFIED-ON-DEVICE |
 | Play / pause / seek | Works | Play/pause icon stays in sync after rotating into landscape (rebuilt action re-synced to real playback state). Verified on device |
 | Quality menu | Unknown | |
 | Captions | Unknown | |

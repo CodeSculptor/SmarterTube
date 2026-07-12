@@ -1102,18 +1102,25 @@ public class AppDialogUtil {
         for (PlaylistInfo playlistInfo : playlistInfos) {
             options.add(UiOptionItem.from(
                     playlistInfo.getTitle(),
-                    (item) -> {
-                        if (playlistInfo instanceof YouTubePlaylistInfo) {
-                            ((YouTubePlaylistInfo) playlistInfo).setSelected(item.isSelected());
-                        }
-                        addRemoveFromPlaylist(context, video, callback, playlistInfo.getPlaylistId(), item.isSelected());
-                        GeneralData.instance(context).setLastPlaylistId(playlistInfo.getPlaylistId());
-                        GeneralData.instance(context).setLastPlaylistTitle(playlistInfo.getTitle());
-                    },
+                    (item) -> toggleVideoInPlaylist(context, video, callback, playlistInfo, item.isSelected()),
                     playlistInfo.isSelected()));
         }
 
         dialogPresenter.appendCheckedCategory(context.getString(R.string.dialog_add_to_playlist), options);
+    }
+
+    /**
+     * Adds/removes {@code video} to/from {@code playlistInfo} and updates the "last used playlist"
+     * memory. Shared by the standard checklist dialog and any custom playlist-picker UI (e.g. the
+     * stmobile Shorts nav bar panel) that needs the exact same toggle behavior.
+     */
+    public static void toggleVideoInPlaylist(Context context, Video video, VideoMenuCallback callback, PlaylistInfo playlistInfo, boolean add) {
+        if (playlistInfo instanceof YouTubePlaylistInfo) {
+            ((YouTubePlaylistInfo) playlistInfo).setSelected(add);
+        }
+        addRemoveFromPlaylist(context, video, callback, playlistInfo.getPlaylistId(), add);
+        GeneralData.instance(context).setLastPlaylistId(playlistInfo.getPlaylistId());
+        GeneralData.instance(context).setLastPlaylistTitle(playlistInfo.getTitle());
     }
 
     private static void addRemoveFromPlaylist(Context context, Video video, VideoMenuCallback callback, String playlistId, boolean add) {

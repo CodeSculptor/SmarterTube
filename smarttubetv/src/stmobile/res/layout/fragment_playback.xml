@@ -339,7 +339,7 @@
     </LinearLayout>
 
     <!--
-        Shorts bottom navigation bar: Home / Shorts / Subscriptions / You.
+        Shorts bottom navigation bar: Home / Shorts / Subscriptions / Playlists / You.
         Visible only in Shorts mode (state 2); managed by MobilePlaybackFragment.applyMobileLayout().
     -->
     <LinearLayout
@@ -396,6 +396,21 @@
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:paddingTop="2dp"
                 android:textSize="11sp" android:text="Subscriptions" android:textColor="@android:color/white"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/shorts_nav_playlists"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?android:attr/selectableItemBackground">
+            <ImageView android:layout_width="30dp" android:layout_height="30dp"
+                android:src="@drawable/ic_shorts_nav_playlists"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:paddingTop="2dp"
+                android:textSize="11sp" android:text="Playlists" android:textColor="@android:color/white"/>
         </LinearLayout>
 
         <LinearLayout
@@ -570,5 +585,93 @@
                 android:textColor="@android:color/white" android:textSize="15sp"
                 android:text="Settings"/>
         </LinearLayout>
+    </LinearLayout>
+
+    <!--
+        Semi-transparent scrim above the "Save to playlist" panel (mirrors mobile_shorts_profile_scrim).
+        Tap-to-dismiss handled in MobilePlaybackFragment.handleShortsTouchEvent.
+    -->
+    <View
+        android:id="@+id/mobile_shorts_playlist_scrim"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#99000000"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/mobile_shorts_playlist_sheet"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!--
+        "Save to playlist" panel: drag handle + title + scrollable checklist of the user's playlists.
+        Slides up from the bottom (sitting just above the nav bar) when the "Playlists" nav bar tab
+        is tapped, mirroring the "You" profile sheet. Grows with content but is capped by
+        MobilePlaybackFragment.capShortsPlaylistScrollHeight() to the space between the bottom of the
+        video and the top of the nav bar (so in the portrait strip it never grows up over the
+        video); overflow scrolls inside playlist_sheet_scroll instead of pushing the panel taller.
+    -->
+    <LinearLayout
+        android:id="@+id/mobile_shorts_playlist_sheet"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@android:color/black"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/mobile_shorts_nav_bar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Drag handle: tap to close. -->
+        <FrameLayout
+            android:id="@+id/playlist_sheet_handle"
+            android:layout_width="match_parent"
+            android:layout_height="26dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+            <View
+                android:layout_width="36dp"
+                android:layout_height="4dp"
+                android:layout_gravity="center"
+                android:background="#66FFFFFF" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/playlist_sheet_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="10dp"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:text="Save to playlist" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:background="#22FFFFFF" />
+
+        <ScrollView
+            android:id="@+id/playlist_sheet_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="vertical">
+
+            <LinearLayout
+                android:id="@+id/playlist_sheet_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
+
+        <TextView
+            android:id="@+id/playlist_sheet_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:textColor="#FFAAAAAA"
+            android:textSize="14sp"
+            android:visibility="gone"
+            android:text="No playlists yet" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

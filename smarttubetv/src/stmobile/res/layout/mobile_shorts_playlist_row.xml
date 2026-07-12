@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    One row in the Shorts nav bar's "Save to playlist" panel: a checkbox + playlist title.
+    Inflated/bound at runtime by MobilePlaybackFragment.populateShortsPlaylistRows().
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:background="?android:attr/selectableItemBackground">
+
+    <CheckBox
+        android:id="@+id/playlist_row_checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="false"
+        android:focusable="false"
+        android:buttonTint="@android:color/white" />
+
+    <TextView
+        android:id="@+id/playlist_row_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:paddingStart="16dp"
+        android:textColor="@android:color/white"
+        android:textSize="15sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+</LinearLayout>

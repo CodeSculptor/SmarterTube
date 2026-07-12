@@ -114,12 +114,24 @@ Resolved this release:
   SurfaceView resizes to fit a smaller window as the system nav bar re-appears for the dialog
   window. The video returns to full size when the panel is dismissed. Portrait playback is
   unaffected. Being tracked for a future fix; the feature otherwise works correctly in portrait.
+- **Save to playlist from the portrait nav bar** — the "Playlists" tab in the portrait bottom nav
+  bar opens a bottom-sheet checklist that adds/removes the current video to/from the user's
+  playlists (same behaviour as the landscape player's playlist button). The panel slides up above
+  the nav bar, is capped to the area below the video so it never overlaps it, and scrolls
+  internally when the list is long. **VERIFIED-ON-DEVICE.**
+- **Pop-up mode shows the channel page instead of the video** ([#33], open). After opening a
+  channel from the player and pressing Back, entering pop-up (PiP) mode renders the channel page
+  while only the audio reflects the playing video. Likely related to the same back-stack handling
+  as [#24]. Portrait pop-up entry and a portrait video queue are requested separately ([#31], [#32]).
 
 [#23]: https://github.com/CodeSculptor/SmarterTube/issues/23
 [#24]: https://github.com/CodeSculptor/SmarterTube/issues/24
 [#27]: https://github.com/CodeSculptor/SmarterTube/issues/27
 [#28]: https://github.com/CodeSculptor/SmarterTube/issues/28
 [#29]: https://github.com/CodeSculptor/SmarterTube/issues/29
+[#31]: https://github.com/CodeSculptor/SmarterTube/issues/31
+[#32]: https://github.com/CodeSculptor/SmarterTube/issues/32
+[#33]: https://github.com/CodeSculptor/SmarterTube/issues/33
 
 ## Updater notes
 

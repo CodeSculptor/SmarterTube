@@ -9,11 +9,15 @@ import android.os.Build.VERSION_CODES;
 import android.os.Handler;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.text.TextUtils;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -27,6 +31,7 @@ import com.bumptech.glide.Glide;
 import com.liskovsoft.mediaserviceinterfaces.MediaItemService;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItemMetadata;
+import com.liskovsoft.mediaserviceinterfaces.data.PlaylistInfo;
 import com.liskovsoft.mediaserviceinterfaces.oauth.Account;
 import com.liskovsoft.sharedutils.helpers.Helpers;
 import com.liskovsoft.sharedutils.rx.RxHelper;
@@ -40,6 +45,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.RemoteControlService;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
+import com.liskovsoft.smartyoutubetv2.common.utils.AppDialogUtil;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.PlaybackFragment;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.other.VideoPlayerGlue;
@@ -113,6 +119,15 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     private View mShortsNavBar;
     private View mShortsProfileScrim;
     private LinearLayout mShortsProfileSheet;
+
+    // "Save to playlist" panel (Shorts only).
+    private View mShortsPlaylistScrim;
+    private LinearLayout mShortsPlaylistSheet;
+    private ScrollView mShortsPlaylistScroll;
+    private LinearLayout mShortsPlaylistList;
+    private TextView mShortsPlaylistEmpty;
+    private Disposable mPlaylistsAction;
+    private String mPlaylistsVideoId;
 
     // Full-page swipe pager: all views that translate together as one Shorts page.
     // Nav bar is intentionally excluded — it stays fixed at the bottom like YT Shorts.
@@ -521,6 +536,17 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             return true; // consume everything outside the sheet
         }
 
+        // Same treatment for the "Save to playlist" panel.
+        if (mShortsPlaylistSheet != null && mShortsPlaylistSheet.getVisibility() == View.VISIBLE) {
+            if (viewContainsRaw(mShortsPlaylistSheet, event.getRawX(), event.getRawY())) {
+                return false; // let the sheet handle it (including its internal scroll)
+            }
+            if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+                closeShortsPlaylistSheet();
+            }
+            return true; // consume everything outside the sheet
+        }
+
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 mSwipeRawStartY = event.getY();
@@ -584,7 +610,10 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             || viewContainsRaw(mShortsNavBar, rawX, rawY)
             || (mShortsProfileSheet != null
                 && mShortsProfileSheet.getVisibility() == View.VISIBLE
-                && viewContainsRaw(mShortsProfileSheet, rawX, rawY));
+                && viewContainsRaw(mShortsProfileSheet, rawX, rawY))
+            || (mShortsPlaylistSheet != null
+                && mShortsPlaylistSheet.getVisibility() == View.VISIBLE
+                && viewContainsRaw(mShortsPlaylistSheet, rawX, rawY));
     }
 
     private boolean viewContainsRaw(View v, float rawX, float rawY) {
@@ -626,10 +655,11 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         mLayoutState = layoutState;
         mStripMode = strip;
 
-        // Hide auto-hide chrome and dismiss profile sheet immediately on any layout change.
+        // Hide auto-hide chrome and dismiss any open sheet immediately on any layout change.
         mChromeHandler.removeCallbacks(mHideShortsChr);
         setShortsChrome(false);
         closeShortsProfileSheet();
+        closeShortsPlaylistSheet();
         // Reset any in-progress swipe animation / pending frame wait.
         mAwaitingShortsFrame = false;
         mChromeHandler.removeCallbacks(mShortsFramePoll);
@@ -857,6 +887,136 @@ public class MobilePlaybackFragment extends PlaybackFragment {
                     mShortsProfileSheet.setVisibility(View.GONE);
                     mShortsProfileSheet.setTranslationY(0);
                 }).start();
+    }
+
+    /**
+     * Slide the "Save to playlist" panel up from the bottom for the video currently on screen,
+     * fetching its playlist membership. Mirrors {@link #openShortsProfileSheet()}; the row list
+     * height is capped in {@link #capShortsPlaylistScrollHeight()} once the rows are populated.
+     */
+    private void openShortsPlaylistSheet() {
+        if (mShortsPlaylistSheet == null || mShortsPlaylistScrim == null) return;
+        if (mShortsPlaylistSheet.getVisibility() == View.VISIBLE) return;
+
+        closeShortsProfileSheet();
+
+        Video video = PlaybackPresenter.instance(getContext()).getVideo();
+        if (video == null || video.videoId == null) return;
+
+        if (mShortsPlaylistList != null) mShortsPlaylistList.removeAllViews();
+        if (mShortsPlaylistEmpty != null) mShortsPlaylistEmpty.setVisibility(View.GONE);
+        if (mShortsPlaylistScroll != null) {
+            ViewGroup.LayoutParams params = mShortsPlaylistScroll.getLayoutParams();
+            params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            mShortsPlaylistScroll.setLayoutParams(params);
+        }
+
+        mShortsPlaylistScrim.setAlpha(0f);
+        mShortsPlaylistScrim.setVisibility(View.VISIBLE);
+        mShortsPlaylistScrim.animate().alpha(1f).setDuration(200).start();
+
+        mShortsPlaylistSheet.setVisibility(View.VISIBLE);
+        mShortsPlaylistSheet.post(() -> {
+            int h = mShortsPlaylistSheet.getHeight();
+            if (h > 0) {
+                mShortsPlaylistSheet.setTranslationY(h);
+                mShortsPlaylistSheet.animate().translationY(0).setDuration(250).start();
+            }
+        });
+
+        mPlaylistsVideoId = video.videoId;
+        RxHelper.disposeActions(mPlaylistsAction);
+        MediaItemService itemService = YouTubeServiceManager.instance().getMediaItemService();
+        if (itemService == null) return;
+
+        final String fetchId = video.videoId;
+        mPlaylistsAction = RxHelper.execute(
+                itemService.getPlaylistsInfoObserve(fetchId),
+                (List<PlaylistInfo> playlistInfos) -> {
+                    if (!isAdded() || !TextUtils.equals(fetchId, mPlaylistsVideoId)) return;
+                    populateShortsPlaylistRows(video, playlistInfos);
+                },
+                error -> {});
+    }
+
+    /** Slide the "Save to playlist" panel back down and hide it. */
+    private void closeShortsPlaylistSheet() {
+        if (mShortsPlaylistSheet == null || mShortsPlaylistScrim == null) return;
+        if (mShortsPlaylistSheet.getVisibility() != View.VISIBLE) return;
+
+        mShortsPlaylistScrim.animate().alpha(0f).setDuration(200)
+                .withEndAction(() -> mShortsPlaylistScrim.setVisibility(View.GONE)).start();
+
+        int h = mShortsPlaylistSheet.getHeight();
+        mShortsPlaylistSheet.animate().translationY(h > 0 ? h : 500).setDuration(200)
+                .withEndAction(() -> {
+                    mShortsPlaylistSheet.setVisibility(View.GONE);
+                    mShortsPlaylistSheet.setTranslationY(0);
+                }).start();
+    }
+
+    /** Build one checkbox row per playlist and cap the panel's height once populated. */
+    private void populateShortsPlaylistRows(Video video, List<PlaylistInfo> playlistInfos) {
+        if (mShortsPlaylistList == null) return;
+        mShortsPlaylistList.removeAllViews();
+
+        if (playlistInfos == null || playlistInfos.isEmpty()) {
+            if (mShortsPlaylistEmpty != null) mShortsPlaylistEmpty.setVisibility(View.VISIBLE);
+            return;
+        }
+        if (mShortsPlaylistEmpty != null) mShortsPlaylistEmpty.setVisibility(View.GONE);
+
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        for (PlaylistInfo info : playlistInfos) {
+            View row = inflater.inflate(R.layout.mobile_shorts_playlist_row, mShortsPlaylistList, false);
+            CheckBox checkBox = row.findViewById(R.id.playlist_row_checkbox);
+            TextView title = row.findViewById(R.id.playlist_row_title);
+            if (title != null) title.setText(info.getTitle());
+            if (checkBox != null) checkBox.setChecked(info.isSelected());
+            row.setOnClickListener(v -> {
+                boolean newState = checkBox == null || !checkBox.isChecked();
+                if (checkBox != null) checkBox.setChecked(newState);
+                AppDialogUtil.toggleVideoInPlaylist(getContext(), video, null, info, newState);
+            });
+            mShortsPlaylistList.addView(row);
+        }
+
+        mShortsPlaylistSheet.post(this::capShortsPlaylistScrollHeight);
+    }
+
+    /**
+     * Caps the panel to the space between the bottom of the video and the top of the nav bar, so
+     * it never grows up over the video. In the regular portrait strip (state 1) the video is a
+     * 16:9 box at the top, leaving a tall below-video area; in Shorts (state 2) the video fills the
+     * screen, so the top boundary falls back to the screen top (the panel may overlay the video,
+     * matching the "You" sheet). Once the row list would exceed the cap it scrolls internally
+     * instead of pushing the panel taller.
+     */
+    private void capShortsPlaylistScrollHeight() {
+        if (mShortsPlaylistSheet == null || mShortsPlaylistScroll == null || mShortsNavBar == null) return;
+
+        // nav bar top and video bottom are both measured relative to the shared parent (mRoot).
+        int navBarTop = mShortsNavBar.getTop();
+
+        int topBoundary = 0; // Shorts: allow the panel up to the screen top.
+        if (mLayoutState == 1) {
+            View videoView = getView();
+            if (videoView != null) {
+                topBoundary = videoView.getBottom(); // regular portrait: keep it below the video.
+            }
+        }
+
+        int availableForSheet = navBarTop - topBoundary;
+        int fixedChrome = mShortsPlaylistSheet.getHeight() - mShortsPlaylistScroll.getHeight();
+        int availableForScroll = availableForSheet - fixedChrome;
+
+        ViewGroup.LayoutParams params = mShortsPlaylistScroll.getLayoutParams();
+        if (availableForScroll > 0 && mShortsPlaylistScroll.getHeight() > availableForScroll) {
+            params.height = availableForScroll;
+        } else {
+            params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        }
+        mShortsPlaylistScroll.setLayoutParams(params);
     }
 
     /** Full-screen height used as the page stride and poster park distance. */
@@ -1238,12 +1398,15 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             }
         }
 
-        // Back button: dismiss the profile sheet if open, otherwise exit the player.
+        // Back button: dismiss an open sheet if any, otherwise exit the player.
         if (mShortsBackBtn != null) {
             mShortsBackBtn.setOnClickListener(v -> {
                 if (mShortsProfileSheet != null
                         && mShortsProfileSheet.getVisibility() == View.VISIBLE) {
                     closeShortsProfileSheet();
+                } else if (mShortsPlaylistSheet != null
+                        && mShortsPlaylistSheet.getVisibility() == View.VISIBLE) {
+                    closeShortsPlaylistSheet();
                 } else {
                     requireActivity().onBackPressed();
                 }
@@ -1264,6 +1427,14 @@ public class MobilePlaybackFragment extends PlaybackFragment {
                     navigateToSection(MediaGroup.TYPE_SHORTS));
             mShortsNavBar.findViewById(R.id.shorts_nav_subscriptions).setOnClickListener(v ->
                     navigateToSection(MediaGroup.TYPE_SUBSCRIPTIONS));
+            mShortsNavBar.findViewById(R.id.shorts_nav_playlists).setOnClickListener(v -> {
+                if (mShortsPlaylistSheet != null
+                        && mShortsPlaylistSheet.getVisibility() == View.VISIBLE) {
+                    closeShortsPlaylistSheet();
+                } else {
+                    openShortsPlaylistSheet();
+                }
+            });
             mShortsNavBar.findViewById(R.id.shorts_nav_you).setOnClickListener(v -> {
                 if (mShortsProfileSheet != null
                         && mShortsProfileSheet.getVisibility() == View.VISIBLE) {
@@ -1293,6 +1464,20 @@ public class MobilePlaybackFragment extends PlaybackFragment {
                     navigateToSection(MediaGroup.TYPE_USER_PLAYLISTS));
             mShortsProfileSheet.findViewById(R.id.profile_row_settings).setOnClickListener(v ->
                     navigateToSection(MediaGroup.TYPE_SETTINGS));
+        }
+
+        // "Save to playlist" panel and scrim.
+        mShortsPlaylistScrim = activity.findViewById(R.id.mobile_shorts_playlist_scrim);
+        mShortsPlaylistSheet = activity.findViewById(R.id.mobile_shorts_playlist_sheet);
+        if (mShortsPlaylistScrim != null) {
+            mShortsPlaylistScrim.setOnClickListener(v -> closeShortsPlaylistSheet());
+        }
+        if (mShortsPlaylistSheet != null) {
+            mShortsPlaylistSheet.findViewById(R.id.playlist_sheet_handle).setOnClickListener(v ->
+                    closeShortsPlaylistSheet());
+            mShortsPlaylistScroll = mShortsPlaylistSheet.findViewById(R.id.playlist_sheet_scroll);
+            mShortsPlaylistList = mShortsPlaylistSheet.findViewById(R.id.playlist_sheet_list);
+            mShortsPlaylistEmpty = mShortsPlaylistSheet.findViewById(R.id.playlist_sheet_empty);
         }
 
         // Filmstrip posters for the swipe pager.
