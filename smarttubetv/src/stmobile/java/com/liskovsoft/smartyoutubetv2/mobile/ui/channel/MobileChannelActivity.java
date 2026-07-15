@@ -24,4 +24,23 @@ public class MobileChannelActivity extends MobileActivity {
                     .commit();
         }
     }
+
+    // Keep ViewManager's logical stack in sync with the real back stack: when the channel is
+    // genuinely left (Back), drop it so the player's startParentView() resolves to Home instead of
+    // relaunching this channel (issues #33/#24) — which otherwise reappears on Back-from-player and
+    // used to become the pinned window in pop-up mode. Opening a video from the channel does NOT
+    // finish this activity, so it correctly stays as the player's parent in that flow. Both the
+    // system-Back path (onBackPressed) and the on-screen back-button / programmatic path (finish())
+    // are covered; removeTop is idempotent so calling it from both is harmless.
+    @Override
+    public void onBackPressed() {
+        getViewManager().removeTop(this);
+        super.onBackPressed();
+    }
+
+    @Override
+    public void finish() {
+        getViewManager().removeTop(this);
+        super.finish();
+    }
 }

@@ -75,6 +75,23 @@ public class MobilePlaybackActivity extends PlaybackActivity {
         finishReally();
     }
 
+    /**
+     * PIP fix (#33): don't relaunch Home when the player drops into PIP.
+     *
+     * The shared base launches the parent activity here. On the phone, Home
+     * ({@code MobileBrowseActivity}) is {@code singleTask} and already sits at the root of this
+     * task, so it is revealed automatically the moment the player pins to a PIP window. Relaunching
+     * it races with that task-pinning transition and can clear the player out of the task — the
+     * player is destroyed, its engine released, and the pop-up shows Home instead of the video.
+     *
+     * We still do the one thing {@code startParentView} does that matters here: drop the player
+     * from the ViewManager stack, so returning from PIP resolves correctly.
+     */
+    @Override
+    protected void startParentViewOnPip() {
+        getViewManager().removeTop(this);
+    }
+
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         // While the overlay is faded out its buttons are still hit-testable (Leanback hides by

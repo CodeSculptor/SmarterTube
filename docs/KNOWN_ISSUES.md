@@ -94,10 +94,11 @@ Resolved this release:
   shared player otherwise kept the engine alive on Back and navigated to the channel, leaving
   audio playing and looping Back between player and channel ([#23], fixed). Home / lock-screen
   background audio is unchanged; PIP mode still enters PIP on Back.
-- **Back from a video opens a duplicate channel page (pre-existing).** Leaving the player with Back
-  re-launches the channel as a fresh activity (shared `ViewManager.startParentView`), so returning
-  from a video opened inside a channel needs one extra Back to leave the channel. Minor (no crash /
-  no lingering audio); was masked in beta.6 by the audio loop that [#23] fixed. Tracked in [#24].
+- **Back from a video no longer opens a duplicate channel page** — fixed ([#24], verified on
+  device). The channel/uploads screens now drop themselves from the `ViewManager` stack when
+  genuinely left (Back), so returning to the player resolves its parent to Home instead of
+  re-launching a stale channel. Previously the lingering stack entry caused a duplicate channel on
+  Back (and fed [#33]).
 - **Landscape play/pause icon was out of sync after rotation** — fixed ([#27], verified on device).
   Rotating into landscape rebuilds the full transport control set mid-playback, creating a fresh
   play/pause action that defaulted to the PLAY icon; it is now re-synced to the real playback state
@@ -119,10 +120,14 @@ Resolved this release:
   playlists (same behaviour as the landscape player's playlist button). The panel slides up above
   the nav bar, is capped to the area below the video so it never overlaps it, and scrolls
   internally when the list is long. **VERIFIED-ON-DEVICE.**
-- **Pop-up mode shows the channel page instead of the video** ([#33], open). After opening a
-  channel from the player and pressing Back, entering pop-up (PiP) mode renders the channel page
-  while only the audio reflects the playing video. Likely related to the same back-stack handling
-  as [#24]. Portrait pop-up entry and a portrait video queue are requested separately ([#31], [#32]).
+- **Pop-up mode now shows the video** — fixed ([#33], verified on device). Two causes: (1) a stale
+  channel entry on the `ViewManager` stack (same root as [#24], fixed above) made the pop-up's
+  parent resolve to the channel; and (2) a pre-existing PIP race — on pop-up entry the player
+  relaunched Home (`MobileBrowseActivity`, `singleTask`, this task's root), which cleared the player
+  out of the task as PIP pinning settled, destroying it and leaving a browse page (not the video)
+  in the pop-up. The phone player now skips that redundant Home relaunch (Home is already behind the
+  PIP window) and only does the stack bookkeeping, so the video reliably fills the pop-up. Portrait
+  pop-up entry and a portrait video queue are requested separately ([#31], [#32]).
 
 [#23]: https://github.com/CodeSculptor/SmarterTube/issues/23
 [#24]: https://github.com/CodeSculptor/SmarterTube/issues/24

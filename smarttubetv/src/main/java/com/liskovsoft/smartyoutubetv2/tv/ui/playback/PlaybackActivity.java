@@ -184,7 +184,7 @@ public class PlaybackActivity extends LeanbackActivity {
             mPlaybackFragment.blockEngine(true);
             // Ensure to opening this activity when the user is returning to the app
             getViewManager().blockTop(this);
-            getViewManager().startParentView(this);
+            startParentViewOnPip();
         } else {
             if (getPlayerTweaksData().isKeepFinishedActivityEnabled()) {
                 //moveTaskToBack(true); // Don't do this or you'll have problems when player overlaps other apps (e.g. casting)
@@ -203,6 +203,16 @@ public class PlaybackActivity extends LeanbackActivity {
         super.finishReally();
 
         mPlaybackFragment.onFinish();
+    }
+
+    /**
+     * Bring the app UI forward while the player drops into PIP / background (the {@code doNotDestroy}
+     * finish branch). The TV build launches the parent activity here. Overridable so the phone
+     * flavor can avoid relaunching its already-present, single-task Home activity, whose relaunch
+     * races with PIP task-pinning and can destroy the player (see MobilePlaybackActivity).
+     */
+    protected void startParentViewOnPip() {
+        getViewManager().startParentView(this);
     }
 
     @Override
