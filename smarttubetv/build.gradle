@@ -235,6 +235,10 @@ android {
             // 23720 = v0.4.2-beta.8+st31.94 (Shorts seek bar visible + auto-hide (#28);
             //         settings dialog presents as a bottom-sheet card over the player;
             //         Back on player no longer re-opens a just-closed settings dialog).
+            // 23721 = v0.5.0-beta.1+st31.94 (first release under package com.codesculptor.smartertube;
+            //         pop-up (PIP) shows the video + channel back-stack fix (#33, #24)).
+            // 23722 = v0.5.0-beta.2+st32.05 (upstream SmartTube 32.05 sync;
+            //         video duration badge on browse/up-next thumbnails).
             versionCode 23721
             versionName "v0.5.0-beta.1+st31.94"
         }
