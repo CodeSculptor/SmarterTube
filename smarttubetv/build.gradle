@@ -239,8 +239,8 @@ android {
             //         pop-up (PIP) shows the video + channel back-stack fix (#33, #24)).
             // 23722 = v0.5.0-beta.2+st32.05 (upstream SmartTube 32.05 sync;
             //         video duration badge on browse/up-next thumbnails).
-            versionCode 23721
-            versionName "v0.5.0-beta.1+st31.94"
+            versionCode 23722
+            versionName "v0.5.0-beta.2+st32.05"
         }
     }
 }
