@@ -25,6 +25,7 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | Feature | Status | Notes |
 |---|---|---|
 | Portrait home (drawer navigation) | Works | Shipped since alpha; re-verify per checklist |
+| Video duration badge on thumbnails | Works | YouTube-style length pill on the bottom-right of every thumbnail — browse grid, shelves, search, channel pages, and the portrait player's up-next list. Sourced from `Video.badge`; hidden for playlists/channels/Shorts. VERIFIED-ON-DEVICE |
 | Search (input + suggestions) | Works | |
 | Search results grid | Works | |
 | Voice search | Works | Mic button in search toolbar (RecognizerIntent); falls back to keyboard if no recognizer. Verified on device (#8) |

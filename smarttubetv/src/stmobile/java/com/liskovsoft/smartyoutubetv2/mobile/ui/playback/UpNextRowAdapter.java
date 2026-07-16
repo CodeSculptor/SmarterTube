@@ -102,6 +102,16 @@ public class UpNextRowAdapter extends RecyclerView.Adapter<UpNextRowAdapter.Hold
                 .load(video.getCardImageUrl())
                 .into(h.thumb);
 
+        // Duration/length badge overlaid on the thumbnail (matches the browse grid card).
+        // Explicit GONE branch because rows are recycled.
+        String badge = video.badge;
+        if (!TextUtils.isEmpty(badge)) {
+            h.duration.setText(badge);
+            h.duration.setVisibility(View.VISIBLE);
+        } else {
+            h.duration.setVisibility(View.GONE);
+        }
+
         h.itemView.setOnClickListener(v -> {
             if (mClick != null) {
                 mClick.onVideo(video);
@@ -111,12 +121,14 @@ public class UpNextRowAdapter extends RecyclerView.Adapter<UpNextRowAdapter.Hold
 
     static class Holder extends RecyclerView.ViewHolder {
         final ImageView thumb;
+        final TextView duration;
         final TextView title;
         final TextView subtitle;
 
         Holder(View v) {
             super(v);
             thumb = v.findViewById(R.id.row_thumb);
+            duration = v.findViewById(R.id.row_duration);
             title = v.findViewById(R.id.row_title);
             subtitle = v.findViewById(R.id.row_subtitle);
         }

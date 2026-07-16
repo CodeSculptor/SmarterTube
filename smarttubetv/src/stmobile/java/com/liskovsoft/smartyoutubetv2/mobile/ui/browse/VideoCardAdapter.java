@@ -103,7 +103,7 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
             view.getLayoutParams().width = mCardWidth;
         }
         ViewHolder holder = new ViewHolder(view);
-        holder.thumb.getLayoutParams().height = mCardWidth * 9 / 16;
+        holder.thumbFrame.getLayoutParams().height = mCardWidth * 9 / 16;
         return holder;
     }
 
@@ -114,12 +114,24 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
         if (holder.itemView.getLayoutParams() != null) {
             holder.itemView.getLayoutParams().width = mCardWidth;
         }
-        holder.thumb.getLayoutParams().height = mCardWidth * 9 / 16;
+        holder.thumbFrame.getLayoutParams().height = mCardWidth * 9 / 16;
 
         Video video = mVideos.get(position);
         holder.title.setText(video.getTitle());
         String author = video.getAuthor();
         holder.author.setText(author != null ? author : "");
+
+        // Duration/length badge overlaid on the thumbnail (YouTube-style). video.badge holds
+        // the duration text ("12:34") for normal videos and occasionally a label ("LIVE").
+        // Explicit GONE branch matters: cards are recycled, so a badge-less video must clear
+        // a badge left over from a recycled holder.
+        String badge = video.badge;
+        if (badge != null && !badge.isEmpty()) {
+            holder.duration.setText(badge);
+            holder.duration.setVisibility(View.VISIBLE);
+        } else {
+            holder.duration.setVisibility(View.GONE);
+        }
 
         Glide.with(holder.itemView.getContext())
                 .load(video.getCardImageUrl())
@@ -139,13 +151,17 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
+        final View thumbFrame;
         final ImageView thumb;
+        final TextView duration;
         final TextView title;
         final TextView author;
 
         ViewHolder(View itemView) {
             super(itemView);
+            thumbFrame = itemView.findViewById(R.id.card_thumb_frame);
             thumb = itemView.findViewById(R.id.card_thumb);
+            duration = itemView.findViewById(R.id.card_duration);
             title = itemView.findViewById(R.id.card_title);
             author = itemView.findViewById(R.id.card_author);
         }
