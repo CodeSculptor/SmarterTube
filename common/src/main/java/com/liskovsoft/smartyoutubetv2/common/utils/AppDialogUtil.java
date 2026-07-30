@@ -1103,7 +1103,7 @@ public class AppDialogUtil {
             options.add(UiOptionItem.from(
                     playlistInfo.getTitle(),
                     (item) -> toggleVideoInPlaylist(context, video, callback, playlistInfo, item.isSelected()),
-                    playlistInfo.isSelected()));
+                    playlistInfo.isSelected() || Helpers.equals(playlistInfo.getPlaylistId(), video.playlistId)));
         }
 
         dialogPresenter.appendCheckedCategory(context.getString(R.string.dialog_add_to_playlist), options);
