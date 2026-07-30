@@ -128,6 +128,14 @@ Resolved this release:
   in the pop-up. The phone player now skips that redundant Home relaunch (Home is already behind the
   PIP window) and only does the stack bookkeeping, so the video reliably fills the pop-up. Portrait
   pop-up entry and a portrait video queue are requested separately ([#31], [#32]).
+- **Closing the pop-up (PIP) window now stops the audio** — fixed ([#35], verified on device).
+  Entering PIP blocks the player engine so it survives the stopped activity (that's what keeps the
+  pop-up playing); closing the window doesn't finish the activity (the overridden `finish()` keeps a
+  blocked engine alive), so the audio used to keep playing behind the closed window.
+  `MobilePlaybackActivity` now detects the dismiss via `onPictureInPictureModeChanged(false)` while the
+  activity is only `CREATED` (vs `STARTED`/`RESUMED` when expanding back to fullscreen) and releases
+  the engine. Screen-off / Home background audio (`BACKGROUND_MODE_SOUND`) never enters PIP, so it's
+  unaffected.
 
 [#23]: https://github.com/CodeSculptor/SmarterTube/issues/23
 [#24]: https://github.com/CodeSculptor/SmarterTube/issues/24

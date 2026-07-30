@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
@@ -90,6 +91,38 @@ public class MobilePlaybackActivity extends PlaybackActivity {
     @Override
     protected void startParentViewOnPip() {
         getViewManager().removeTop(this);
+    }
+
+    /**
+     * PIP audio-leak fix: stop playback when the PIP window is dismissed (the X).
+     *
+     * Entering PIP calls {@code blockEngine(true)} so the ExoPlayer survives the activity being
+     * stopped — that's what keeps the video playing in the pop-up ({@code maybeReleasePlayer()}
+     * deliberately no-ops while the engine is blocked). But closing the PIP window does NOT finish
+     * this activity: the overridden {@link PlaybackActivity#finish()} treats a blocked engine as
+     * "keep playing", so the activity just parks in the stopped state ({@code onStop} runs with
+     * {@code isFinishing() == false} and no {@code onDestroy}) and the blocked engine keeps
+     * playing audio behind the now-closed window.
+     *
+     * The reliable discriminator (verified on device) is the lifecycle state when PIP mode ends:
+     * dismissing the window delivers {@code onPictureInPictureModeChanged(false)} while the activity
+     * is only CREATED (stopped, not returning to the foreground); expanding PIP back to fullscreen
+     * delivers it at STARTED/RESUMED. So on the dismiss case we unblock the engine and finish for
+     * real ({@link #finishReally()} releases the now-unblocked player and tears the activity down).
+     * Screen-off / Home background audio in {@code BACKGROUND_MODE_SOUND} never enters PIP, so this
+     * path doesn't touch it.
+     */
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode);
+
+        if (!isInPictureInPictureMode
+                && !getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED)) {
+            if (mMobileFragment != null) {
+                mMobileFragment.blockEngine(false);
+            }
+            finishReally();
+        }
     }
 
     @Override
