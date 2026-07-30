@@ -241,8 +241,8 @@ android {
             //         video duration badge on browse/up-next thumbnails).
             // 23723 = v0.5.0-beta.3+st32.10 (upstream SmartTube 32.10 sync;
             //         stop audio when the pop-up (PIP) window is closed (#35)).
-            versionCode 23722
-            versionName "v0.5.0-beta.2+st32.05"
+            versionCode 23723
+            versionName "v0.5.0-beta.3+st32.10"
         }
     }
 }
