@@ -3,7 +3,7 @@
 Tracked issues for the current beta. Keep this honest and current — it is part of the release
 checklist and what makes a beta release trustworthy.
 
-Current release: `v0.5.0-beta.3+st32.10`  ·  Upstream SmartTube base: `32.10`  ·  Channel: beta
+Current release: `v0.5.0-beta.4+st32.23`  ·  Upstream SmartTube base: `32.23`  ·  Channel: beta
 
 ## Status / classification
 
