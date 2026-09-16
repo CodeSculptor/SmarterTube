@@ -243,6 +243,7 @@ android {
             //         stop audio when the pop-up (PIP) window is closed (#35)).
             // 23724 = v0.5.0-beta.4+st32.23 (upstream SmartTube 32.23 sync).
             // 23725 = v0.5.0-beta.5+st32.45 (upstream SmartTube 32.45 sync).
+            // 23726 = v0.5.0-beta.6+st32.51 (upstream SmartTube 32.51 sync).
             versionCode 23725
             versionName "v0.5.0-beta.5+st32.45"
         }
