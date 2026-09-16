@@ -53,9 +53,9 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
             if (getPlayerTweaksData().getPlayerDataSource() != PlayerTweaksData.PLAYER_DATA_SOURCE_OKHTTP
                 && getPlayerTweaksData().getPreferredDnsType() != PlayerTweaksData.DNS_TYPE_SYSTEM
                 && !getPlayerTweaksData().isNetworkErrorFixingDisabled()) {
-                // Wrong DNS resolution could cause hanging at start
+                // Wrong DNS resolving could cause hanging at start
                 // Do switch to only engine that respects custom DNS settings
-                MessageHelpers.showLongMessage(getContext(), "Switching to OkHttp network engine...");
+                MessageHelpers.showLongMessage(getContext(), "Fixing wrong DNS resolving...");
                 getPlayerTweaksData().setPlayerDataSource(PlayerTweaksData.PLAYER_DATA_SOURCE_OKHTTP);
                 mVideoLoaderController.restartEngine();
             } else {
