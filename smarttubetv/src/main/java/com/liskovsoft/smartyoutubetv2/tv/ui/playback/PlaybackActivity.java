@@ -36,7 +36,6 @@ public class PlaybackActivity extends LeanbackActivity {
     private static final float GAMEPAD_TRIGGER_INTENSITY_OFF = 0.45f;
     private boolean gamepadTriggerPressed = false;
     private PlaybackFragment mPlaybackFragment;
-    private boolean mIsBackPressed;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -228,18 +227,6 @@ public class PlaybackActivity extends LeanbackActivity {
         super.onPause();
     }
 
-    @Override
-    public void onBackPressed() {
-        mIsBackPressed = true;
-        super.onBackPressed();
-    }
-
-    @Override
-    protected void onResume() {
-        mIsBackPressed = false;
-        super.onResume();
-    }
-
     @SuppressWarnings("deprecation")
     private void enterBackgroundPlayMode() {
         if (Build.VERSION.SDK_INT >= 21 && Build.VERSION.SDK_INT < 26) {
@@ -289,7 +276,7 @@ public class PlaybackActivity extends LeanbackActivity {
     public void onUserLeaveHint() {
         // Check that user not open dialog/search activity instead of really leaving the activity
         // Activity may be overlapped by the dialog, back is pressed or new view started
-        if (mIsBackPressed || isFinishing() || getViewManager().isNewViewPending() || getGeneralData().getBackgroundPlaybackShortcut() == GeneralData.BACKGROUND_PLAYBACK_SHORTCUT_BACK) {
+        if (isBackPressed() || isFinishing() || getViewManager().isNewViewPending() || getGeneralData().getBackgroundPlaybackShortcut() == GeneralData.BACKGROUND_PLAYBACK_SHORTCUT_BACK) {
             return;
         }
 
@@ -332,7 +319,7 @@ public class PlaybackActivity extends LeanbackActivity {
     }
 
     private boolean skipPip() {
-        return mIsBackPressed && getGeneralData().getBackgroundPlaybackShortcut() == GeneralData.BACKGROUND_PLAYBACK_SHORTCUT_HOME;
+        return isBackPressed() && getGeneralData().getBackgroundPlaybackShortcut() == GeneralData.BACKGROUND_PLAYBACK_SHORTCUT_HOME;
     }
 
     private boolean isEngineBlocked() {
