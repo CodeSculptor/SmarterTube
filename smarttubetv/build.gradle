@@ -252,8 +252,8 @@ android {
             // 23727 = v0.5.0-beta.7+st32.56 (upstream SmartTube 32.56 sync; watched progress bar on thumbnails #41).
             // 23728 = v0.5.0-beta.8+st32.56 (settings back stack + context-menu ticks #43; status bar insets #37;
             //         tap video to hide player controls #39; up-next long-press menu #42).
-            versionCode 23727
-            versionName "v0.5.0-beta.7+st32.56"
+            versionCode 23728
+            versionName "v0.5.0-beta.8+st32.56"
         }
     }
 }
