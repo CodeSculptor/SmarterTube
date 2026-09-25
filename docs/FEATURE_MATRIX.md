@@ -15,9 +15,9 @@ Status values:
 > **Unknown blocks a stable (1.0) release** for core user flows. Beta releases may ship with
 > Unknown rows, but they must be listed here honestly rather than assumed to work.
 
-Last reviewed for: `v0.4.2-beta.8+st31.94`. Rows re-verified on a device this cycle: Shorts
-playback (seek bar, auto-hide, swipe-to-next), Settings screen (bottom-sheet panel over player,
-Back navigation). Other rows are carried from prior shipped behaviour — treat anything not
+Last reviewed for: `v0.5.0-beta.8+st32.56`. Rows re-verified on a device this cycle: Status bar
+insets (#37), Player controls tap-to-hide (#39), Up-next long-press menu (#42), Settings screen
+(nested dialogs, context-menu ticks, #43). Other rows are carried from prior shipped behaviour — treat anything not
 explicitly re-tested as provisional and confirm against the release checklist before 1.0.
 
 ## Browsing & navigation
@@ -49,6 +49,7 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | Subscribe / unsubscribe | Works | Channel-page pill; state resolved from first upload's metadata |
 | Notification bell / inbox | Not implemented | Upstream source was dead; pivoted to subscriptions feed |
 | Upload notifications (push) | Works | Subscriptions-feed poll, shipped 31.93-mobile-1.3 |
+| Status bar insets | Works | Screens pad below system bars that are actually showing (#37, beta.8): with Fullscreen mode on (default) the bars are hidden and nothing changes; if the OS keeps the status bar visible (seen on a Pixel, Android 17) or Fullscreen mode is off, the top bar sits below it. Verified on device (no change on Samsung) and on an API 36 emulator with forced edge-to-edge; the Pixel case is confirmed by the emulator repro only |
 
 ## Player
 
@@ -61,11 +62,13 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | Shorts playback | Works | TikTok-style UX: swipe pager, tap-to-pause, vertical action rail (like/dislike/comments/channel), auto-hide chrome, seek bar visible and auto-hides with chrome (#28, fixed beta.8). VERIFIED-ON-DEVICE. |
 | Save to playlist (portrait nav bar) | Works | "Playlists" tab in the portrait bottom nav bar opens a bottom-sheet checklist (same add/remove behaviour as the landscape player's playlist button) for the current video; the panel slides up above the nav bar, is capped to the area below the video (never overlaps it) and scrolls internally when the list is long. VERIFIED-ON-DEVICE |
 | Play / pause / seek | Works | Play/pause icon stays in sync after rotating into landscape (rebuilt action re-synced to real playback state). Verified on device |
+| Player controls show/hide | Works | Tap the video to show the controls; tap empty video while they're showing to hide them (#39, beta.8). Taps on buttons, the seek bar and suggestion cards, drags, and double-tap seek (controls hidden) are unaffected. VERIFIED-ON-DEVICE |
+| Up-next list (portrait) | Works | Tap a row to play it; long-press opens the same video menu as Home thumbnails (#42, beta.8). VERIFIED-ON-DEVICE |
 | Pop-up (PIP) mode | Works | Shows the playing video, including after visiting a channel from the player then returning (#33 fixed). The phone player skips relaunching Home on PIP entry (Home is already behind the pop-up), avoiding a task-clear race that used to destroy the player. Closing the pop-up window stops playback — the engine is released instead of leaking audio behind the closed window (#35). VERIFIED-ON-DEVICE |
 | Quality menu | Unknown | |
 | Captions | Unknown | |
 | Playback speed | Works | Opens as a translucent bottom-sheet card over the player (beta.8); video stays visible behind a dim scrim. Known issue: player SurfaceView shrinks in landscape while the panel is open ([#29]) |
-| SponsorBlock | Works | Upstream feature. Per-channel exclusion via long-press menu (enable in Settings > General > Context menu) and optional player button (Settings > Player > Setup player buttons; landscape only) — verified on device (#40). Not in the up-next long-press yet (#42) |
+| SponsorBlock | Works | Upstream feature. Per-channel exclusion via long-press menu (enable in Settings > General > Context menu) and optional player button (Settings > Player > Setup player buttons; landscape only) — verified on device (#40). Also in the up-next long-press menu (#42, beta.8) |
 | Return YouTube Dislike | Works | Upstream feature |
 | DeArrow | Unknown | Upstream feature; verify in phone UI |
 | Casting / Chromecast | Not implemented | |
