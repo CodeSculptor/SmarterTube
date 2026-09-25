@@ -42,6 +42,8 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.settings.AccountSett
 import com.liskovsoft.smartyoutubetv2.common.app.views.BrowseView;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
 import com.liskovsoft.smartyoutubetv2.mobile.notifications.NotificationPollWorker;
+import com.liskovsoft.smartyoutubetv2.mobile.stats.StatsDialogs;
+import com.liskovsoft.smartyoutubetv2.mobile.stats.StatsReporter;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.about.MobileAboutActivity;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobileNotificationPrefs;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobilePlayerStylePrefs;
@@ -366,6 +368,12 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
                     context.getString(R.string.mobile_notifications_title),
                     this::showNotificationsToggle,
                     R.drawable.settings_notifications));
+            if (StatsReporter.isConfigured(context)) {
+                items.add(new SettingsItem(
+                        context.getString(R.string.mobile_stats_title),
+                        () -> StatsDialogs.showSettingsPicker(context),
+                        R.drawable.settings_stats));
+            }
         }
         if (upstreamItems != null) {
             // Drop upstream's "About" row: it's the TV-oriented About panel (dead

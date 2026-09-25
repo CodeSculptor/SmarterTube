@@ -1,6 +1,9 @@
 package com.liskovsoft.smartyoutubetv2.mobile.ui.main;
 
+import android.app.Activity;
+import android.app.Application;
 import android.content.SharedPreferences;
+import android.os.Bundle;
 
 import com.liskovsoft.smartyoutubetv2.common.app.views.AddDeviceView;
 import com.liskovsoft.smartyoutubetv2.common.app.views.AppDialogView;
@@ -26,6 +29,7 @@ import com.liskovsoft.smartyoutubetv2.mobile.ui.channel.MobileChannelActivity;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.channeluploads.MobileChannelUploadsActivity;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.dialogs.MobileAppDialogActivity;
 import com.liskovsoft.smartyoutubetv2.mobile.notifications.NotificationPollWorker;
+import com.liskovsoft.smartyoutubetv2.mobile.stats.StatsReporter;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.playback.MobilePlaybackActivity;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobileNotificationPrefs;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobilePlayerStylePrefs;
@@ -74,7 +78,20 @@ public class MobileApplication extends MainApplication {
         // Notifications tab shows the uploads the upload-notifications poll has picked up instead.
         // Set before super.onCreate() so it's in place before BrowsePresenter is ever created.
         BrowsePresenter.sNotificationsSource = () -> MobileNotificationPrefs.getHistory(this);
+        // Save crashes locally for the opt-in crash reports. Installed BEFORE super.onCreate() so
+        // upstream's handler (MainApplication.setupGlobalExceptionHandler) wraps this one and the
+        // exceptions it deliberately swallows are never recorded as crashes.
+        StatsReporter.installCrashHandler(this);
         super.onCreate();
+
+        // Opt-in anonymous usage heartbeat: at most once a day, whenever any screen starts.
+        // No-op unless the user opted in (see StatsReporter).
+        registerActivityLifecycleCallbacks(new ActivityStartedCallback() {
+            @Override
+            public void onActivityStarted(Activity activity) {
+                StatsReporter.onForeground(activity);
+            }
+        });
 
         // Always surface the YouTube notifications inbox as a phone nav-drawer tab, for every
         // account. The section is fully wired upstream but hidden by default
@@ -182,5 +199,15 @@ public class MobileApplication extends MainApplication {
         viewManager.register(ChannelView.class, MobileChannelActivity.class, MobileBrowseActivity.class);
         viewManager.register(ChannelUploadsView.class, MobileChannelUploadsActivity.class, MobileBrowseActivity.class);
         viewManager.register(WebBrowserView.class, WebBrowserActivity.class, MobileBrowseActivity.class);
+    }
+
+    /** Lifecycle callbacks with empty defaults, so callers override only what they need. */
+    private abstract static class ActivityStartedCallback implements Application.ActivityLifecycleCallbacks {
+        @Override public void onActivityCreated(Activity activity, Bundle savedInstanceState) {}
+        @Override public void onActivityResumed(Activity activity) {}
+        @Override public void onActivityPaused(Activity activity) {}
+        @Override public void onActivityStopped(Activity activity) {}
+        @Override public void onActivitySaveInstanceState(Activity activity, Bundle outState) {}
+        @Override public void onActivityDestroyed(Activity activity) {}
     }
 }

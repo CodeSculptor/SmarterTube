@@ -45,8 +45,10 @@ public final class LaunchUpdateNotices {
     private LaunchUpdateNotices() {
     }
 
-    public static void onHomeCreated(Activity activity) {
+    /** {@code done} runs once the "What's new" dialog is closed, or when no dialog will be shown. */
+    public static void onHomeCreated(Activity activity, Runnable done) {
         if (sRanThisProcess) {
+            done.run();
             return;
         }
         sRanThisProcess = true;
@@ -62,12 +64,14 @@ public final class LaunchUpdateNotices {
         final boolean whatsNewOwed = !current.equals(lastSeen);
         long sinceLastCheck = System.currentTimeMillis() - prefs.getLong(KEY_LAST_CHECK_MS, 0);
         if (!whatsNewOwed && sinceLastCheck >= 0 && sinceLastCheck < CHECK_INTERVAL_MS) {
+            done.run();
             return;
         }
 
         MobileUpdateChecker.check(activity.getString(R.string.mobile_about_url_releases_api), current,
                 result -> {
                     if (result.status == MobileUpdateChecker.Status.ERROR) {
+                        done.run();
                         return; // offline etc. - try again next launch
                     }
                     prefs.edit().putLong(KEY_LAST_CHECK_MS, System.currentTimeMillis()).apply();
@@ -80,13 +84,19 @@ public final class LaunchUpdateNotices {
 
                     if (whatsNewOwed) {
                         prefs.edit().putString(KEY_LAST_SEEN_VERSION, current).apply();
-                        if (showWhatsNew(activity, result.installedRelease, updateNotice)) {
+                        if (showWhatsNew(activity, result.installedRelease, () -> {
+                            if (updateNotice != null) {
+                                updateNotice.run();
+                            }
+                            done.run();
+                        })) {
                             return; // the update notice follows the dialog
                         }
                     }
                     if (updateNotice != null) {
                         updateNotice.run();
                     }
+                    done.run();
                 });
     }
 

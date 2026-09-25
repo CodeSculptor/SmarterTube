@@ -13,7 +13,24 @@ SmarterTube is a phone and tablet client for YouTube. It is a fork of [SmartTube
 
 ## Data the developer collects
 
-**None.** SmarterTube has no developer-controlled backend, no telemetry, no analytics, and no crash reporting. The developer receives no data about you or your usage.
+**Nothing, unless you opt in to anonymous stats.**
+
+The app contains an *opt-in* anonymous-stats feature, but it is **switched off in current releases**: no server address is configured, so you are never asked, no Settings row appears, nothing is recorded, and nothing is sent. If a future release switches it on, this section will say so and the rules below apply.
+
+When it is switched on, SmarterTube asks you once (on the Home screen) whether to send anonymous stats. You can change your answer any time in **Settings → Anonymous stats**. If you say no, nothing is sent.
+
+If you opt in, the app sends the following to the developer's own server (a Cloudflare Worker whose source is in [`stats-worker/`](stats-worker/)):
+
+| What | When | Contents |
+|---|---|---|
+| Usage count | At most once a day, when you use the app | App version, Android version, and whether this is your first count of the week / month / ever |
+| Crash report | Next time you open the app after a crash | App version, Android version, phone make and model, and the stack trace (code locations only; error messages are removed because they can contain video or search details) |
+
+If you said no and the app crashes, the crash details are kept on your device only, and the next time you open the app it asks whether to send that one report. Nothing is sent unless you tap **Send**; tapping **Don't send** deletes it.
+
+**Never sent:** your Google account, sign-in tokens, watch history, videos, channels, searches, or any identifier for you or your device. There is no install ID, so counts can't be linked to a person or to each other. Like any web request, the server's host (Cloudflare) sees your IP address, but the stats server doesn't read or store it, and request logging is turned off. The aggregate counts are published at the server's `/stats` endpoint so anyone can see exactly what's collected.
+
+There is no other telemetry, analytics, or advertising SDK in the app.
 
 ---
 
@@ -43,7 +60,7 @@ When the app opens (at most about twice a day), and when you tap **Check for upd
 
 ## Your rights
 
-Because the developer collects no data, there is nothing to provide, correct, or delete. For questions about data held by Google/YouTube, refer to your Google account settings.
+The optional stats contain no identifier, so nothing held by the developer can be linked back to you to provide, correct, or delete. Turning stats off stops all further sending. For questions about data held by Google/YouTube, refer to your Google account settings.
 
 ---
 

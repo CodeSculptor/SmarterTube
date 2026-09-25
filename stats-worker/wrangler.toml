@@ -1,0 +1,13 @@
+name = "smartertube-stats"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+# Privacy: no request logs or traces are kept, so client IPs/headers are never persisted.
+[observability]
+enabled = false
+
+[[d1_databases]]
+binding = "DB"
+database_name = "smartertube-stats"
+# Fill in after `npx wrangler d1 create smartertube-stats` (see README.md).
+database_id = "REPLACE_WITH_DATABASE_ID"

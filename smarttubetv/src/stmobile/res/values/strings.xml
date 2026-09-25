@@ -95,4 +95,18 @@
     <string name="mobile_uploads_summary_text">%1$d new video(s) from your subscriptions</string>
     <string name="mobile_uploads_new_video">New video</string>
 
+    <!-- Opt-in anonymous stats (usage heartbeat + crash reports). See mobile/stats/StatsReporter. -->
+    <!-- Base URL of the fork's stats Worker (stats-worker/ in the repo). Empty = feature dormant. -->
+    <string name="mobile_stats_endpoint" translatable="false"></string>
+    <string name="mobile_stats_title">Anonymous stats</string>
+    <string name="mobile_stats_prompt_title">Help improve SmarterTube?</string>
+    <string name="mobile_stats_details">SmarterTube can send the developer:\n\n• an anonymous \"app was used today\" count, at most once a day\n• crash reports (code locations only)\n\nEach includes just the app version and Android version (crash reports also include the phone model).\n\nNever sent: your account, videos, channels, searches or any ID that could identify you.\n\nYou can change this any time in Settings → Anonymous stats.</string>
+    <string name="mobile_stats_prompt_yes">Sure</string>
+    <string name="mobile_stats_prompt_no">No thanks</string>
+    <string name="mobile_stats_whats_sent">What\'s sent?</string>
+    <string name="mobile_stats_crash_title">SmarterTube crashed last time</string>
+    <string name="mobile_stats_crash_message">Send an anonymous crash report? It contains only code locations, the app and Android versions and the phone model — no account, video or search data.</string>
+    <string name="mobile_stats_crash_send">Send</string>
+    <string name="mobile_stats_crash_discard">Don\'t send</string>
+
 </resources>
