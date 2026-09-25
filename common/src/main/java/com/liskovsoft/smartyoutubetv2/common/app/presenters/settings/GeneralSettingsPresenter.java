@@ -41,6 +41,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class GeneralSettingsPresenter extends BasePresenter<Void> {
+    /**
+     * MOD (phone fork): when false, ticking a context-menu item just enables it in its default
+     * slot instead of opening the "Position of …" picker (ordering stays under Context menu
+     * sorting). The phone build turns this off; TV behaviour is unchanged.
+     */
+    public static boolean sAskMenuItemPosition = true;
     private final GeneralData mGeneralData;
     private final PlayerData mPlayerData;
     private final PlayerTweaksData mPlayerTweaksData;
@@ -198,7 +204,9 @@ public class GeneralSettingsPresenter extends BasePresenter<Void> {
             options.add(UiOptionItem.from(getContext().getString(nameResId), optionItem -> {
                 if (optionItem.isSelected()) {
                     mMainUIData.setMenuItemEnabled(menuItem);
-                    showMenuItemOrderDialog(menuItem);
+                    if (sAskMenuItemPosition) {
+                        showMenuItemOrderDialog(menuItem);
+                    }
                 } else {
                     mMainUIData.setMenuItemDisabled(menuItem);
                 }

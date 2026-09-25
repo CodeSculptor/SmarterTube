@@ -1,6 +1,7 @@
 package com.liskovsoft.smartyoutubetv2.mobile.ui.dialogs;
 
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -28,6 +29,8 @@ import com.liskovsoft.smartyoutubetv2.common.app.views.AppDialogView;
 import com.liskovsoft.smartyoutubetv2.common.app.views.PlaybackView;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 
 /**
@@ -36,10 +39,12 @@ import java.util.List;
  * and the on-select callbacks are all reused from the TV code; only the view layer is new.
  *
  * Categories are rendered flat in one vertical list: each non-null category title becomes
- * a section header followed by its option rows. There is no nested back stack — back
- * always finishes the dialog (the underlying TV {@code AppDialogPresenter} drives a fresh
- * dialog instance per category on the TV build's nested screens; on phone the same flow
- * just opens a new {@code MobileAppDialogActivity}).
+ * a section header followed by its option rows.
+ *
+ * Nested dialogs (a setting that opens another dialog while this one is shown, e.g. General →
+ * Context menu → "Position of …") arrive as another {@link #show} on this same fragment. Like the
+ * TV {@code AppDialogFragment}'s child back stack, the previous dialog is pushed and restored by
+ * Back, a tap outside the sheet, or the presenter's {@link #goBack}.
  */
 public class MobileAppDialogFragment extends Fragment implements AppDialogView {
     /** A single-category sub-dialog this short (or shorter) is presented as a bottom-sheet card. */
@@ -66,6 +71,9 @@ public class MobileAppDialogFragment extends Fragment implements AppDialogView {
     private boolean mIsOverlay;
     private boolean mIsPaused;
     private int mId;
+    /** Options dialog currently on screen, and the ones it was opened from (nested dialogs). */
+    private DialogState mCurrent;
+    private final Deque<DialogState> mBackStack = new ArrayDeque<>();
 
     @Nullable
     @Override
@@ -155,6 +163,25 @@ public class MobileAppDialogFragment extends Fragment implements AppDialogView {
     @Override
     public void show(List<OptionCategory> categories, CharSequence title, boolean isExpandable,
                      boolean isTransparent, boolean isOverlay, int id) {
+        boolean isComments = categories != null && categories.size() == 1
+                && categories.get(0).type == OptionCategory.TYPE_COMMENTS;
+        if (!isComments) {
+            DialogState next = new DialogState(categories, title, isExpandable, isTransparent, isOverlay, id);
+            // A different options dialog opened on top of the current one is a nested level: keep
+            // the current one (and its scroll position) to return to. The same dialog re-shown
+            // (a refresh after a change) just replaces it.
+            if (mCurrent != null && !TextUtils.equals(mCurrent.resolvedTitle(), next.resolvedTitle())) {
+                mCurrent.listState = mList != null && mList.getLayoutManager() != null
+                        ? mList.getLayoutManager().onSaveInstanceState() : null;
+                mBackStack.push(mCurrent);
+            }
+            mCurrent = next;
+        }
+        render(categories, title, isExpandable, isTransparent, isOverlay, id);
+    }
+
+    private void render(List<OptionCategory> categories, CharSequence title, boolean isExpandable,
+                        boolean isTransparent, boolean isOverlay, int id) {
         mIsTransparent = isTransparent;
         mIsOverlay = isOverlay;
         mId = id;
@@ -471,6 +498,36 @@ public class MobileAppDialogFragment extends Fragment implements AppDialogView {
         }
     }
 
+    /** An options dialog as passed to {@link #show}, kept so a nested dialog can return to it. */
+    private static final class DialogState {
+        final List<OptionCategory> categories;
+        final CharSequence title;
+        final boolean isExpandable;
+        final boolean isTransparent;
+        final boolean isOverlay;
+        final int id;
+        Parcelable listState;
+
+        DialogState(List<OptionCategory> categories, CharSequence title, boolean isExpandable,
+                    boolean isTransparent, boolean isOverlay, int id) {
+            this.categories = categories;
+            this.title = title;
+            this.isExpandable = isExpandable;
+            this.isTransparent = isTransparent;
+            this.isOverlay = isOverlay;
+            this.id = id;
+        }
+
+        /** The title actually displayed (see {@link #render}): a lone expandable category's name. */
+        CharSequence resolvedTitle() {
+            if (isExpandable && categories != null && categories.size() == 1
+                    && categories.get(0).title != null) {
+                return categories.get(0).title;
+            }
+            return title;
+        }
+    }
+
     /** Saved top-level comments state while a nested replies thread is displayed. */
     private static final class CommentsState {
         final CommentsReceiver receiver;
@@ -493,22 +550,35 @@ public class MobileAppDialogFragment extends Fragment implements AppDialogView {
 
     @Override
     public void goBack() {
-        // The only nested level is a comments replies thread; otherwise goBack == finish.
         if (mParentComments != null) {
             restoreParentComments();
+        } else if (!mBackStack.isEmpty()) {
+            restorePreviousDialog();
         } else {
             finish();
+        }
+    }
+
+    /** Pop back to the dialog a nested one was opened from, at the same scroll position. */
+    private void restorePreviousDialog() {
+        DialogState previous = mBackStack.pop();
+        mCurrent = previous;
+        render(previous.categories, previous.title, previous.isExpandable,
+                previous.isTransparent, previous.isOverlay, previous.id);
+        if (previous.listState != null && mList != null && mList.getLayoutManager() != null) {
+            mList.getLayoutManager().onRestoreInstanceState(previous.listState);
         }
     }
 
     @Override
     public void clearBackstack() {
         mParentComments = null;
+        mBackStack.clear();
     }
 
     @Override
     public boolean canGoBack() {
-        return mParentComments != null;
+        return mParentComments != null || !mBackStack.isEmpty();
     }
 
     @Override

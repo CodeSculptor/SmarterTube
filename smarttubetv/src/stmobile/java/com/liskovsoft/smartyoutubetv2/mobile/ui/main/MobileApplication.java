@@ -16,6 +16,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.views.WebBrowserView;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerConstants;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.service.SidebarService;
+import com.liskovsoft.smartyoutubetv2.common.app.presenters.settings.GeneralSettingsPresenter;
 import com.liskovsoft.smartyoutubetv2.common.prefs.AppPrefs;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
@@ -84,6 +85,11 @@ public class MobileApplication extends MainApplication {
 
         hideScreenDimmingButtonOnce();
         defaultBackgroundPlaybackOnce();
+
+        // Ticking a context-menu item in Settings > General just enables it (in its default slot)
+        // instead of popping a "Position of …" picker after every tick — a TV-remote flow that
+        // reads as broken on a touchscreen. Reordering stays under "Context menu sorting".
+        GeneralSettingsPresenter.sAskMenuItemPosition = false;
     }
 
     /**

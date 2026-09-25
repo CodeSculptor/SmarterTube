@@ -35,7 +35,7 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | Subscriptions feed | Works | Drives upload notifications |
 | History | Unknown | Not re-verified this cycle |
 | Playlists | Unknown | Not re-verified this cycle |
-| Settings screen (portrait) | Works | Mobile-friendly inputs (#26, verified on device): categorical single-choice settings collapse to a value row + bottom-sheet picker; numeric ranges (speed, zoom, seek interval, volume, auto-hide) use an inline slider that only drags from the thumb so list scrolling is unaffected; checkbox-heavy screens group into collapsible sections (long screens start collapsed with an "N ON" count, tap a header to expand) |
+| Settings screen (portrait) | Works | Mobile-friendly inputs (#26, verified on device): categorical single-choice settings collapse to a value row + bottom-sheet picker; numeric ranges (speed, zoom, seek interval, volume, auto-hide) use an inline slider that only drags from the thumb so list scrolling is unaffected; checkbox-heavy screens group into collapsible sections (long screens start collapsed with an "N ON" count, tap a header to expand). Nested dialogs return to the screen they were opened from (#43); ticking a Context menu item just enables it (no position popup; order via Context menu sorting, whose list refreshes only on reopening General) |
 | Theme picker (light/dark) | Unknown | Recent work; verify on device |
 | About screen | Works | |
 
@@ -65,7 +65,7 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | Quality menu | Unknown | |
 | Captions | Unknown | |
 | Playback speed | Works | Opens as a translucent bottom-sheet card over the player (beta.8); video stays visible behind a dim scrim. Known issue: player SurfaceView shrinks in landscape while the panel is open ([#29]) |
-| SponsorBlock | Works | Upstream feature |
+| SponsorBlock | Works | Upstream feature. Per-channel exclusion via long-press menu (enable in Settings > General > Context menu) and optional player button (Settings > Player > Setup player buttons; landscape only) — verified on device (#40). Not in the up-next long-press yet (#42) |
 | Return YouTube Dislike | Works | Upstream feature |
 | DeArrow | Unknown | Upstream feature; verify in phone UI |
 | Casting / Chromecast | Not implemented | |

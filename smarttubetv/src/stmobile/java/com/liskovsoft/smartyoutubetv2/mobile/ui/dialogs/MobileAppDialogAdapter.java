@@ -429,7 +429,9 @@ class MobileAppDialogAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     /**
      * Whether a radio category is an ordered numeric range (speed, zoom, seek interval, auto-hide
      * timeout) and should be a discrete slider. Detected from the option labels — a strong majority
-     * must contain a number (a few word labels like "Never" / "Default" at the ends are fine).
+     * must be short numeric values (a few word labels like "Never" / "Default" at the ends are fine).
+     * Long labels that merely contain a number (e.g. the context-menu "Position of …" picker's
+     * "16 Exclude this channel from SponsorBlock") are an ordinary list, not a range.
      *
      * Unlike the value/picker collapse this is NOT gated on {@code suppressHeaders}: a slider is a
      * self-contained inline control with no recursion risk, so a lone expandable numeric category
@@ -444,12 +446,19 @@ class MobileAppDialogAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         }
         int numeric = 0;
         for (OptionItem option : category.options) {
-            if (hasDigit(option.getTitle())) {
+            CharSequence label = option.getTitle();
+            if (label != null && label.length() > MAX_SLIDER_LABEL_LENGTH) {
+                return false;
+            }
+            if (hasDigit(label)) {
                 numeric++;
             }
         }
         return numeric * 5 >= category.options.size() * 3; // >= 60% numeric
     }
+
+    /** Range values are short ("1.25x", "10 sec", "Never"); anything longer is a list item. */
+    private static final int MAX_SLIDER_LABEL_LENGTH = 16;
 
     private static boolean hasDigit(CharSequence text) {
         if (text == null) {
