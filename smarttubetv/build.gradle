@@ -250,8 +250,8 @@ android {
             // 23725 = v0.5.0-beta.5+st32.45 (upstream SmartTube 32.45 sync).
             // 23726 = v0.5.0-beta.6+st32.51 (upstream SmartTube 32.51 sync).
             // 23727 = v0.5.0-beta.7+st32.56 (upstream SmartTube 32.56 sync; watched progress bar on thumbnails #41).
-            versionCode 23726
-            versionName "v0.5.0-beta.6+st32.51"
+            versionCode 23727
+            versionName "v0.5.0-beta.7+st32.56"
         }
     }
 }
