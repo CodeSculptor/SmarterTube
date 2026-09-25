@@ -30,7 +30,8 @@
     in-place upgrade).
 
 .PARAMETER Prerelease
-    Mark the GitHub release as a prerelease (use for alpha/beta; omit for stable).
+    Mark the GitHub release as a prerelease. Use for ALPHA only - beta/rc/stable are published as
+    normal releases so they show as "Latest" (channel is in the tag; see docs/VERSIONING.md).
 
 .PARAMETER NotesFile
     Path to a markdown file for the release body. If omitted, a minimal body is generated.
@@ -43,7 +44,7 @@
     GitHub repo slug. Default: CodeSculptor/SmarterTube.
 
 .EXAMPLE
-    .\release.ps1 -VersionName v0.5.0-beta.1+st31.94 -Prerelease
+    .\release.ps1 -VersionName v0.5.0-beta.1+st31.94 -NotesFile notes.md
 .EXAMPLE
     .\release.ps1 -VersionName v0.5.0-beta.1+st31.94 -Prerelease -DryRun
 #>

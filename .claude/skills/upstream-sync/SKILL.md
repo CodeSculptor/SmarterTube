@@ -166,12 +166,19 @@ a clean tree:
 4. Run the release from that clean master-tip checkout:
    ```
    $env:ANDROID_SDK_ROOT="C:\Users\steph\AppData\Local\Android\Sdk"; $env:ANDROID_HOME=$env:ANDROID_SDK_ROOT
-   .\release.ps1 -VersionName <vX.Y.Z-channel.N+stEE.EE> -Prerelease
+   .\release.ps1 -VersionName <vX.Y.Z-channel.N+stEE.EE> -NotesFile <notes.md>
    ```
+   **No `-Prerelease` for betas/rcs** (policy since 2026-09-25, see `docs/VERSIONING.md` →
+   "GitHub release flag"): the channel lives in the tag name. Flagging betas as GitHub prereleases
+   froze "Latest" on a 3-month-old build and hid current releases from Obtainium's defaults. Use
+   `-Prerelease` only for **alpha** builds.
+   **Always pass `-NotesFile`** with a short "What's new" (features/fixes with issue numbers + the
+   upstream base) — the script's default body says nothing about what changed.
    It bumps the flavor block, builds all 4 ABIs, verifies the signing cert
    (`50fdb412c6e3b683bbd03f9f7a69c40f436b7769810310e30ec96a91259b98a2`), commits, pushes, tags, and
    publishes the GH release — in that order, so a build that doesn't pass never reaches master.
-5. Verify the release listing (`gh release view <tag> --json isPrerelease,assets`) and wait for
+5. Verify the release listing (`gh release view <tag> --json isPrerelease,assets` — expect
+   `isPrerelease:false` for beta/rc/stable; `gh release list` must show it as **Latest**) and wait for
    "stmobile validate" green on the release commit.
 6. **Check the F-Droid publish actually fired and succeeded** — don't assume:
    ```
@@ -182,6 +189,13 @@ a clean tree:
    fast/empty-looking run or a `failure` conclusion means it didn't publish, not that it did.
 
 ## 8. Close the loop
+
+- **Reconcile GitHub issues against what shipped** (every release, not just feature ones):
+  `gh issue list --repo CodeSculptor/SmarterTube --state open` — close anything this release fixed
+  or implemented (with a comment linking the release; user-filed duplicates of our own tracking
+  issues included), and close stale `upstream-sync` issues. **An open `upstream-sync`-labelled
+  issue makes the 6-hourly bot skip every run** (it silently skipped for 3 months, Jun→Sep 2026,
+  because of a forgotten issue #21).
 
 - If this sync included a bug fix or feature (not just the mechanical upstream bump), update
   `docs/FEATURE_MATRIX.md` / `docs/KNOWN_ISSUES.md` for it in the same commit, and file/close a

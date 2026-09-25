@@ -176,6 +176,17 @@ v1.0.0-rc.1+st32.10
 
 Stable releases have no prerelease label.
 
+### GitHub release flag
+
+The channel is carried by the **tag name**, not by GitHub's "pre-release" checkbox. Publish
+**beta, rc and stable** releases as normal GitHub releases (not flagged pre-release) so the newest
+build is shown as **Latest** and is picked up by Obtainium's default settings. Only **alpha**
+builds are flagged pre-release. The in-app updater (`MobileUpdateChecker`) trusts the parsed tag
+channel over GitHub's flag, so the flag never changes which update a user is offered.
+
+(Policy since 2026-09-25: flagging every beta as pre-release had left `v0.4.2-beta.8` — under the
+retired package id — as "Latest" for three months.)
+
 ```text
 v1.0.0+st32.10
 ```
