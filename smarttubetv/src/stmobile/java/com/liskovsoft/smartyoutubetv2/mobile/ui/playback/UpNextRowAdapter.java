@@ -31,9 +31,11 @@ public class UpNextRowAdapter extends RecyclerView.Adapter<UpNextRowAdapter.Hold
 
     private final List<Video> mVideos = new ArrayList<>();
     private final OnVideo mClick;
+    private final OnVideo mLongClick;
 
-    public UpNextRowAdapter(OnVideo click) {
+    public UpNextRowAdapter(OnVideo click, OnVideo longClick) {
         mClick = click;
+        mLongClick = longClick;
     }
 
     public void appendVideos(List<Video> videos) {
@@ -136,6 +138,13 @@ public class UpNextRowAdapter extends RecyclerView.Adapter<UpNextRowAdapter.Hold
             if (mClick != null) {
                 mClick.onVideo(video);
             }
+        });
+        // Long-press opens the video context menu, as on Home thumbnails (VideoCardAdapter).
+        h.itemView.setOnLongClickListener(v -> {
+            if (mLongClick != null) {
+                mLongClick.onVideo(video);
+            }
+            return true;
         });
     }
 

@@ -1336,7 +1336,10 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         mDescriptionView.setOnClickListener(v -> setDescriptionExpanded(false));
 
         mUpNextAdapter = new UpNextRowAdapter(
-                video -> PlaybackPresenter.instance(getContext()).onSuggestionItemClicked(video));
+                video -> PlaybackPresenter.instance(getContext()).onSuggestionItemClicked(video),
+                // Same video menu as the TV suggestions row (PlayerUIController), which also
+                // keeps the playback-queue row in sync on Add to queue / Play next.
+                video -> PlaybackPresenter.instance(getContext()).onSuggestionItemLongClicked(video));
         mUpNextList.setLayoutManager(new LinearLayoutManager(getContext()));
         mUpNextList.setAdapter(mUpNextAdapter);
 
