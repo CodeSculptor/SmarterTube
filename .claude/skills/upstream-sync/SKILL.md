@@ -123,7 +123,15 @@ real interface drift; fix in `stmobile` (or ask the user before touching shared 
 
 Install the debug APK and check Home/search/playback/back-nav on device (`R3GL3069JMZ`; "not
 found" = unplugged, ask the user to replug; "unauthorized" = ask them to tap Allow on the phone).
-Debug→debug is a plain `install -r` (no wipe). Skip this step **only if the user explicitly says
+
+**Signing must match what's on the phone, or `install -r` fails.** Since 2026-09-16 the phone runs
+the **release**-signed build (cert `50fdb412…`). A debug build is only signed with that key when
+`smartertube-release.jks` + `keystore.properties` sit at the worktree root (`build.gradle`'s debug
+buildType uses the release signingConfig if `keystore.properties` exists) — a fresh worktree has
+neither, so it falls back to the debug key (`9b2d99fe…`) and can't upgrade in place (an uninstall
+would wipe sign-in). Before building, copy both from `C:\Users\steph\Backups\SmarterTube-release-key\`
+to the worktree root (both gitignored), then confirm with
+`apksigner verify --print-certs <apk>` → `50fdb412…`. Skip this step **only if the user explicitly says
 to skip it** — and if skipped, say so plainly in the final report and in the memory note (don't let
 an unverified merge read as verified later).
 
