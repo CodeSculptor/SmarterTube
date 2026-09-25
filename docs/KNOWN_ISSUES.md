@@ -3,7 +3,7 @@
 Tracked issues for the current beta. Keep this honest and current — it is part of the release
 checklist and what makes a beta release trustworthy.
 
-Current release: `v0.5.0-beta.7+st32.56`  ·  Upstream SmartTube base: `32.56`  ·  Channel: beta
+Current release: `v0.5.0-beta.8+st32.56`  ·  Upstream SmartTube base: `32.56`  ·  Channel: beta
 
 ## Status / classification
 
@@ -99,6 +99,16 @@ Resolved this release:
   genuinely left (Back), so returning to the player resolves its parent to Home instead of
   re-launching a stale channel. Previously the lingering stack entry caused a duplicate channel on
   Back (and fed [#33]).
+- **Tap the video to hide the controls** — fixed in beta.8 ([#39], verified on device). While the
+  controls were showing, taps went to the Leanback overlay and nothing hid it; a tap on empty
+  video now hides them. Taps on controls, drags and double-tap seek are unchanged.
+- **Up-next long-press menu** — added in beta.8 ([#42], verified on device): long-pressing an
+  up-next row in the portrait player opens the same video menu as Home thumbnails.
+- **Top bar under the status bar on some phones** — fixed in beta.8 ([#37]). Fullscreen mode
+  (default) hides the system bars; where the OS keeps the status bar visible (reported on a Pixel,
+  Android 17), screens are now padded below it. If the status bar is only swiped in briefly it
+  overlays the content, as in any fullscreen app; turning off Settings > User interface > Fullscreen
+  mode keeps the bars permanently and lays everything out below them.
 - **Landscape play/pause icon was out of sync after rotation** — fixed ([#27], verified on device).
   Rotating into landscape rebuilds the full transport control set mid-playback, creating a fresh
   play/pause action that defaulted to the PLAY icon; it is now re-synced to the real playback state
@@ -138,6 +148,9 @@ Resolved this release:
   unaffected.
 
 [#23]: https://github.com/CodeSculptor/SmarterTube/issues/23
+[#37]: https://github.com/CodeSculptor/SmarterTube/issues/37
+[#39]: https://github.com/CodeSculptor/SmarterTube/issues/39
+[#42]: https://github.com/CodeSculptor/SmarterTube/issues/42
 [#24]: https://github.com/CodeSculptor/SmarterTube/issues/24
 [#27]: https://github.com/CodeSculptor/SmarterTube/issues/27
 [#28]: https://github.com/CodeSculptor/SmarterTube/issues/28
