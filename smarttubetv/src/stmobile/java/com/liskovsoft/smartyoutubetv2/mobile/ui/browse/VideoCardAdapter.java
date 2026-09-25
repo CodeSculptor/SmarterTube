@@ -3,7 +3,9 @@ package com.liskovsoft.smartyoutubetv2.mobile.ui.browse;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -85,6 +87,26 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
         }
     }
 
+    /**
+     * Apply a presenter {@code ACTION_SYNC} (e.g. updated percent-watched after returning from
+     * the player) to matching cards in place. Mirrors TV's {@code VideoGroupObjectAdapter.sync}:
+     * every position is checked since a list (History) can hold the same video more than once.
+     */
+    public void sync(List<Video> changed) {
+        if (changed == null) {
+            return;
+        }
+        for (Video video : changed) {
+            for (int i = 0; i < mVideos.size(); i++) {
+                Video origin = mVideos.get(i);
+                if (origin.equals(video)) {
+                    origin.sync(video);
+                    notifyItemChanged(i);
+                }
+            }
+        }
+    }
+
     public Video getLast() {
         return mVideos.isEmpty() ? null : mVideos.get(mVideos.size() - 1);
     }
@@ -133,6 +155,8 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
             holder.duration.setVisibility(View.GONE);
         }
 
+        bindWatchedBar(holder.progress, holder.duration, video);
+
         Glide.with(holder.itemView.getContext())
                 .load(video.getCardImageUrl())
                 .into(holder.thumb);
@@ -150,10 +174,40 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
         });
     }
 
+    /**
+     * YouTube-style red "watched" bar along the thumbnail's bottom edge. Same semantics as the
+     * TV card ({@code VideoCardPresenter}): tiny progress is rounded up to 1% so it stays visible.
+     * Hidden when unknown/unwatched and on Shorts (YouTube shows no bar on Shorts tiles). When
+     * shown, the duration badge is lifted above the bar so they don't overlap.
+     * Shared with the up-next row ({@code UpNextRowAdapter}).
+     */
+    public static void bindWatchedBar(ProgressBar bar, TextView badge, Video video) {
+        float percent = video.percentWatched;
+        boolean show = percent > 0 && !video.isShorts;
+        // Explicit GONE branch: views are recycled.
+        if (show) {
+            bar.setProgress(percent < 1 ? 1 : Math.min(100, Math.round(percent)));
+            bar.setVisibility(View.VISIBLE);
+        } else {
+            bar.setVisibility(View.GONE);
+        }
+
+        if (badge.getLayoutParams() instanceof FrameLayout.LayoutParams) {
+            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) badge.getLayoutParams();
+            float density = badge.getResources().getDisplayMetrics().density;
+            int bottom = Math.round((show ? 4 + 3 : 4) * density);
+            if (lp.bottomMargin != bottom) {
+                lp.bottomMargin = bottom;
+                badge.setLayoutParams(lp);
+            }
+        }
+    }
+
     static class ViewHolder extends RecyclerView.ViewHolder {
         final View thumbFrame;
         final ImageView thumb;
         final TextView duration;
+        final ProgressBar progress;
         final TextView title;
         final TextView author;
 
@@ -162,6 +216,7 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
             thumbFrame = itemView.findViewById(R.id.card_thumb_frame);
             thumb = itemView.findViewById(R.id.card_thumb);
             duration = itemView.findViewById(R.id.card_duration);
+            progress = itemView.findViewById(R.id.card_progress);
             title = itemView.findViewById(R.id.card_title);
             author = itemView.findViewById(R.id.card_author);
         }

@@ -26,6 +26,7 @@ explicitly re-tested as provisional and confirm against the release checklist be
 |---|---|---|
 | Portrait home (drawer navigation) | Works | Shipped since alpha; re-verify per checklist |
 | Video duration badge on thumbnails | Works | YouTube-style length pill on the bottom-right of every thumbnail — browse grid, shelves, search, channel pages, and the portrait player's up-next list. Sourced from `Video.badge`; hidden for playlists/channels/Shorts. VERIFIED-ON-DEVICE |
+| Watched progress bar on thumbnails | Works | YouTube-style red bar along the bottom of every thumbnail (browse grid, shelves, search, channel pages, history, portrait up-next); length = YouTube's server-side resume percentage (`Video.percentWatched`, local playback state as fallback), tiny progress rounded up to 1%, hidden when unwatched and on Shorts; duration badge lifts above it. Cards refresh on Back from the player via the presenter's `ACTION_SYNC`. VERIFIED-ON-DEVICE |
 | Search (input + suggestions) | Works | |
 | Search results grid | Works | |
 | Voice search | Works | Mic button in search toolbar (RecognizerIntent); falls back to keyboard if no recognizer. Verified on device (#8) |

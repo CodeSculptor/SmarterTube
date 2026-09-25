@@ -90,6 +90,13 @@ public class ChannelTabsAdapter extends RecyclerView.Adapter<ChannelTabsAdapter.
         }
     }
 
+    /** Forward a presenter ACTION_SYNC (percent-watched refresh) to every nested card adapter. */
+    public void syncVideos(List<Video> videos) {
+        for (VideoCardAdapter adapter : mAdapters) {
+            adapter.sync(videos);
+        }
+    }
+
     public String getTitle(int position) {
         return position >= 0 && position < mTitles.size() ? mTitles.get(position) : "";
     }

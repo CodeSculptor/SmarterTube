@@ -169,7 +169,8 @@ public class MobileSearchFragment extends Fragment implements SearchView {
                 clearSearch();
                 break;
             case VideoGroup.ACTION_SYNC:
-                // Percent-watched markers only; not rendered natively yet.
+                // Percent-watched refresh: synced in place, so mGroups (same Video objects) stays current.
+                if (mResultsAdapter != null) mResultsAdapter.sync(group.getVideos());
                 return;
             case VideoGroup.ACTION_REMOVE:
             case VideoGroup.ACTION_REMOVE_AUTHOR:

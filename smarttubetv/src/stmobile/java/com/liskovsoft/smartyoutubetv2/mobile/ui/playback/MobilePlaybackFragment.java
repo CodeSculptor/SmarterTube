@@ -428,8 +428,16 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             super.updateSuggestions(group);
         }
 
-        if (group == null || group.isEmpty() || group.getAction() == VideoGroup.ACTION_SYNC) {
-            return; // SYNC = metadata refresh of existing items; the rows don't show live counters
+        if (group != null && group.getAction() == VideoGroup.ACTION_SYNC) {
+            // Percent-watched refresh of existing items: redraw the up-next watched bars.
+            if (mUpNextAdapter != null) {
+                mUpNextAdapter.sync(group.getVideos());
+            }
+            return;
+        }
+
+        if (group == null || group.isEmpty()) {
+            return;
         }
 
         mSuggestionGroups.add(group);

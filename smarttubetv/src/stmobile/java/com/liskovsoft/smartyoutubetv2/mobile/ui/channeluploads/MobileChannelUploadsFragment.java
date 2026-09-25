@@ -31,6 +31,7 @@ import com.liskovsoft.smartyoutubetv2.tv.R;
  */
 public class MobileChannelUploadsFragment extends Fragment implements ChannelUploadsView {
     private ChannelUploadsPresenter mPresenter;
+    private boolean mFragmentCreated = true;
     private RecyclerView mGrid;
     private SwipeRefreshLayout mSwipeRefresh;
     private ProgressBar mProgressBar;
@@ -85,6 +86,18 @@ public class MobileChannelUploadsFragment extends Fragment implements ChannelUpl
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        // Back from the player: the presenter pushes changed percent-watched as ACTION_SYNC.
+        // Skip the first resume (right after creation) so it doesn't consume the changes
+        // before the screen underneath gets them (same guard as MobileSearchFragment).
+        if (!mFragmentCreated && mPresenter != null) {
+            mPresenter.onViewResumed();
+        }
+        mFragmentCreated = false;
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
         if (mPresenter != null) {
@@ -111,7 +124,8 @@ public class MobileChannelUploadsFragment extends Fragment implements ChannelUpl
                 mAdapter.remove(group.getVideos());
                 break;
             case VideoGroup.ACTION_SYNC:
-                // Percent-watched markers only; not rendered natively yet.
+                // Percent-watched refresh (e.g. back from the player): redraw the watched bars.
+                mAdapter.sync(group.getVideos());
                 break;
             default: // ACTION_APPEND / ACTION_PREPEND
                 if (!group.isEmpty()) {

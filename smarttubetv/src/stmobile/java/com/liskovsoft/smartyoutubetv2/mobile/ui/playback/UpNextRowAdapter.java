@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -12,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.browse.VideoCardAdapter;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 
 import java.util.ArrayList;
@@ -71,6 +73,22 @@ public class UpNextRowAdapter extends RecyclerView.Adapter<UpNextRowAdapter.Hold
         }
     }
 
+    /** Presenter ACTION_SYNC: refresh percent-watched on matching rows in place. */
+    public void sync(List<Video> changed) {
+        if (changed == null) {
+            return;
+        }
+        for (Video video : changed) {
+            for (int i = 0; i < mVideos.size(); i++) {
+                Video origin = mVideos.get(i);
+                if (origin.equals(video)) {
+                    origin.sync(video);
+                    notifyItemChanged(i);
+                }
+            }
+        }
+    }
+
     public void clear() {
         mVideos.clear();
         notifyDataSetChanged();
@@ -112,6 +130,8 @@ public class UpNextRowAdapter extends RecyclerView.Adapter<UpNextRowAdapter.Hold
             h.duration.setVisibility(View.GONE);
         }
 
+        VideoCardAdapter.bindWatchedBar(h.progress, h.duration, video);
+
         h.itemView.setOnClickListener(v -> {
             if (mClick != null) {
                 mClick.onVideo(video);
@@ -122,6 +142,7 @@ public class UpNextRowAdapter extends RecyclerView.Adapter<UpNextRowAdapter.Hold
     static class Holder extends RecyclerView.ViewHolder {
         final ImageView thumb;
         final TextView duration;
+        final ProgressBar progress;
         final TextView title;
         final TextView subtitle;
 
@@ -129,6 +150,7 @@ public class UpNextRowAdapter extends RecyclerView.Adapter<UpNextRowAdapter.Hold
             super(v);
             thumb = v.findViewById(R.id.row_thumb);
             duration = v.findViewById(R.id.row_duration);
+            progress = v.findViewById(R.id.row_progress);
             title = v.findViewById(R.id.row_title);
             subtitle = v.findViewById(R.id.row_subtitle);
         }

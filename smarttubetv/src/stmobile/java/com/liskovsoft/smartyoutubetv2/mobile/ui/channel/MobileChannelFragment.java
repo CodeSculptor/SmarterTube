@@ -50,6 +50,7 @@ import io.reactivex.disposables.Disposable;
  */
 public class MobileChannelFragment extends Fragment implements ChannelView {
     private ChannelPresenter mPresenter;
+    private boolean mFragmentCreated = true;
     private ViewPager2 mPager;
     private TabLayout mTabs;
     private TabLayoutMediator mTabsMediator;
@@ -362,6 +363,18 @@ public class MobileChannelFragment extends Fragment implements ChannelView {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        // Back from the player: the presenter pushes changed percent-watched as ACTION_SYNC.
+        // Skip the first resume (right after creation) so it doesn't consume the changes
+        // before the screen underneath gets them (same guard as MobileSearchFragment).
+        if (!mFragmentCreated && mPresenter != null) {
+            mPresenter.onViewResumed();
+        }
+        mFragmentCreated = false;
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
         if (mTabsMediator != null) {
@@ -412,7 +425,8 @@ public class MobileChannelFragment extends Fragment implements ChannelView {
                 mTabsAdapter.removeVideos(group.getVideos());
                 break;
             case VideoGroup.ACTION_SYNC:
-                // Percent-watched markers only; not rendered natively yet.
+                // Percent-watched refresh (e.g. back from the player): redraw the watched bars.
+                mTabsAdapter.syncVideos(group.getVideos());
                 break;
             default: // ACTION_APPEND / ACTION_PREPEND — a new group is a new tab, a
                      // continuation appends to its existing page.

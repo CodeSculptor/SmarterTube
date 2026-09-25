@@ -24,6 +24,17 @@
             android:background="@color/mobile_thumbnail_placeholder"
             android:contentDescription="@null" />
 
+        <!-- YouTube-style red "watched" bar along the bottom edge (bound in VideoCardAdapter). -->
+        <ProgressBar
+            android:id="@+id/card_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:layout_gravity="bottom"
+            android:max="100"
+            android:progressDrawable="@drawable/mobile_watched_progress"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/card_duration"
             android:layout_width="wrap_content"

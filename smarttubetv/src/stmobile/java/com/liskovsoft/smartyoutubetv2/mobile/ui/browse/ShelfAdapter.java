@@ -95,6 +95,13 @@ public class ShelfAdapter extends RecyclerView.Adapter<ShelfAdapter.ViewHolder> 
         }
     }
 
+    /** Forward a presenter ACTION_SYNC (percent-watched refresh) to every nested card adapter. */
+    public void syncVideos(List<Video> videos) {
+        for (VideoCardAdapter adapter : mAdapters) {
+            adapter.sync(videos);
+        }
+    }
+
     public void clear() {
         mIds.clear();
         mTitles.clear();

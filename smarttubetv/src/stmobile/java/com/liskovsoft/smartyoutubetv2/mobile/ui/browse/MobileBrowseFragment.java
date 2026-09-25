@@ -302,7 +302,9 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
                 if (mShelfAdapter != null) mShelfAdapter.removeVideos(group.getVideos());
                 break;
             case VideoGroup.ACTION_SYNC:
-                // Percent-watched markers only; not rendered natively yet.
+                // Percent-watched refresh (e.g. back from the player): redraw the watched bars.
+                if (mGridAdapter != null) mGridAdapter.sync(group.getVideos());
+                if (mShelfAdapter != null) mShelfAdapter.syncVideos(group.getVideos());
                 break;
             default: // ACTION_APPEND / ACTION_PREPEND
                 if (group.isEmpty()) {
