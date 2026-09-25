@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.liskovsoft.smartyoutubetv2.mobile.ui.base.SystemBarInsets;
 import com.liskovsoft.smartyoutubetv2.mobile.update.MobileUpdateChecker;
 import com.liskovsoft.smartyoutubetv2.tv.BuildConfig;
 import com.liskovsoft.smartyoutubetv2.tv.R;
@@ -31,6 +32,7 @@ public class MobileAboutActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.mobile_about_activity);
+        SystemBarInsets.apply(this); // not a MobileActivity, so apply the #37 inset fix here
 
         ((TextView) findViewById(R.id.about_version))
                 .setText(getString(R.string.mobile_about_version, BuildConfig.VERSION_NAME));

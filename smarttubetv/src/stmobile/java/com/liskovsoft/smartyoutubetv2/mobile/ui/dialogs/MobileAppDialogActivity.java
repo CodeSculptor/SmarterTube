@@ -120,6 +120,13 @@ public class MobileAppDialogActivity extends MobileActivity {
         }
     }
 
+    @Override
+    protected boolean appliesSystemBarInsets() {
+        // The sheet copies the player's full-screen + translucent-nav flags and draws its own
+        // bottom card over the player; padding it would lift the card off the bottom edge.
+        return !mSheetMode;
+    }
+
     /**
      * Panel mode: the dialog content starts below the player's 16:9 strip; the transparent
      * area above it shows the still-playing video, and tapping it closes the comments.

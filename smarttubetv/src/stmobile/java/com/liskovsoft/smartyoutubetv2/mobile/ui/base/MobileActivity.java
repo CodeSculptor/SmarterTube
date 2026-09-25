@@ -62,6 +62,20 @@ public abstract class MobileActivity extends MotherActivity {
         allowLandscapeOnTablets();
     }
 
+    @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // After the subclass's setContentView. A no-op unless the OS draws us edge-to-edge (#37).
+        if (appliesSystemBarInsets()) {
+            SystemBarInsets.apply(this);
+        }
+    }
+
+    /** Whether {@link SystemBarInsets} pads this activity's content clear of the system bars. */
+    protected boolean appliesSystemBarInsets() {
+        return true;
+    }
+
     /**
      * The content activities (browse/search/channel/sign-in) are locked to portrait in
      * the manifest - the right default on a phone. On a tablet (smallestWidth >= 600dp)
