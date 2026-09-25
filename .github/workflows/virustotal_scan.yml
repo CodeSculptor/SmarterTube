@@ -79,6 +79,7 @@ jobs:
           done
 
       - name: Update Release Notes
+        if: steps.vt.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
