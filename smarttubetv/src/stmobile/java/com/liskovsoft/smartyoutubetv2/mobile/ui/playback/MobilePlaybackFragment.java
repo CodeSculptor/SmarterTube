@@ -145,6 +145,8 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     private long    mTouchDownTime;
     private boolean mShortsSwipeDragging;
     private int     mDragThresholdPx; // initialised to 15dp in initShortsViews
+    // Non-Shorts: the current gesture started on empty video while the controls were showing.
+    private boolean mOverlayTapCandidate;
 
     // While committing a swipe, the incoming poster stays on screen covering the (loading) surface
     // until the new video is actually rendering — eliminates the black flash. A timeout is the
@@ -524,11 +526,89 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             return handleShortsTouchEvent(event);
         }
 
+        // Non-Shorts, controls showing: a tap on empty video hides them (#39).
+        if (isOverlayShown()) return handleOverlayShownTouch(event, playerView);
+
         // Non-Shorts: original phantom-tap guard.
-        if (isOverlayShown()) return false;
         if (event.getY() > playerView.getBottom()) return false;
         onDispatchTouchEvent(event); // overlay tickle + double-tap seek
         return true;
+    }
+
+    /**
+     * Controls showing (non-Shorts): everything is dispatched normally so the Leanback buttons, seek
+     * bar and suggestion cards keep working, except a quick tap that started on empty video. That
+     * tap hides the controls, as phone players do. Leanback on its own never hides on a tap: the
+     * touch lands on the transparent overlay grid, and the double-tap adapter is off while the
+     * overlay shows.
+     */
+    private boolean handleOverlayShownTouch(MotionEvent event, View playerView) {
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                mOverlayTapCandidate = event.getY() <= playerView.getBottom()
+                        && !hitsPlayerControl(requireActivity().getWindow().getDecorView(),
+                                event.getRawX(), event.getRawY(),
+                                playerView.getWidth() * playerView.getHeight() / 2);
+                mSwipeRawStartX = event.getX();
+                mSwipeRawStartY = event.getY();
+                mTouchDownTime = android.os.SystemClock.uptimeMillis();
+                return false;
+
+            case MotionEvent.ACTION_MOVE:
+                if (mOverlayTapCandidate
+                        && (Math.abs(event.getX() - mSwipeRawStartX) > mDragThresholdPx
+                            || Math.abs(event.getY() - mSwipeRawStartY) > mDragThresholdPx)) {
+                    mOverlayTapCandidate = false; // a drag (e.g. scrolling the rows), not a tap
+                }
+                return false;
+
+            case MotionEvent.ACTION_UP: {
+                boolean tap = mOverlayTapCandidate
+                        && android.os.SystemClock.uptimeMillis() - mTouchDownTime < 350;
+                mOverlayTapCandidate = false;
+                if (!tap) return false;
+                // Consume the UP (so no double-tap/tickle logic sees a stray UP and re-shows the
+                // controls), but cancel the gesture in the view tree to clear any pressed state.
+                MotionEvent cancel = MotionEvent.obtain(event);
+                cancel.setAction(MotionEvent.ACTION_CANCEL);
+                requireActivity().getWindow().superDispatchTouchEvent(cancel);
+                cancel.recycle();
+                hideControlsOverlay(true);
+                return true;
+            }
+
+            case MotionEvent.ACTION_CANCEL:
+                mOverlayTapCandidate = false;
+                return false;
+        }
+        return false;
+    }
+
+    /**
+     * Whether a visible player control sits under the raw point: a clickable view or a focusable
+     * leaf (the Leanback action buttons, seek bar, suggestion cards and the back button). Views at
+     * least {@code containerArea} in size are treated as containers, not controls, so a
+     * full-screen clickable host can't swallow every tap.
+     */
+    private boolean hitsPlayerControl(View v, float rawX, float rawY, int containerArea) {
+        if (v.getVisibility() != View.VISIBLE || v.getAlpha() == 0f
+                || !viewContainsRaw(v, rawX, rawY)) {
+            return false;
+        }
+        boolean isGroup = v instanceof ViewGroup;
+        boolean interactive = v.isClickable() || v.isLongClickable() || (!isGroup && v.isFocusable());
+        if (interactive && v.getWidth() * v.getHeight() < containerArea) {
+            return true;
+        }
+        if (isGroup) {
+            ViewGroup group = (ViewGroup) v;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                if (hitsPlayerControl(group.getChildAt(i), rawX, rawY, containerArea)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean handleShortsTouchEvent(MotionEvent event) {
