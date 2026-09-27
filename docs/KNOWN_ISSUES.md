@@ -3,7 +3,7 @@
 Tracked issues for the current beta. Keep this honest and current — it is part of the release
 checklist and what makes a beta release trustworthy.
 
-Current release: `v0.5.0-beta.8+st32.56`  ·  Upstream SmartTube base: `32.56`  ·  Channel: beta
+Current release: `v0.6.1-beta.1+st32.59`  ·  Upstream SmartTube base: `32.59`  ·  Channel: beta
 
 ## Status / classification
 
@@ -132,6 +132,10 @@ Resolved this release:
   dialog" feature zooms the video to ~63% and pins it left so a TV side-panel doesn't cover it.
   Phone dialogs are bottom sheets, so the phone now turns on "Don't resize video to fit dialog"
   once (Settings > Player; a user can turn it back off).
+- **Video quality and zoom sliders were lists in beta.8** — fixed in `v0.6.1-beta.1` ([#44],
+  verified on device). A beta.8 guard meant for the context-menu position picker (#43) rejected any
+  slider with a label over 16 characters, so Video formats and Video zoom became tap-to-open
+  lists. Now only numbered sentences ("16 Exclude this channel…") are kept as lists.
 - **Shorts oversized on tablets** — fixed in `v0.6.0-beta.1` ([#30]). The Shorts area was always
   full-width 9:16, taller than a 4:3 tablet screen; on screens wider than 10:16 it is now sized
   from the available height and centred with side bars.
@@ -166,6 +170,7 @@ Resolved this release:
 [#28]: https://github.com/CodeSculptor/SmarterTube/issues/28
 [#29]: https://github.com/CodeSculptor/SmarterTube/issues/29
 [#30]: https://github.com/CodeSculptor/SmarterTube/issues/30
+[#44]: https://github.com/CodeSculptor/SmarterTube/issues/44
 [#31]: https://github.com/CodeSculptor/SmarterTube/issues/31
 [#32]: https://github.com/CodeSculptor/SmarterTube/issues/32
 [#33]: https://github.com/CodeSculptor/SmarterTube/issues/33

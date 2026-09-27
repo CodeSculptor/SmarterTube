@@ -254,6 +254,7 @@ android {
             //         tap video to hide player controls #39; up-next long-press menu #42).
             // 23729 = v0.6.0-beta.1+st32.56 ("Layout/Orientation": no video shrink under settings dialogs #29;
             //         Shorts fitted on tablets #30; phone landscape + tablet layout audit #25).
+            // 23730 = v0.6.1-beta.1+st32.59 (upstream SmartTube 32.59 sync; video format/zoom sliders restored #44).
             versionCode 23729
             versionName "v0.6.0-beta.1+st32.56"
         }

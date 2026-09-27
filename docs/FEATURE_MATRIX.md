@@ -35,7 +35,7 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | Subscriptions feed | Works | Drives upload notifications |
 | History | Unknown | Not re-verified this cycle |
 | Playlists | Unknown | Not re-verified this cycle |
-| Settings screen (portrait) | Works | Mobile-friendly inputs (#26, verified on device): categorical single-choice settings collapse to a value row + bottom-sheet picker; numeric ranges (speed, zoom, seek interval, volume, auto-hide) use an inline slider that only drags from the thumb so list scrolling is unaffected; checkbox-heavy screens group into collapsible sections (long screens start collapsed with an "N ON" count, tap a header to expand). Nested dialogs return to the screen they were opened from (#43); ticking a Context menu item just enables it (no position popup; order via Context menu sorting, whose list refreshes only on reopening General) |
+| Settings screen (portrait) | Works | Mobile-friendly inputs (#26, verified on device): categorical single-choice settings collapse to a value row + bottom-sheet picker; numeric ranges (speed, zoom, video/audio formats, seek interval, volume, auto-hide; format/zoom sliders restored in v0.6.1-beta.1, #44) use an inline slider that only drags from the thumb so list scrolling is unaffected; checkbox-heavy screens group into collapsible sections (long screens start collapsed with an "N ON" count, tap a header to expand). Nested dialogs return to the screen they were opened from (#43); ticking a Context menu item just enables it (no position popup; order via Context menu sorting, whose list refreshes only on reopening General) |
 | Theme picker (light/dark) | Unknown | Recent work; verify on device |
 | About screen | Works | |
 
