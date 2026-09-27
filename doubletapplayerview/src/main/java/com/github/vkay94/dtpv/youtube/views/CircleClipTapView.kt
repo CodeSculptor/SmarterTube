@@ -116,7 +116,10 @@ internal class CircleClipTapView(context: Context?, attrs: AttributeSet) :
         cX = x
         cY = y
 
-        val newIsLeft = x <= resources.displayMetrics.widthPixels / 2
+        // MOD: the view's own width, not displayMetrics. The host app can leave stale (portrait)
+        // display metrics in place, so in landscape a rewind tap past the old half-width drew its
+        // ripple on the right-hand (forward) side.
+        val newIsLeft = x <= widthPx / 2
         if (isLeft != newIsLeft) {
             isLeft = newIsLeft
             updatePathShape()
