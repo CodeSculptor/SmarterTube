@@ -111,6 +111,19 @@
         app:layout_constraintEnd_toEndOf="@id/playback_controls_fragment" />
 
     <!--
+        Modern player chrome (#46, Modern + Tap to pause styles): top bar, centre controls, time,
+        seek bar and the landscape action row, over the video. See mobile_modern_chrome.xml.
+    -->
+    <include
+        layout="@layout/mobile_modern_chrome"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="@id/playback_controls_fragment"
+        app:layout_constraintBottom_toBottomOf="@id/playback_controls_fragment"
+        app:layout_constraintStart_toStartOf="@id/playback_controls_fragment"
+        app:layout_constraintEnd_toEndOf="@id/playback_controls_fragment" />
+
+    <!--
         Shorts info bar: title + channel name shown BELOW the 9:16 video strip.
         Always visible while in Shorts mode (does not auto-hide). Replaces the regular
         up-next panel for Shorts; hidden when the regular panel is shown.
@@ -674,4 +687,14 @@
             android:visibility="gone"
             android:text="No playlists yet" />
     </LinearLayout>
+
+    <!-- Modern player sheet (#46): settings actions / More videos, above everything else. -->
+    <include
+        layout="@layout/mobile_modern_sheet"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

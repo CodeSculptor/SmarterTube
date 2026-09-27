@@ -27,6 +27,7 @@ import com.liskovsoft.smartyoutubetv2.mobile.ui.dialogs.MobileAppDialogActivity;
 import com.liskovsoft.smartyoutubetv2.mobile.notifications.NotificationPollWorker;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.playback.MobilePlaybackActivity;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobileNotificationPrefs;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobilePlayerStylePrefs;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobileThemePrefs;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.search.MobileSearchActivity;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.signin.MobileSignInActivity;
@@ -83,6 +84,9 @@ public class MobileApplication extends MainApplication {
         // signed out, so this is safe to call unconditionally on every cold start.
         NotificationPollWorker.schedule(this);
 
+        // Must run before the *Once() defaults below: it tells a fresh install from an existing
+        // one by whether those one-time flags have been written yet.
+        choosePlayerStyleOnce();
         hideScreenDimmingButtonOnce();
         keepVideoSizeUnderDialogsOnce();
         defaultBackgroundPlaybackOnce();
@@ -122,6 +126,24 @@ public class MobileApplication extends MainApplication {
             PlayerTweaksData.instance(this).setPlayerButtonDisabled(PlayerTweaksData.PLAYER_BUTTON_SCREEN_DIMMING);
             prefs.edit().putBoolean("screen_dimming_hidden", true).apply();
         }
+    }
+
+    /**
+     * Pick the default phone player style once (#46). Fresh installs get the Modern style (phone-style
+     * controls familiar to phone users); existing users keep the Classic SmartTube-style controls
+     * they already know. An existing install is recognised by the one-time flags earlier versions
+     * wrote to "mobile_player_prefs". The choice is stored, so later launches never change it.
+     */
+    private void choosePlayerStyleOnce() {
+        if (MobilePlayerStylePrefs.isSet(this)) {
+            return;
+        }
+        SharedPreferences prefs = getSharedPreferences("mobile_player_prefs", MODE_PRIVATE);
+        boolean existingInstall = prefs.contains("background_sound_defaulted")
+                || prefs.contains("screen_dimming_hidden");
+        MobilePlayerStylePrefs.setStyle(this, existingInstall
+                ? MobilePlayerStylePrefs.Style.CLASSIC
+                : MobilePlayerStylePrefs.Style.MODERN);
     }
 
     /**

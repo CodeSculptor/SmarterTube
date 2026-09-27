@@ -44,6 +44,7 @@ import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
 import com.liskovsoft.smartyoutubetv2.mobile.notifications.NotificationPollWorker;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.about.MobileAboutActivity;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobileNotificationPrefs;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobilePlayerStylePrefs;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobileThemePrefs;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 
@@ -349,6 +350,10 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
                     this::showThemePicker,
                     R.drawable.settings_theme));
             items.add(new SettingsItem(
+                    context.getString(R.string.mobile_player_style_title),
+                    this::showPlayerStylePicker,
+                    R.drawable.settings_player_style));
+            items.add(new SettingsItem(
                     context.getString(R.string.mobile_notifications_title),
                     this::showNotificationsToggle,
                     R.drawable.settings_notifications));
@@ -398,6 +403,31 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
                     if (getActivity() != null) {
                         getActivity().recreate();
                     }
+                })
+                .show();
+    }
+
+    /**
+     * Phone-only "Player style" picker (#46): Classic / Modern / Tap to pause. Drives
+     * {@link MobilePlayerStylePrefs}; the player reads it each time it resumes.
+     */
+    private void showPlayerStylePicker() {
+        Context context = getContext();
+        if (context == null) {
+            return;
+        }
+        MobilePlayerStylePrefs.Style[] styles = MobilePlayerStylePrefs.Style.values();
+        String[] labels = {
+                context.getString(R.string.mobile_player_style_classic),
+                context.getString(R.string.mobile_player_style_modern),
+                context.getString(R.string.mobile_player_style_tap_to_pause),
+        };
+        int checked = MobilePlayerStylePrefs.getStyle(context).ordinal();
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.mobile_player_style_title)
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    MobilePlayerStylePrefs.setStyle(context, styles[which]);
+                    dialog.dismiss();
                 })
                 .show();
     }

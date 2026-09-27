@@ -9,6 +9,7 @@ import android.os.Build.VERSION_CODES;
 import android.os.Handler;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.text.TextUtils;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -46,6 +47,7 @@ import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.RemoteControlService;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.utils.AppDialogUtil;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobilePlayerStylePrefs;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.PlaybackFragment;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.other.VideoPlayerGlue;
@@ -168,6 +170,17 @@ public class MobilePlaybackFragment extends PlaybackFragment {
 
     // Auto-hide for the Shorts overlay chrome (rail + back button).
     private final Handler mChromeHandler = new Handler();
+
+    // Player style (#46): Classic / Modern / Tap to pause, re-read on every resume.
+    private MobilePlayerStylePrefs.Style mStyle = MobilePlayerStylePrefs.Style.CLASSIC;
+    private MobilePlayerStylePrefs.Style mLastStyle;
+    // Phone-style controls for the Modern and Tap to pause styles.
+    private ModernPlayerChrome mModernChrome;
+    // Tap to pause: our own tap detector while the controls are hidden (single tap = play/pause,
+    // double tap = seek), replacing upstream's tickle-on-touch-down there.
+    private GestureDetector mTapDetector;
+    // Lets our own "resume → hide the controls" through the paused-controls hold in hideControlsOverlay.
+    private boolean mForceHideControls;
     // Hides the Shorts chrome (action rail + back button + seek bar). Only ever scheduled when
     // the auto-hide setting is on, so firing always means "hide now".
     private final Runnable mHideShortsChr = () -> setShortsChrome(false);
@@ -188,7 +201,10 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         // applyMobileLayout does a full re-apply (ratio + control/decor visibility + chrome)
         // instead of early-returning because the state looks unchanged.
         mLayoutState = -1;
+        // The player style may have changed in Settings while we were away (#46).
+        mStyle = MobilePlayerStylePrefs.getStyle(requireContext());
         applyMobileLayout();
+        if (mModernChrome != null) mModernChrome.start();
     }
 
     @Override
@@ -213,6 +229,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         mChromeHandler.removeCallbacks(mShortsFrameTimeout);
         mChromeHandler.removeCallbacks(mShortsLoopPoll);
         mChromeHandler.removeCallbacks(mShortsLoopTimeout);
+        if (mModernChrome != null) mModernChrome.stop();
         mAwaitingShortsFrame = false;
         mAwaitingShortsLoop = false;
     }
@@ -286,6 +303,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         }
 
         mTitleView.setText(video.getTitle() != null ? video.getTitle() : "");
+        if (mModernChrome != null) mModernChrome.bindVideo(video);
         mDescriptionView.setText(video.description != null ? video.description : "");
         mExpandView.setVisibility(TextUtils.isEmpty(video.description) ? View.GONE : View.VISIBLE);
 
@@ -403,6 +421,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             if (mShortsDislikeBtn    != null) tintRailButton(mShortsDislikeBtn,    active);
             tintPortraitButton(mPortraitDislikeBtn, active);
         }
+        if (mModernChrome != null) mModernChrome.update();
     }
 
     /** Views/date: the first non-author segment of "Author • views • date". */
@@ -429,8 +448,9 @@ public class MobilePlaybackFragment extends PlaybackFragment {
 
     @Override
     public void updateSuggestions(VideoGroup group) {
-        // In strip mode the rows stay empty — see mSuggestionGroups.
-        if (!mStripMode) {
+        // In strip mode (and in the Modern styles, which have More videos instead) the rows stay
+        // empty — see mSuggestionGroups.
+        if (!mStripMode && !mStyle.isModern()) {
             super.updateSuggestions(group);
         }
 
@@ -525,6 +545,11 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         View playerView = getView();
         if (playerView == null) return false;
 
+        // Modern styles' settings / More videos sheet: the card takes its own touches, a tap outside closes it.
+        if (mModernChrome != null && mModernChrome.isSheetOpen()) {
+            return mModernChrome.handleSheetTouch(event);
+        }
+
         // Shorts: all touch is managed here (drag pager + tap-to-toggle).
         if (mLayoutState == 2) {
             return handleShortsTouchEvent(event);
@@ -535,8 +560,44 @@ public class MobilePlaybackFragment extends PlaybackFragment {
 
         // Non-Shorts: original phantom-tap guard.
         if (event.getY() > playerView.getBottom()) return false;
+        // Tap to pause style (#46): a tap plays/pauses and a double tap seeks, via our own detector
+        // (upstream's path shows the controls on touch-down, before a tap can be told apart).
+        if (mStyle.tapTogglesPlayback() && mTapDetector != null) {
+            mTapDetector.onTouchEvent(event);
+            return true;
+        }
         onDispatchTouchEvent(event); // overlay tickle + double-tap seek
         return true;
+    }
+
+    /**
+     * Tap to pause style: pausing brings up the controls (their centre button then shows ▶);
+     * resuming hides them and flashes the play icon, like the Shorts player.
+     */
+    void togglePlaybackFromTap() {
+        boolean play = !getPlayWhenReady();
+        setPlayWhenReady(play);
+        if (play) {
+            mForceHideControls = true;
+            hideControlsOverlay(true);
+            mForceHideControls = false;
+            showShortsPlayPauseIcon(true);
+        } else {
+            showControlsOverlay(true);
+        }
+    }
+
+    /** Tap to pause style: a double tap seeks back (left half) or forward (right half). */
+    private void seekFromDoubleTap(MotionEvent e) {
+        View playerView = getView();
+        if (playerView == null) return;
+        long step = PlayerData.instance(getContext()).getSeekIncrementMs();
+        long target = e.getX() < playerView.getWidth() / 2f
+                ? Math.max(0, getPositionMs() - step)
+                : Math.min(getDurationMs(), getPositionMs() + step);
+        setPositionMs(target);
+        // Show the seek bar briefly so the jump is visible; it auto-hides while playing.
+        tickle();
     }
 
     /**
@@ -577,7 +638,11 @@ public class MobilePlaybackFragment extends PlaybackFragment {
                 cancel.setAction(MotionEvent.ACTION_CANCEL);
                 requireActivity().getWindow().superDispatchTouchEvent(cancel);
                 cancel.recycle();
-                hideControlsOverlay(true);
+                if (mStyle.tapTogglesPlayback()) {
+                    togglePlaybackFromTap(); // Tap to pause style: toggle instead of hiding
+                } else {
+                    hideControlsOverlay(true);
+                }
                 return true;
             }
 
@@ -738,6 +803,13 @@ public class MobilePlaybackFragment extends PlaybackFragment {
 
         applyOverlayDecorVisibility(strip);
 
+        // Before the unchanged-state early return: PIP entry/exit and a style change don't change
+        // the layout state but do change whether the modern controls belong on screen.
+        if (mModernChrome != null) {
+            mModernChrome.applyOrientation(!portrait);
+            mModernChrome.sync();
+        }
+
         // Keyed on the 3-value state (not just the boolean) so a regular<->Shorts switch — both of
         // which are "strip" — still re-applies the new dimension ratio.
         int layoutState = !strip ? 0 : (isShorts ? 2 : 1);
@@ -774,7 +846,10 @@ public class MobilePlaybackFragment extends PlaybackFragment {
 
         // Leanback suggestion rows: removed while in the strip (they draw inside the small video
         // area and stay clickable underneath it), replayed from the cache on return to full-screen.
-        if (strip) {
+        // The Modern styles never show them: their landscape controls have More videos instead,
+        // and with the Leanback control row hidden, focus would drop onto the rows and scroll them
+        // into view behind the controls (#46).
+        if (strip || mStyle.isModern()) {
             super.clearSuggestions();
         } else {
             for (VideoGroup group : mSuggestionGroups) {
@@ -811,7 +886,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
 
         // Non-Shorts: make sure the Leanback control row is visible (a prior Shorts auto-hide
         // may have left it INVISIBLE). In Shorts, setShortsChrome owns the control row.
-        if (layoutState != 2) setShortsControlsVisible(true);
+        if (layoutState != 2) setShortsControlsVisible(!mStyle.isModern());
 
         // Shorts shows only the seek bar over full-bleed video — kill the Leanback dim scrim
         // (BG_LIGHT, set at fragment creation) so the video isn't darkened. Restore it for
@@ -837,9 +912,13 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         applyOverlayDecorVisibility(mStripMode);
         // Non-Shorts: ensure the control row is visible after the lazy inflate. In Shorts the
         // control row (transport buttons + seek bar + time) is owned by setShortsChrome.
-        if (mLayoutState != 2) setShortsControlsVisible(true);
-        // Back button follows the player controls on all non-Shorts pages.
-        if (mShortsBackBtn != null && mLayoutState != 2) mShortsBackBtn.setVisibility(View.VISIBLE);
+        // Modern styles hide the Leanback row and draw their own controls instead (#46).
+        if (mLayoutState != 2) setShortsControlsVisible(!mStyle.isModern());
+        // Back button follows the player controls on all non-Shorts pages (Modern has its own).
+        if (mShortsBackBtn != null && mLayoutState != 2) {
+            mShortsBackBtn.setVisibility(mStyle.isModern() ? View.INVISIBLE : View.VISIBLE);
+        }
+        if (mModernChrome != null) mModernChrome.sync();
     }
 
     @Override
@@ -849,8 +928,67 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         // Leanback hide here (used by e.g. PlayerUIController's auto-hide) avoids the translate
         // animation that left the seek bar stuck near the top of the screen.
         if (mLayoutState == 2) return;
+        // Tap to pause style (#46): while paused the controls stay up (it's how you reach them), so
+        // hold off auto-hides until playback resumes. Our own resume path forces the hide.
+        if (mStyle.tapTogglesPlayback() && !mForceHideControls
+                && !getPlayWhenReady() && !isInPipMode()) {
+            return;
+        }
         if (mShortsBackBtn != null) mShortsBackBtn.setVisibility(View.INVISIBLE);
         super.hideControlsOverlay(runAnimation);
+        if (mModernChrome != null) mModernChrome.sync();
+    }
+
+    /** Modern controls belong on screen only over a regular video (full screen or strip), never in PIP. */
+    boolean modernChromeAllowed() {
+        return (mLayoutState == 0 || mLayoutState == 1) && !isInPipMode();
+    }
+
+    MobilePlayerStylePrefs.Style style() {
+        return mStyle;
+    }
+
+    VideoPlayerGlue glue() {
+        return getPlayerGlue();
+    }
+
+    UpNextRowAdapter upNextAdapter() {
+        return mUpNextAdapter;
+    }
+
+    RecyclerView upNextList() {
+        return mUpNextList;
+    }
+
+    boolean isModernSheetOpen() {
+        return mModernChrome != null && mModernChrome.isSheetOpen();
+    }
+
+    /** Back: closes the modern settings / More videos sheet if it's open. */
+    boolean closeModernSheet() {
+        return mModernChrome != null && mModernChrome.closeSheet();
+    }
+
+    /** Tap to pause: single tap plays/pauses, double tap seeks (see interceptPlayerTouch). */
+    private void initTapDetector(Activity activity) {
+        mTapDetector = new GestureDetector(activity, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return true;
+            }
+
+            @Override
+            public boolean onSingleTapConfirmed(MotionEvent e) {
+                togglePlaybackFromTap();
+                return true;
+            }
+
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                seekFromDoubleTap(e);
+                return true;
+            }
+        });
     }
 
     @Override
@@ -1371,10 +1509,12 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         if (getActivity() == null) {
             return;
         }
+        // Modern styles show their own title/time, so the Leanback ones go in landscape too (#46).
+        boolean hide = strip || mStyle.isModern();
         for (int id : new int[]{R.id.controls_card, R.id.quality_info, R.id.date_time}) {
             View view = getActivity().findViewById(id);
             if (view != null) {
-                view.setVisibility(strip ? View.GONE : View.VISIBLE);
+                view.setVisibility(hide ? View.GONE : View.VISIBLE);
             }
         }
     }
@@ -1385,10 +1525,12 @@ public class MobilePlaybackFragment extends PlaybackFragment {
      */
     private void syncCompactControls(boolean compact) {
         VideoPlayerGlue glue = getPlayerGlue();
-        if (glue != null && (glue != mLastGlue || compact != mLastCompact)) {
-            glue.setCompactControls(compact);
+        if (glue != null && (glue != mLastGlue || compact != mLastCompact || mStyle != mLastStyle)) {
+            // Modern styles hide the row but keep the full action set: the settings sheet lists it.
+            glue.setCompactControls(compact && !mStyle.isModern());
             mLastGlue = glue;
             mLastCompact = compact;
+            mLastStyle = mStyle;
         }
     }
 
@@ -1472,6 +1614,8 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         }
 
         initShortsViews(activity);
+        mModernChrome = ModernPlayerChrome.create(this, activity);
+        initTapDetector(activity);
 
         return true;
     }

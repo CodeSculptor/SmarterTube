@@ -1,0 +1,488 @@
+package com.liskovsoft.smartyoutubetv2.mobile.ui.playback;
+
+import android.app.Activity;
+import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.SeekBar;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.leanback.widget.Action;
+import androidx.leanback.widget.ArrayObjectAdapter;
+import androidx.leanback.widget.ObjectAdapter;
+import androidx.leanback.widget.PlaybackControlsRow;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
+import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerUI;
+import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
+import com.liskovsoft.smartyoutubetv2.tv.R;
+import com.liskovsoft.smartyoutubetv2.tv.ui.playback.other.VideoPlayerGlue;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Phone-style player controls for regular videos (#46, the Modern and Tap to pause player styles).
+ *
+ * The Leanback control rows stay alive but hidden (their action set, state and auto-hide timer keep
+ * working); this class draws its own chrome over the video and routes every button through the
+ * same glue actions the Leanback buttons use, so behaviour is identical to Classic. Its visibility
+ * follows one source of truth, the Leanback overlay state ({@link MobilePlaybackFragment#isOverlayShown()}),
+ * checked on every show/hide and on a short poll, so no code path can leave the two out of step.
+ *
+ * Portrait: top bar (close, CC, settings), centre previous / play-pause / next, time + fullscreen,
+ * seek bar along the bottom edge. Landscape adds the title and channel, and an action row (like,
+ * dislike, comments, save, share, more) with a More videos button. Everything else the player can
+ * do is in the settings sheet, built from the user's own player-button list, so nothing needs a
+ * rotation to reach.
+ */
+final class ModernPlayerChrome {
+    private static final int POLL_MS = 200;
+    private static final int SEEK_MAX = 1000;
+    private static final int ACTIVE_TINT = 0xFF3EA6FF; // same "on" tint as the Shorts action rail
+    private static final int SHEET_MAX_WIDTH_DP = 560;
+    private static final int SHEET_ROW_HEIGHT_DP = 52;
+
+    private final MobilePlaybackFragment mHost;
+    private final Activity mActivity;
+    private final View mRoot;
+    private final View mTitleBlock;
+    private final TextView mTitle;
+    private final TextView mChannel;
+    private final ImageButton mCc;
+    private final ImageButton mPlayPause;
+    private final TextView mTime;
+    private final ImageButton mFullscreen;
+    private final SeekBar mSeek;
+    private final View mActions;
+    private final ImageButton mLike;
+    private final ImageButton mDislike;
+
+    private final View mSheet;
+    private final View mSheetCard;
+    private final TextView mSheetTitle;
+    private final RecyclerView mSheetList;
+    private boolean mSheetShowsUpNext;
+
+    private final Handler mHandler = new Handler(Looper.getMainLooper());
+    private final Runnable mPoll = new Runnable() {
+        @Override
+        public void run() {
+            sync();
+            mHandler.postDelayed(this, POLL_MS);
+        }
+    };
+    private boolean mLandscape;
+    private boolean mUserSeeking;
+
+    /** Returns null if the chrome views aren't in the player layout. */
+    static ModernPlayerChrome create(MobilePlaybackFragment host, Activity activity) {
+        return activity.findViewById(R.id.mobile_modern_chrome) != null
+                && activity.findViewById(R.id.mobile_modern_sheet) != null
+                ? new ModernPlayerChrome(host, activity) : null;
+    }
+
+    private ModernPlayerChrome(MobilePlaybackFragment host, Activity activity) {
+        mHost = host;
+        mActivity = activity;
+        mRoot = activity.findViewById(R.id.mobile_modern_chrome);
+        mTitleBlock = mRoot.findViewById(R.id.modern_title_block);
+        mTitle = mRoot.findViewById(R.id.modern_title);
+        mChannel = mRoot.findViewById(R.id.modern_channel);
+        mCc = mRoot.findViewById(R.id.modern_cc);
+        mPlayPause = mRoot.findViewById(R.id.modern_play_pause);
+        mTime = mRoot.findViewById(R.id.modern_time);
+        mFullscreen = mRoot.findViewById(R.id.modern_fullscreen);
+        mSeek = mRoot.findViewById(R.id.modern_seek);
+        mActions = mRoot.findViewById(R.id.modern_actions);
+        mLike = mRoot.findViewById(R.id.modern_like);
+        mDislike = mRoot.findViewById(R.id.modern_dislike);
+
+        mSheet = activity.findViewById(R.id.mobile_modern_sheet);
+        mSheetCard = mSheet.findViewById(R.id.modern_sheet_card);
+        mSheetTitle = mSheet.findViewById(R.id.modern_sheet_title);
+        mSheetList = mSheet.findViewById(R.id.modern_sheet_list);
+        mSheetList.setLayoutManager(new LinearLayoutManager(activity));
+
+        mRoot.findViewById(R.id.modern_collapse).setOnClickListener(v -> mActivity.onBackPressed());
+        mCc.setOnClickListener(v -> clickAction(R.id.lb_control_closed_captioning));
+        mCc.setOnLongClickListener(v -> longClickAction(R.id.lb_control_closed_captioning));
+        mRoot.findViewById(R.id.modern_settings).setOnClickListener(v -> openActionsSheet());
+        mRoot.findViewById(R.id.modern_more).setOnClickListener(v -> openActionsSheet());
+        mRoot.findViewById(R.id.modern_previous).setOnClickListener(v -> {
+            VideoPlayerGlue glue = mHost.glue();
+            if (glue != null) glue.previous();
+            mHost.tickle();
+        });
+        mRoot.findViewById(R.id.modern_next).setOnClickListener(v -> {
+            VideoPlayerGlue glue = mHost.glue();
+            if (glue != null) glue.next();
+            mHost.tickle();
+        });
+        mPlayPause.setOnClickListener(v -> {
+            if (mHost.style().tapTogglesPlayback()) {
+                mHost.togglePlaybackFromTap();
+            } else {
+                mHost.setPlayWhenReady(!mHost.getPlayWhenReady());
+                mHost.tickle(); // restart the auto-hide timer
+            }
+            update();
+        });
+        mFullscreen.setOnClickListener(v -> {
+            if (mActivity instanceof MobilePlaybackActivity) {
+                ((MobilePlaybackActivity) mActivity).toggleFullscreen();
+            }
+        });
+        mChannel.setOnClickListener(v -> clickAction(R.id.action_channel));
+        mLike.setOnClickListener(v -> clickAction(R.id.action_thumbs_up));
+        mDislike.setOnClickListener(v -> clickAction(R.id.action_thumbs_down));
+        mRoot.findViewById(R.id.modern_comments).setOnClickListener(v -> clickAction(R.id.action_chat));
+        mRoot.findViewById(R.id.modern_save).setOnClickListener(v -> clickAction(R.id.action_playlist_add));
+        mRoot.findViewById(R.id.modern_share).setOnClickListener(v -> clickAction(R.id.action_share));
+        mRoot.findViewById(R.id.modern_more_videos).setOnClickListener(v -> openUpNextSheet());
+
+        mSeek.setMax(SEEK_MAX);
+        mSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    long duration = mHost.getDurationMs();
+                    mTime.setText(formatTime(duration * progress / SEEK_MAX, duration));
+                    mHost.tickle(); // keep the controls up while dragging
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                mUserSeeking = true;
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                long duration = mHost.getDurationMs();
+                if (duration > 0) {
+                    mHost.setPositionMs(duration * seekBar.getProgress() / SEEK_MAX);
+                }
+                mUserSeeking = false;
+                mHost.tickle();
+            }
+        });
+    }
+
+    /** Start following the overlay state (player resumed). */
+    void start() {
+        mHandler.removeCallbacks(mPoll);
+        mHandler.post(mPoll);
+    }
+
+    /** Stop following (player paused / backgrounded). */
+    void stop() {
+        mHandler.removeCallbacks(mPoll);
+    }
+
+    /** Show the chrome exactly when the Leanback overlay is shown and the style/layout allow it. */
+    void sync() {
+        boolean show = mHost.style().isModern() && mHost.modernChromeAllowed() && mHost.isOverlayShown();
+        if (!show && mSheet.getVisibility() == View.VISIBLE && !mHost.modernChromeAllowed()) {
+            closeSheet(); // e.g. entering PIP or switching to a Short
+        }
+        mRoot.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (show) {
+            update();
+        }
+    }
+
+    /** Portrait strip vs landscape full screen. */
+    void applyOrientation(boolean landscape) {
+        mLandscape = landscape;
+        // Portrait keeps the title block's space (it pushes CC/settings to the right) but not its text.
+        mTitleBlock.setVisibility(landscape ? View.VISIBLE : View.INVISIBLE);
+        mActions.setVisibility(landscape ? View.VISIBLE : View.GONE);
+        // Landscape runs edge to edge (under a camera cutout too), so keep the controls off the edges.
+        int side = landscape ? dp(24) : 0;
+        mRoot.setPadding(side, 0, side, 0);
+        mFullscreen.setImageResource(landscape ? R.drawable.ic_modern_fullscreen_exit : R.drawable.ic_modern_fullscreen);
+        if (mSheet.getVisibility() == View.VISIBLE) {
+            closeSheet();
+        }
+    }
+
+    void bindVideo(Video video) {
+        mTitle.setText(video != null && video.getTitle() != null ? video.getTitle() : "");
+        mChannel.setText(video != null && video.getAuthor() != null ? video.getAuthor() : "");
+        if (mSheetShowsUpNext) {
+            closeSheet(); // a video picked from More videos is now playing
+        }
+    }
+
+    /** Refresh the play/pause icon, time, seek bar and toggle states. */
+    void update() {
+        if (mRoot.getVisibility() != View.VISIBLE) {
+            return;
+        }
+        mPlayPause.setImageResource(mHost.getPlayWhenReady() ? R.drawable.ic_shorts_pause : R.drawable.ic_shorts_play);
+        long duration = mHost.getDurationMs();
+        if (!mUserSeeking) {
+            long position = mHost.getPositionMs();
+            mTime.setText(formatTime(position, duration));
+            mSeek.setProgress(duration > 0 ? (int) (position * SEEK_MAX / duration) : 0);
+        }
+        mCc.setAlpha(isOn(R.id.lb_control_closed_captioning) ? 1f : 0.6f);
+        tint(mLike, isOn(R.id.action_thumbs_up));
+        tint(mDislike, isOn(R.id.action_thumbs_down));
+    }
+
+    // ---- Sheet ---------------------------------------------------------------------------------
+
+    boolean isSheetOpen() {
+        return mSheet.getVisibility() == View.VISIBLE;
+    }
+
+    /** Touch routing while the sheet is open: the card handles its own touches; a tap outside closes. */
+    boolean handleSheetTouch(MotionEvent event) {
+        int[] loc = new int[2];
+        mSheetCard.getLocationOnScreen(loc);
+        boolean inside = event.getRawX() >= loc[0] && event.getRawX() <= loc[0] + mSheetCard.getWidth()
+                && event.getRawY() >= loc[1] && event.getRawY() <= loc[1] + mSheetCard.getHeight();
+        if (inside) {
+            return false;
+        }
+        if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+            closeSheet();
+        }
+        return true;
+    }
+
+    /** Closes the sheet if it's open; returns whether it was (for Back). */
+    boolean closeSheet() {
+        if (mSheet.getVisibility() != View.VISIBLE) {
+            return false;
+        }
+        mSheet.setVisibility(View.GONE);
+        if (mSheetShowsUpNext) {
+            // Hand the up-next adapter back to the portrait panel's list.
+            mSheetList.setAdapter(null);
+            RecyclerView panelList = mHost.upNextList();
+            if (panelList != null) panelList.setAdapter(mHost.upNextAdapter());
+            mSheetShowsUpNext = false;
+        } else {
+            mSheetList.setAdapter(null);
+        }
+        return true;
+    }
+
+    private void openActionsSheet() {
+        List<Action> actions = new ArrayList<>();
+        for (Action action : rowActions()) {
+            if (!isOnScreen(action)) {
+                actions.add(action);
+            }
+        }
+        mSheetTitle.setText(R.string.mobile_player_settings);
+        mSheetList.setAdapter(new ActionAdapter(actions));
+        showSheet(Math.min(actions.size() * dp(SHEET_ROW_HEIGHT_DP), maxSheetListHeight()));
+    }
+
+    private void openUpNextSheet() {
+        UpNextRowAdapter adapter = mHost.upNextAdapter();
+        if (adapter == null) {
+            return;
+        }
+        // One adapter, one list at a time: borrow it from the (hidden in landscape) portrait panel.
+        RecyclerView panelList = mHost.upNextList();
+        if (panelList != null) panelList.setAdapter(null);
+        mSheetShowsUpNext = true;
+        mSheetTitle.setText(R.string.mobile_player_more_videos);
+        mSheetList.setAdapter(adapter);
+        showSheet(maxSheetListHeight());
+    }
+
+    private void showSheet(int listHeight) {
+        ViewGroup.LayoutParams listLp = mSheetList.getLayoutParams();
+        listLp.height = listHeight;
+        mSheetList.setLayoutParams(listLp);
+        ViewGroup.LayoutParams cardLp = mSheetCard.getLayoutParams();
+        int screenWidth = mActivity.getResources().getDisplayMetrics().widthPixels;
+        cardLp.width = mLandscape ? Math.min(dp(SHEET_MAX_WIDTH_DP), screenWidth) : ViewGroup.LayoutParams.MATCH_PARENT;
+        mSheetCard.setLayoutParams(cardLp);
+        mSheetList.scrollToPosition(0);
+        mSheet.setVisibility(View.VISIBLE);
+        mSheet.bringToFront();
+    }
+
+    private int maxSheetListHeight() {
+        View parent = (View) mSheet.getParent();
+        int height = parent != null && parent.getHeight() > 0
+                ? parent.getHeight() : mActivity.getResources().getDisplayMetrics().heightPixels;
+        return (int) (height * (mLandscape ? 0.7f : 0.55f));
+    }
+
+    /** Actions shown as their own buttons in this orientation don't need a sheet row. */
+    private boolean isOnScreen(Action action) {
+        if (action instanceof PlaybackControlsRow.PlayPauseAction
+                || action instanceof PlaybackControlsRow.SkipPreviousAction
+                || action instanceof PlaybackControlsRow.SkipNextAction) {
+            return true;
+        }
+        long id = action.getId();
+        if (id == R.id.lb_control_closed_captioning) {
+            return true;
+        }
+        // Like/dislike are on screen in both orientations (portrait: the panel under the video).
+        if (id == R.id.action_thumbs_up || id == R.id.action_thumbs_down) {
+            return true;
+        }
+        return mLandscape && (id == R.id.action_chat || id == R.id.action_playlist_add || id == R.id.action_share);
+    }
+
+    // ---- Actions -------------------------------------------------------------------------------
+
+    /** The glue's full action set (the user's "Setup player buttons" list), in row order. */
+    private List<Action> rowActions() {
+        List<Action> result = new ArrayList<>();
+        VideoPlayerGlue glue = mHost.glue();
+        if (glue == null || glue.getControlsRow() == null) {
+            return result;
+        }
+        addActions(result, glue.getControlsRow().getPrimaryActionsAdapter());
+        addActions(result, glue.getControlsRow().getSecondaryActionsAdapter());
+        return result;
+    }
+
+    private static void addActions(List<Action> result, ObjectAdapter adapter) {
+        if (!(adapter instanceof ArrayObjectAdapter)) {
+            return;
+        }
+        ArrayObjectAdapter array = (ArrayObjectAdapter) adapter;
+        for (int i = 0; i < array.size(); i++) {
+            if (array.get(i) instanceof Action) {
+                result.add((Action) array.get(i));
+            }
+        }
+    }
+
+    private Action findAction(int id) {
+        for (Action action : rowActions()) {
+            if (action.getId() == id) {
+                return action;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Same path as tapping the Leanback button (multi-state actions step their state there). If the
+     * user removed that button from their player-button list, fall back to the presenter directly.
+     */
+    private void clickAction(int id) {
+        VideoPlayerGlue glue = mHost.glue();
+        Action action = findAction(id);
+        if (glue != null && action != null) {
+            glue.onActionClicked(action);
+        } else {
+            PlaybackPresenter.instance(mActivity).onButtonClicked(id, isOn(id) ? PlayerUI.BUTTON_ON : PlayerUI.BUTTON_OFF);
+        }
+        mHost.tickle();
+        update();
+    }
+
+    private boolean longClickAction(int id) {
+        VideoPlayerGlue glue = mHost.glue();
+        Action action = findAction(id);
+        if (glue != null && action != null) {
+            return glue.onActionLongClicked(action);
+        }
+        return false;
+    }
+
+    private boolean isOn(int id) {
+        return mHost.getButtonState(id) == PlayerUI.BUTTON_ON;
+    }
+
+    private static void tint(ImageView view, boolean active) {
+        if (active) {
+            view.setColorFilter(ACTIVE_TINT);
+        } else {
+            view.clearColorFilter();
+        }
+    }
+
+    private int dp(int value) {
+        return (int) (value * mActivity.getResources().getDisplayMetrics().density);
+    }
+
+    private static String formatTime(long positionMs, long durationMs) {
+        return format(positionMs) + " / " + (durationMs > 0 ? format(durationMs) : "--:--");
+    }
+
+    private static String format(long ms) {
+        long total = Math.max(0, ms / 1000);
+        long hours = total / 3600;
+        long minutes = (total % 3600) / 60;
+        long seconds = total % 60;
+        return hours > 0
+                ? String.format(java.util.Locale.ROOT, "%d:%02d:%02d", hours, minutes, seconds)
+                : String.format(java.util.Locale.ROOT, "%d:%02d", minutes, seconds);
+    }
+
+    /** Rows of the settings sheet: every player action not already on screen. */
+    private final class ActionAdapter extends RecyclerView.Adapter<ActionAdapter.Holder> {
+        private final List<Action> mItems;
+
+        ActionAdapter(List<Action> items) {
+            mItems = items;
+        }
+
+        @NonNull
+        @Override
+        public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            return new Holder(LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.mobile_modern_sheet_row, parent, false));
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull Holder holder, int position) {
+            Action action = mItems.get(position);
+            Drawable icon = action.getIcon();
+            holder.icon.setImageDrawable(icon != null ? icon.getConstantState() != null
+                    ? icon.getConstantState().newDrawable().mutate() : icon : null);
+            CharSequence label = action.getLabel1() != null ? action.getLabel1() : action.getLabel2();
+            holder.label.setText(label != null ? label : "");
+            holder.itemView.setOnClickListener(v -> {
+                closeSheet();
+                VideoPlayerGlue glue = mHost.glue();
+                if (glue != null) glue.onActionClicked(action);
+            });
+            holder.itemView.setOnLongClickListener(v -> {
+                closeSheet();
+                VideoPlayerGlue glue = mHost.glue();
+                return glue != null && glue.onActionLongClicked(action);
+            });
+        }
+
+        @Override
+        public int getItemCount() {
+            return mItems.size();
+        }
+
+        final class Holder extends RecyclerView.ViewHolder {
+            final ImageView icon;
+            final TextView label;
+
+            Holder(View view) {
+                super(view);
+                icon = view.findViewById(R.id.modern_sheet_row_icon);
+                label = view.findViewById(R.id.modern_sheet_row_label);
+            }
+        }
+    }
+}

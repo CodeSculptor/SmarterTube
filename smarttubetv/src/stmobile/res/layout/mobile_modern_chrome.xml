@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Modern player chrome (#46, Modern + Tap to pause styles): replaces the Leanback control rows
+    over regular videos with a phone-style layout. Top: collapse, title (landscape), CC, settings.
+    Centre: previous / play-pause / next. Bottom: time + fullscreen, seek bar, and (landscape) an
+    action row with More videos. Driven by ModernPlayerChrome; the root is not clickable, so taps on
+    empty video still reach MobilePlaybackFragment's tap handling. GONE while hidden, so nothing in
+    here can take a phantom tap.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/mobile_modern_chrome"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:visibility="gone">
+
+    <LinearLayout
+        android:id="@+id/modern_top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="4dp"
+        android:paddingTop="4dp"
+        android:paddingEnd="4dp">
+
+        <ImageButton
+            android:id="@+id/modern_collapse"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_modern_icon_button"
+            android:contentDescription="@string/mobile_player_collapse"
+            android:src="@drawable/ic_modern_collapse" />
+
+        <LinearLayout
+            android:id="@+id/modern_title_block"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
+
+            <TextView
+                android:id="@+id/modern_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#FFFFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/modern_channel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#CCFFFFFF"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/modern_cc"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_modern_icon_button"
+            android:contentDescription="@string/mobile_player_captions"
+            android:src="@drawable/ic_modern_cc" />
+
+        <ImageButton
+            android:id="@+id/modern_settings"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_modern_icon_button"
+            android:contentDescription="@string/mobile_player_settings"
+            android:src="@drawable/ic_modern_settings" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/modern_centre"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/modern_previous"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_player_centre_button"
+            android:contentDescription="@string/mobile_player_previous"
+            android:src="@drawable/ic_player_skip_previous" />
+
+        <ImageButton
+            android:id="@+id/modern_play_pause"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_marginStart="40dp"
+            android:layout_marginEnd="40dp"
+            android:background="@drawable/bg_player_centre_button"
+            android:contentDescription="@string/mobile_player_play_pause"
+            android:src="@drawable/ic_shorts_pause" />
+
+        <ImageButton
+            android:id="@+id/modern_next"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_player_centre_button"
+            android:contentDescription="@string/mobile_player_next"
+            android:src="@drawable/ic_player_skip_next" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/modern_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="4dp">
+
+            <TextView
+                android:id="@+id/modern_time"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#FFFFFFFF"
+                android:textSize="13sp" />
+
+            <ImageButton
+                android:id="@+id/modern_fullscreen"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_modern_icon_button"
+                android:contentDescription="@string/mobile_player_fullscreen"
+                android:src="@drawable/ic_modern_fullscreen" />
+        </LinearLayout>
+
+        <SeekBar
+            android:id="@+id/modern_seek"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"
+            android:maxHeight="3dp"
+            android:minHeight="3dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:progressBackgroundTint="#66FFFFFF"
+            android:progressTint="@color/brand_accent"
+            android:splitTrack="false"
+            android:thumbTint="@color/brand_accent" />
+
+        <LinearLayout
+            android:id="@+id/modern_actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="4dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="8dp">
+
+            <ImageButton
+                android:id="@+id/modern_like"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_modern_icon_button"
+                android:contentDescription="@string/mobile_player_like"
+                android:src="@drawable/ic_shorts_like" />
+
+            <ImageButton
+                android:id="@+id/modern_dislike"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_modern_icon_button"
+                android:contentDescription="@string/mobile_player_dislike"
+                android:src="@drawable/ic_shorts_dislike" />
+
+            <ImageButton
+                android:id="@+id/modern_comments"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_modern_icon_button"
+                android:contentDescription="@string/mobile_player_comments"
+                android:src="@drawable/ic_shorts_comments" />
+
+            <ImageButton
+                android:id="@+id/modern_save"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_modern_icon_button"
+                android:contentDescription="@string/mobile_player_save"
+                android:src="@drawable/ic_modern_save" />
+
+            <ImageButton
+                android:id="@+id/modern_share"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_modern_icon_button"
+                android:contentDescription="@string/mobile_player_share"
+                android:src="@drawable/ic_modern_share" />
+
+            <ImageButton
+                android:id="@+id/modern_more"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_modern_icon_button"
+                android:contentDescription="@string/mobile_player_more"
+                android:src="@drawable/ic_modern_more" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/modern_more_videos"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_modern_pill"
+                android:gravity="center"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="@string/mobile_player_more_videos"
+                android:textColor="#FFFFFFFF"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

@@ -97,6 +97,13 @@ Resolved this release:
 
 ## Player
 
+- **Player style** ([#46]): Settings > Player style picks Classic (SmartTube control rows),
+  Modern (phone-style controls; the default on new installs) or Tap to pause. Known gaps in the
+  Modern styles: the seek bar has no preview thumbnails while dragging (Classic keeps them), and
+  Tap to pause's double-tap seek shows the seek bar rather than the ripple. The portrait panel
+  under the video keeps its current look for now.
+- **Double-tap seek highlight on the wrong side in landscape** — fixed ([#46]). The shared
+  double-tap view measured taps against stale portrait display metrics.
 - **Back stops the video and leaves** (phone UX). With background audio on (the default), the
   shared player otherwise kept the engine alive on Back and navigated to the channel, leaving
   audio playing and looping Back between player and channel ([#23], fixed). Home / lock-screen
@@ -171,6 +178,7 @@ Resolved this release:
 [#29]: https://github.com/CodeSculptor/SmarterTube/issues/29
 [#30]: https://github.com/CodeSculptor/SmarterTube/issues/30
 [#44]: https://github.com/CodeSculptor/SmarterTube/issues/44
+[#46]: https://github.com/CodeSculptor/SmarterTube/issues/46
 [#31]: https://github.com/CodeSculptor/SmarterTube/issues/31
 [#32]: https://github.com/CodeSculptor/SmarterTube/issues/32
 [#33]: https://github.com/CodeSculptor/SmarterTube/issues/33

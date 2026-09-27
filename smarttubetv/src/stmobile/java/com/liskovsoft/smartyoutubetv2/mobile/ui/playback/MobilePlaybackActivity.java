@@ -2,8 +2,12 @@ package com.liskovsoft.smartyoutubetv2.mobile.ui.playback;
 
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.OrientationEventListener;
 
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
@@ -29,6 +33,10 @@ import com.liskovsoft.smartyoutubetv2.tv.ui.playback.PlaybackActivity;
  */
 public class MobilePlaybackActivity extends PlaybackActivity {
     private MobilePlaybackFragment mMobileFragment;
+    // Full-screen button (#46): the orientation it forced, and a sensor watch that hands rotation
+    // back to the device once the phone is physically turned to match.
+    private int mForcedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+    private OrientationEventListener mOrientationWatch;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -126,6 +134,20 @@ public class MobilePlaybackActivity extends PlaybackActivity {
     }
 
     @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        // Back closes an open Modern settings / More videos sheet (#46). Caught here, before the
+        // player's own key handling, which would otherwise treat Back as leaving the video.
+        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && mMobileFragment != null
+                && mMobileFragment.isModernSheetOpen()) {
+            if (event.getAction() == KeyEvent.ACTION_UP) {
+                mMobileFragment.closeModernSheet();
+            }
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         // While the overlay is faded out its buttons are still hit-testable (Leanback hides by
         // alpha, not visibility) — consume the tap so it only reveals the controls instead of
@@ -137,18 +159,96 @@ public class MobilePlaybackActivity extends PlaybackActivity {
         return super.dispatchTouchEvent(event);
     }
 
+    /**
+     * Full-screen button (#46, Modern player styles): force landscape from portrait, or portrait
+     * from landscape. Once the phone is physically turned to match, rotation goes back to the
+     * sensor (if auto-rotate is on), so turning the phone back later works as usual. With
+     * auto-rotate off, this button is the only way into landscape, and the forced orientation stays
+     * until it's pressed again.
+     */
+    public void toggleFullscreen() {
+        boolean portrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
+        mForcedOrientation = portrait
+                ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+        setRequestedOrientation(mForcedOrientation);
+        watchForMatchingOrientation();
+    }
+
+    private void watchForMatchingOrientation() {
+        stopOrientationWatch();
+        if (!isAutoRotateOn()) {
+            return; // rotation lock: keep the forced orientation
+        }
+        mOrientationWatch = new OrientationEventListener(this) {
+            @Override
+            public void onOrientationChanged(int degrees) {
+                if (degrees == ORIENTATION_UNKNOWN) {
+                    return;
+                }
+                boolean physicalLandscape = (degrees >= 60 && degrees <= 120) || (degrees >= 240 && degrees <= 300);
+                boolean physicalPortrait = degrees <= 30 || degrees >= 330;
+                boolean matches = mForcedOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                        ? physicalLandscape : physicalPortrait;
+                if (matches) {
+                    releaseForcedOrientation();
+                }
+            }
+        };
+        if (mOrientationWatch.canDetectOrientation()) {
+            mOrientationWatch.enable();
+        } else {
+            mOrientationWatch = null;
+        }
+    }
+
+    private void releaseForcedOrientation() {
+        stopOrientationWatch();
+        mForcedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+        applyOrientationForCurrentVideo();
+    }
+
+    private void stopOrientationWatch() {
+        if (mOrientationWatch != null) {
+            mOrientationWatch.disable();
+            mOrientationWatch = null;
+        }
+    }
+
+    private boolean isAutoRotateOn() {
+        return Settings.System.getInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0) == 1;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopOrientationWatch();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mForcedOrientation != ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) {
+            watchForMatchingOrientation();
+        }
+    }
+
     private void applyOrientationForCurrentVideo() {
         Video video = PlaybackPresenter.instance(this).getVideo();
 
         if (video != null && video.isShorts) {
             // Shorts are 9:16 — lock to portrait so they fill the screen.
+            stopOrientationWatch();
+            mForcedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         } else {
             // Regular videos rotate freely: landscape = full-screen, upright = 16:9 strip with
             // the up-next panel below (MobilePlaybackFragment.applyMobileLayout). The manifest
             // lists "orientation" in configChanges, so rotation never recreates the activity
             // (no rebuffer) — the fragment just re-applies constraints.
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_USER);
+            // A full-screen button press (#46) keeps its forced orientation across videos.
+            setRequestedOrientation(mForcedOrientation != ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                    ? mForcedOrientation : ActivityInfo.SCREEN_ORIENTATION_FULL_USER);
         }
     }
 }
