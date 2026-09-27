@@ -19,6 +19,7 @@ import android.content.SharedPreferences;
 public final class MobilePlayerStylePrefs {
     private static final String PREFS_NAME = "mobile_player_style_prefs";
     private static final String KEY_STYLE = "style";
+    private static final String KEY_SWIPE_GESTURES = "swipe_gestures";
 
     public enum Style {
         CLASSIC, MODERN, TAP_TO_PAUSE;
@@ -52,6 +53,21 @@ public final class MobilePlayerStylePrefs {
 
     public static void setStyle(Context context, Style style) {
         prefs(context).edit().putString(KEY_STYLE, style.name()).apply();
+    }
+
+    /**
+     * Swipe gestures in the landscape player (#48): volume on the right, brightness on the left.
+     * Until the user chooses, on for the Modern styles and off for Classic (pure SmartTube).
+     */
+    public static boolean isSwipeGesturesEnabled(Context context) {
+        SharedPreferences prefs = prefs(context);
+        return prefs.contains(KEY_SWIPE_GESTURES)
+                ? prefs.getBoolean(KEY_SWIPE_GESTURES, false)
+                : getStyle(context).isModern();
+    }
+
+    public static void setSwipeGesturesEnabled(Context context, boolean enabled) {
+        prefs(context).edit().putBoolean(KEY_SWIPE_GESTURES, enabled).apply();
     }
 
     private static SharedPreferences prefs(Context context) {

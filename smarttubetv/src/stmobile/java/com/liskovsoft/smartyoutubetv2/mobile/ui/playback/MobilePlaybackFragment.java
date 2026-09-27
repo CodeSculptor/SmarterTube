@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
 
 import com.bumptech.glide.Glide;
 import com.liskovsoft.mediaserviceinterfaces.MediaItemService;
@@ -47,6 +48,7 @@ import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.RemoteControlService;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.utils.AppDialogUtil;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.base.CutoutGuard;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobilePlayerStylePrefs;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.PlaybackFragment;
@@ -181,6 +183,13 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     private GestureDetector mTapDetector;
     // Lets our own "resume → hide the controls" through the paused-controls hold in hideControlsOverlay.
     private boolean mForceHideControls;
+    // Swipe gestures in the landscape player (#48): volume right, brightness left.
+    private SwipeGestures mSwipe;
+    private boolean mSwipeEnabled;
+    // Set while SwipeGestures replays a held touch through the normal path, so it isn't re-captured.
+    private boolean mReplayingTouch;
+    // Display-cutout bands that cover the ends of an edge (#47, see CutoutGuard).
+    private androidx.core.graphics.Insets mCutoutBands = androidx.core.graphics.Insets.NONE;
     // Hides the Shorts chrome (action rail + back button + seek bar). Only ever scheduled when
     // the auto-hide setting is on, so firing always means "hide now".
     private final Runnable mHideShortsChr = () -> setShortsChrome(false);
@@ -203,6 +212,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         mLayoutState = -1;
         // The player style may have changed in Settings while we were away (#46).
         mStyle = MobilePlayerStylePrefs.getStyle(requireContext());
+        mSwipeEnabled = MobilePlayerStylePrefs.isSwipeGesturesEnabled(requireContext());
         applyMobileLayout();
         if (mModernChrome != null) mModernChrome.start();
     }
@@ -555,6 +565,17 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             return handleShortsTouchEvent(event);
         }
 
+        // Landscape swipe gestures (#48): a touch that may become a volume/brightness swipe is held
+        // back, then either swiped or replayed through the paths below.
+        if (mSwipe != null && !mReplayingTouch) {
+            if (mSwipe.isActive()) {
+                return mSwipe.handle(event, this::replayTouch);
+            }
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN && swipeCanStart(event, playerView)) {
+                return mSwipe.start(event, playerView);
+            }
+        }
+
         // Non-Shorts, controls showing: a tap on empty video hides them (#39).
         if (isOverlayShown()) return handleOverlayShownTouch(event, playerView);
 
@@ -568,6 +589,32 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         }
         onDispatchTouchEvent(event); // overlay tickle + double-tap seek
         return true;
+    }
+
+    /**
+     * Swipes start only in the landscape full-screen player with the controls hidden, and not near
+     * an edge, where the system's own swipes (notification shade, back gesture) live.
+     */
+    private boolean swipeCanStart(MotionEvent down, View playerView) {
+        if (!mSwipeEnabled || mLayoutState != 0 || isInPipMode() || isOverlayShown()
+                || getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
+            return false;
+        }
+        float density = getResources().getDisplayMetrics().density;
+        float edgeX = 32 * density;
+        float edgeY = 48 * density;
+        return down.getX() > edgeX && down.getX() < playerView.getWidth() - edgeX
+                && down.getY() > edgeY && down.getY() < playerView.getHeight() - edgeY;
+    }
+
+    /** SwipeGestures hands back a touch that wasn't a swipe: run it through the normal path. */
+    private boolean replayTouch(MotionEvent event) {
+        mReplayingTouch = true;
+        try {
+            return interceptPlayerTouch(event);
+        } finally {
+            mReplayingTouch = false;
+        }
     }
 
     /**
@@ -805,6 +852,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
 
         // Before the unchanged-state early return: PIP entry/exit and a style change don't change
         // the layout state but do change whether the modern controls belong on screen.
+        applyCutoutPadding();
         if (mModernChrome != null) {
             mModernChrome.applyOrientation(!portrait);
             mModernChrome.sync();
@@ -967,6 +1015,42 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     /** Back: closes the modern settings / More videos sheet if it's open. */
     boolean closeModernSheet() {
         return mModernChrome != null && mModernChrome.closeSheet();
+    }
+
+    /**
+     * Notched phones (#47): the player runs full screen into the cutout area. That's fine for a
+     * centred camera hole, but a corner notch or MIUI's blacked-out notch strip covers the back
+     * button and the top of the video. Track the bands to avoid as the insets change.
+     */
+    private void initCutoutGuard(Activity activity) {
+        ViewCompat.setOnApplyWindowInsetsListener(mRoot, (v, insets) -> {
+            mCutoutBands = CutoutGuard.bands(activity, insets);
+            v.post(this::applyCutoutPadding);
+            return insets; // pass through untouched: the player's own views lay out as before
+        });
+        ViewCompat.requestApplyInsets(mRoot);
+    }
+
+    /**
+     * Portrait: move the whole player (strip, controls, panel) below a top band, minus anything a
+     * parent already fitted. Landscape: the video is letterboxed clear of a side notch anyway, so
+     * only the Modern controls need to keep off the band (ModernPlayerChrome).
+     */
+    private void applyCutoutPadding() {
+        if (mRoot == null) return;
+        boolean portrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
+        int top = 0;
+        if (portrait && mCutoutBands.top > 0) {
+            int[] loc = new int[2];
+            mRoot.getLocationInWindow(loc);
+            top = Math.max(0, mCutoutBands.top - loc[1]);
+        }
+        if (mRoot.getPaddingTop() != top) {
+            mRoot.setPadding(mRoot.getPaddingLeft(), top, mRoot.getPaddingRight(), mRoot.getPaddingBottom());
+        }
+        if (mModernChrome != null) {
+            mModernChrome.setCutoutBands(mCutoutBands);
+        }
     }
 
     /** Tap to pause: single tap plays/pauses, double tap seeks (see interceptPlayerTouch). */
@@ -1616,6 +1700,8 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         initShortsViews(activity);
         mModernChrome = ModernPlayerChrome.create(this, activity);
         initTapDetector(activity);
+        mSwipe = SwipeGestures.create(activity);
+        initCutoutGuard(activity);
 
         return true;
     }

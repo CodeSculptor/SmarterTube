@@ -83,6 +83,7 @@ final class ModernPlayerChrome {
     };
     private boolean mLandscape;
     private boolean mUserSeeking;
+    private androidx.core.graphics.Insets mCutoutBands = androidx.core.graphics.Insets.NONE;
 
     /** Returns null if the chrome views aren't in the player layout. */
     static ModernPlayerChrome create(MobilePlaybackFragment host, Activity activity) {
@@ -207,13 +208,24 @@ final class ModernPlayerChrome {
         // Portrait keeps the title block's space (it pushes CC/settings to the right) but not its text.
         mTitleBlock.setVisibility(landscape ? View.VISIBLE : View.INVISIBLE);
         mActions.setVisibility(landscape ? View.VISIBLE : View.GONE);
-        // Landscape runs edge to edge (under a camera cutout too), so keep the controls off the edges.
-        int side = landscape ? dp(24) : 0;
-        mRoot.setPadding(side, 0, side, 0);
+        applySidePadding();
         mFullscreen.setImageResource(landscape ? R.drawable.ic_modern_fullscreen_exit : R.drawable.ic_modern_fullscreen);
         if (mSheet.getVisibility() == View.VISIBLE) {
             closeSheet();
         }
+    }
+
+    /** Cutout bands to keep clear of (#47); only the landscape sides matter here. */
+    void setCutoutBands(androidx.core.graphics.Insets bands) {
+        mCutoutBands = bands;
+        applySidePadding();
+    }
+
+    private void applySidePadding() {
+        // Landscape runs edge to edge, so keep the controls off the edges, and off a notch band there.
+        int left = mLandscape ? Math.max(dp(24), mCutoutBands.left) : 0;
+        int right = mLandscape ? Math.max(dp(24), mCutoutBands.right) : 0;
+        mRoot.setPadding(left, 0, right, 0);
     }
 
     void bindVideo(Video video) {

@@ -354,6 +354,10 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
                     this::showPlayerStylePicker,
                     R.drawable.settings_player_style));
             items.add(new SettingsItem(
+                    context.getString(R.string.mobile_swipe_gestures_title),
+                    this::showSwipeGesturesToggle,
+                    R.drawable.settings_swipe_gestures));
+            items.add(new SettingsItem(
                     context.getString(R.string.mobile_notifications_title),
                     this::showNotificationsToggle,
                     R.drawable.settings_notifications));
@@ -427,6 +431,26 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
                 .setTitle(R.string.mobile_player_style_title)
                 .setSingleChoiceItems(labels, checked, (dialog, which) -> {
                     MobilePlayerStylePrefs.setStyle(context, styles[which]);
+                    dialog.dismiss();
+                })
+                .show();
+    }
+
+    /** Phone-only "Swipe gestures" on/off (#48); the player reads it when it resumes. */
+    private void showSwipeGesturesToggle() {
+        Context context = getContext();
+        if (context == null) {
+            return;
+        }
+        String[] labels = {
+                context.getString(R.string.mobile_swipe_gestures_on),
+                context.getString(R.string.mobile_swipe_gestures_off),
+        };
+        int checked = MobilePlayerStylePrefs.isSwipeGesturesEnabled(context) ? 0 : 1;
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.mobile_swipe_gestures_title)
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    MobilePlayerStylePrefs.setSwipeGesturesEnabled(context, which == 0);
                     dialog.dismiss();
                 })
                 .show();

@@ -688,6 +688,45 @@
             android:text="No playlists yet" />
     </LinearLayout>
 
+    <!--
+        Swipe gesture level indicator (#48): icon + level bar, shown while swiping volume
+        (right half) or brightness (left half) in the landscape player. Not interactive.
+    -->
+    <LinearLayout
+        android:id="@+id/mobile_swipe_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_modern_pill"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="10dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="@id/playback_controls_fragment"
+        app:layout_constraintBottom_toBottomOf="@id/playback_controls_fragment"
+        app:layout_constraintStart_toStartOf="@id/playback_controls_fragment"
+        app:layout_constraintEnd_toEndOf="@id/playback_controls_fragment">
+
+        <ImageView
+            android:id="@+id/mobile_swipe_indicator_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_swipe_volume" />
+
+        <ProgressBar
+            android:id="@+id/mobile_swipe_indicator_level"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="140dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:max="100"
+            android:progressBackgroundTint="#66FFFFFF"
+            android:progressTint="@color/brand_accent" />
+    </LinearLayout>
+
     <!-- Modern player sheet (#46): settings actions / More videos, above everything else. -->
     <include
         layout="@layout/mobile_modern_sheet"
