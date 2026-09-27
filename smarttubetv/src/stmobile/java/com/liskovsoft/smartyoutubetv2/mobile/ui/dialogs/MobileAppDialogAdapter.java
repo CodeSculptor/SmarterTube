@@ -429,9 +429,11 @@ class MobileAppDialogAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     /**
      * Whether a radio category is an ordered numeric range (speed, zoom, seek interval, auto-hide
      * timeout) and should be a discrete slider. Detected from the option labels — a strong majority
-     * must be short numeric values (a few word labels like "Never" / "Default" at the ends are fine).
-     * Long labels that merely contain a number (e.g. the context-menu "Position of …" picker's
-     * "16 Exclude this channel from SponsorBlock") are an ordinary list, not a range.
+     * must contain a number (a few word labels like "Never" / "Fit either width or height" are fine).
+     * Long values are fine too: video formats ("1080p, 24fps, 3.33Mbps, vp9") are an ordered range
+     * users expect to slide through (#44). What rules a slider out is a numbered sentence (e.g. the
+     * context-menu "Position of …" picker's "16 Exclude this channel from SponsorBlock", #43): that
+     * is an ordinary list, not a range.
      *
      * Unlike the value/picker collapse this is NOT gated on {@code suppressHeaders}: a slider is a
      * self-contained inline control with no recursion risk, so a lone expandable numeric category
@@ -447,18 +449,39 @@ class MobileAppDialogAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         int numeric = 0;
         for (OptionItem option : category.options) {
             CharSequence label = option.getTitle();
-            if (label != null && label.length() > MAX_SLIDER_LABEL_LENGTH) {
-                return false;
-            }
             if (hasDigit(label)) {
+                if (countPlainWords(label) >= MIN_SENTENCE_WORDS) {
+                    return false;
+                }
                 numeric++;
             }
         }
         return numeric * 5 >= category.options.size() * 3; // >= 60% numeric
     }
 
-    /** Range values are short ("1.25x", "10 sec", "Never"); anything longer is a list item. */
-    private static final int MAX_SLIDER_LABEL_LENGTH = 16;
+    /** A numbered label with this many letters-only words reads as a sentence, not a value. */
+    private static final int MIN_SENTENCE_WORDS = 3;
+
+    /** Words made only of letters ("Exclude", "channel"); "24fps", "vp9", "(4K)" don't count. */
+    private static int countPlainWords(CharSequence text) {
+        int words = 0;
+        for (String word : text.toString().split("\\s+")) {
+            if (word.isEmpty()) {
+                continue;
+            }
+            boolean letters = true;
+            for (int i = 0; i < word.length(); i++) {
+                if (!Character.isLetter(word.charAt(i))) {
+                    letters = false;
+                    break;
+                }
+            }
+            if (letters) {
+                words++;
+            }
+        }
+        return words;
+    }
 
     private static boolean hasDigit(CharSequence text) {
         if (text == null) {
