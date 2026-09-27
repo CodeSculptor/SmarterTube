@@ -140,7 +140,12 @@ jobs:
           } > /tmp/pr-final.md
           # Create the PR. If creation fails (e.g. token perms), fall back to an issue so the
           # sync is never silently dropped — the branch is already pushed, so a human can PR it.
+          # --repo is required: this job adds a git remote named `upstream` (yuliskov/SmartTube),
+          # and gh prefers that remote as the base repo, so without it the PR is attempted on
+          # upstream and the repo-scoped SYNC_PAT is refused ("Resource not accessible by
+          # personal access token", issue #45, 2026-09-26).
           if ! PR_URL=$(gh pr create \
+            --repo "${{ github.repository }}" \
             --base master \
             --head "${{ steps.merge.outputs.branch }}" \
             --title "Upstream sync $(date -u +%Y-%m-%d) — clean merge" \
