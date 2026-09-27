@@ -59,7 +59,7 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | Portrait player | Partially works | Channel avatar + tappable channel row; native like/dislike under views; verify comments |
 | In-panel comments (portrait) | Partially works | Read-only; posting is blocked on auth/PoToken |
 | Comments posting | Not implemented | Blocked on innertube auth + PoToken |
-| Shorts playback | Works | TikTok-style UX: swipe pager, tap-to-pause, vertical action rail (like/dislike/comments/channel), auto-hide chrome, seek bar visible and auto-hides with chrome (#28, fixed beta.8). VERIFIED-ON-DEVICE. |
+| Shorts playback | Works | TikTok-style UX: swipe pager, tap-to-pause, vertical action rail (like/dislike/comments/channel), auto-hide chrome, seek bar visible and auto-hides with chrome (#28, fixed beta.8). VERIFIED-ON-DEVICE. On screens wider than 10:16 (tablets, foldables) the Short is fitted with side bars instead of overflowing the screen (#30, v0.6.0-beta.1; verified on a 1536x2048 emulator). |
 | Save to playlist (portrait nav bar) | Works | "Playlists" tab in the portrait bottom nav bar opens a bottom-sheet checklist (same add/remove behaviour as the landscape player's playlist button) for the current video; the panel slides up above the nav bar, is capped to the area below the video (never overlaps it) and scrolls internally when the list is long. VERIFIED-ON-DEVICE |
 | Play / pause / seek | Works | Play/pause icon stays in sync after rotating into landscape (rebuilt action re-synced to real playback state). Verified on device |
 | Player controls show/hide | Works | Tap the video to show the controls; tap empty video while they're showing to hide them (#39, beta.8). Taps on buttons, the seek bar and suggestion cards, drags, and double-tap seek (controls hidden) are unaffected. VERIFIED-ON-DEVICE |
@@ -67,7 +67,7 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | Pop-up (PIP) mode | Works | Shows the playing video, including after visiting a channel from the player then returning (#33 fixed). The phone player skips relaunching Home on PIP entry (Home is already behind the pop-up), avoiding a task-clear race that used to destroy the player. Closing the pop-up window stops playback — the engine is released instead of leaking audio behind the closed window (#35). VERIFIED-ON-DEVICE |
 | Quality menu | Unknown | |
 | Captions | Unknown | |
-| Playback speed | Works | Opens as a translucent bottom-sheet card over the player (beta.8); video stays visible behind a dim scrim. Known issue: player SurfaceView shrinks in landscape while the panel is open ([#29]) |
+| Playback speed | Works | Opens as a translucent bottom-sheet card over the player (beta.8); video stays visible behind a dim scrim. The video keeps its full size behind the sheet in landscape (#29, fixed v0.6.0-beta.1: upstream's TV "resize video to fit dialog" zoom is turned off once on phones). VERIFIED-ON-DEVICE |
 | SponsorBlock | Works | Upstream feature. Per-channel exclusion via long-press menu (enable in Settings > General > Context menu) and optional player button (Settings > Player > Setup player buttons; landscape only) — verified on device (#40). Also in the up-next long-press menu (#42, beta.8) |
 | Return YouTube Dislike | Works | Upstream feature |
 | DeArrow | Unknown | Upstream feature; verify in phone UI |
@@ -87,9 +87,9 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | Feature | Status | Notes |
 |---|---|---|
 | Phone portrait | Works | Primary target |
-| Phone landscape | Unknown | Audit in Gate C |
-| Tablet portrait | Unknown | Audit in Gate C |
-| Tablet landscape | Unknown | Audit in Gate C |
+| Phone landscape | Works | #25 audit (v0.6.0-beta.1): only the player and its sheets/dialogs rotate on phones; browse, search, channel and settings are portrait-locked by design. Landscape player, controls and settings sheets verified on device (#29 fixed) |
+| Tablet portrait | Works | #25 audit on a 1536x2048 sw768dp emulator (API 36): Home rows, side menu, search grid (3 columns), channel page + tabs, settings, portrait player strip + up-next, Shorts (fitted, #30). Minor: light-theme side-menu icons are near-invisible (theme issue, tracked with the Theme row) |
+| Tablet landscape | Works | #25 audit (same emulator): Home rows, side menu (scrolls), search, channel, settings, full-screen player + settings sheet (#29 fixed). Cosmetic: the channel grid keeps 3 fixed-width columns with wide gaps (Home uses 4) |
 | TV / leanback interface | Not applicable | Phone/tablet product; use upstream SmartTube for TV |
 
 ## Platform

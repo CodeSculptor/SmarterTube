@@ -49,10 +49,17 @@ Reworked for touch ([#26], verified on device — Player, General, Auto Frame Ra
 
 [#26]: https://github.com/CodeSculptor/SmarterTube/issues/26
 
-## Layout / orientation (to be audited in Gate C)
+## Layout / orientation (Gate C audit, [#25])
 
-- Phone landscape and tablet portrait/landscape layouts are **unverified**. TV/leanback layout
-  assumptions may leak into these orientations.
+- Audited for `v0.6.0-beta.1`: phone landscape (player only; other phone screens are
+  portrait-locked by design) and tablet portrait/landscape on a 1536x2048 emulator. All core
+  screens work. Remaining cosmetic items:
+  - **Tablet landscape channel grid** keeps 3 fixed-width columns with wide gaps between them
+    (Home switches to 4 columns).
+  - **Light theme: side-menu icons are nearly invisible** (white icons on a light-grey drawer).
+    Dark theme is unaffected.
+
+[#25]: https://github.com/CodeSculptor/SmarterTube/issues/25
 
 ## Shorts
 
@@ -120,11 +127,14 @@ Resolved this release:
   dialogs (e.g. Video speed, Quality) open as a translucent bottom-sheet so the video stays
   visible behind a dim scrim. Tap outside the card or press Back to close without leaving the
   player. **VERIFIED-ON-DEVICE.**
-- **Video shrinks in landscape when a settings panel is open** ([#29]). When the video is playing
-  in landscape fullscreen and a settings panel (Video speed, Quality, etc.) is opened, the player
-  SurfaceView resizes to fit a smaller window as the system nav bar re-appears for the dialog
-  window. The video returns to full size when the panel is dismissed. Portrait playback is
-  unaffected. Being tracked for a future fix; the feature otherwise works correctly in portrait.
+- **Video shrank in landscape when a settings panel was open** — fixed in `v0.6.0-beta.1`
+  ([#29], verified on device). It wasn't the system bars: upstream's TV "resize video to fit
+  dialog" feature zooms the video to ~63% and pins it left so a TV side-panel doesn't cover it.
+  Phone dialogs are bottom sheets, so the phone now turns on "Don't resize video to fit dialog"
+  once (Settings > Player; a user can turn it back off).
+- **Shorts oversized on tablets** — fixed in `v0.6.0-beta.1` ([#30]). The Shorts area was always
+  full-width 9:16, taller than a 4:3 tablet screen; on screens wider than 10:16 it is now sized
+  from the available height and centred with side bars.
 - **Save to playlist from the portrait nav bar** — the "Playlists" tab in the portrait bottom nav
   bar opens a bottom-sheet checklist that adds/removes the current video to/from the user's
   playlists (same behaviour as the landscape player's playlist button). The panel slides up above
@@ -155,6 +165,7 @@ Resolved this release:
 [#27]: https://github.com/CodeSculptor/SmarterTube/issues/27
 [#28]: https://github.com/CodeSculptor/SmarterTube/issues/28
 [#29]: https://github.com/CodeSculptor/SmarterTube/issues/29
+[#30]: https://github.com/CodeSculptor/SmarterTube/issues/30
 [#31]: https://github.com/CodeSculptor/SmarterTube/issues/31
 [#32]: https://github.com/CodeSculptor/SmarterTube/issues/32
 [#33]: https://github.com/CodeSculptor/SmarterTube/issues/33
