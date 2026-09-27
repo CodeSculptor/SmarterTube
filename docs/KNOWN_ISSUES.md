@@ -102,6 +102,15 @@ Resolved this release:
   Modern styles: the seek bar has no preview thumbnails while dragging (Classic keeps them), and
   Tap to pause's double-tap seek shows the seek bar rather than the ripple. The portrait panel
   under the video keeps its current look for now.
+- **Swipe gestures in the landscape player** — added ([#48], verified on device): with the controls
+  hidden, swipe up/down on the right half for volume, on the left half for brightness. Settings >
+  Swipe gestures turns it off (default on for Modern / Tap to pause, off for Classic).
+- **Player controls under a corner notch / MIUI notch strip** ([#47]): screens and the player now
+  keep clear of a cutout band that reaches the outer part of an edge (corner notch, MIUI's
+  blacked-out notch area). A centred camera hole or notch keeps the full-bleed layout (verified
+  unchanged on a Samsung). The MIUI case is emulator-verified only; awaiting the reporter's
+  confirmation. Separately, the status/navigation bars staying visible over the landscape player
+  on that Redmi (MIUI, Android 11) is still open.
 - **Double-tap seek highlight on the wrong side in landscape** — fixed ([#46]). The shared
   double-tap view measured taps against stale portrait display metrics.
 - **Back stops the video and leaves** (phone UX). With background audio on (the default), the
@@ -179,6 +188,8 @@ Resolved this release:
 [#30]: https://github.com/CodeSculptor/SmarterTube/issues/30
 [#44]: https://github.com/CodeSculptor/SmarterTube/issues/44
 [#46]: https://github.com/CodeSculptor/SmarterTube/issues/46
+[#47]: https://github.com/CodeSculptor/SmarterTube/issues/47
+[#48]: https://github.com/CodeSculptor/SmarterTube/issues/48
 [#31]: https://github.com/CodeSculptor/SmarterTube/issues/31
 [#32]: https://github.com/CodeSculptor/SmarterTube/issues/32
 [#33]: https://github.com/CodeSculptor/SmarterTube/issues/33
