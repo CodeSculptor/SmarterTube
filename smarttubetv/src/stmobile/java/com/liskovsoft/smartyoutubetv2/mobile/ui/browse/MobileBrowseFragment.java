@@ -296,6 +296,11 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
                 if (mShelfAdapter != null) mShelfAdapter.clear();
                 if (mGridAdapter != null) mGridAdapter.clear();
                 hideEmptyMessage();
+                // Local grids (Notifications, Playback queue, Blocked channels) deliver their whole
+                // list as one REPLACE group, not clear-then-append.
+                if (!group.isEmpty() && mGridAdapter != null) {
+                    mGridAdapter.setVideos(group.getVideos());
+                }
                 break;
             case VideoGroup.ACTION_REMOVE:
             case VideoGroup.ACTION_REMOVE_AUTHOR:
@@ -481,6 +486,7 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
                         return;
                     }
                     MobileNotificationPrefs.setEnabled(context, turnOn);
+                    MobileNotificationPrefs.setPrompted(context); // chose here; never prompt on launch
                     NotificationPollWorker.schedule(context);
                     if (turnOn && getActivity() instanceof MobileBrowseActivity) {
                         ((MobileBrowseActivity) getActivity()).requestPostNotificationsPermission();

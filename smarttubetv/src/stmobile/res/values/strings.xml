@@ -80,6 +80,10 @@
     <string name="mobile_notifications_option_on">On</string>
     <string name="mobile_notifications_option_off">Off</string>
     <string name="mobile_notifications_channel_name">New uploads</string>
+    <string name="mobile_notifications_prompt_title">Get notified about new uploads?</string>
+    <string name="mobile_notifications_prompt_message">SmarterTube can check your subscriptions in the background and notify you when a channel you follow uploads. You can change this later in Settings → Upload notifications.</string>
+    <string name="mobile_notifications_prompt_yes">Turn on</string>
+    <string name="mobile_notifications_prompt_no">Not now</string>
     <string name="mobile_uploads_summary_title">New uploads</string>
     <string name="mobile_uploads_summary_text">%1$d new video(s) from your subscriptions</string>
     <string name="mobile_uploads_new_video">New video</string>

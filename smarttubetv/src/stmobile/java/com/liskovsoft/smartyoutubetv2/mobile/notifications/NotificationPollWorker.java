@@ -15,6 +15,7 @@ import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItem;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.rx.RxHelper;
+import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobileNotificationPrefs;
 import com.liskovsoft.youtubeapi.service.YouTubeServiceManager;
 
@@ -44,6 +45,8 @@ public class NotificationPollWorker extends Worker {
     private static final String WORK_NAME = "stmobile_upload_notifications";
     private static final long REPEAT_MINUTES = 15; // WorkManager periodic minimum
     private static final long FETCH_TIMEOUT_SECONDS = 60;
+    /** How much of the current feed to put in the Notifications tab on the first run, so it isn't empty. */
+    private static final int SEED_HISTORY_COUNT = 30;
 
     public NotificationPollWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
@@ -105,6 +108,13 @@ public class NotificationPollWorker extends Worker {
 
             LinkedHashSet<String> seen = MobileNotificationPrefs.getSeenIds(context);
 
+            if (seen.isEmpty() || !MobileNotificationPrefs.hasHistory(context)) {
+                // Fill the Notifications tab from the current feed (also covers installs that
+                // seeded before the tab was backed by this history).
+                MobileNotificationPrefs.addToHistory(context,
+                        toVideos(items.subList(0, Math.min(items.size(), SEED_HISTORY_COUNT))));
+            }
+
             if (seen.isEmpty()) {
                 // First run: record the current state without alerting on the backlog.
                 MobileNotificationPrefs.saveSeenIds(context, currentIds, null);
@@ -122,6 +132,7 @@ public class NotificationPollWorker extends Worker {
             if (!newItems.isEmpty()) {
                 Log.d(TAG, "Posting %d new upload notification(s)", newItems.size());
                 UploadNotifier.notifyNewUploads(context, newItems);
+                MobileNotificationPrefs.addToHistory(context, toVideos(newItems));
             }
 
             // Persist: newest current ids first, then previously-seen, capped.
@@ -133,6 +144,16 @@ public class NotificationPollWorker extends Worker {
             e.printStackTrace();
             return Result.success(); // periodic; just try again next cycle
         }
+    }
+
+    private static List<Video> toVideos(List<MediaItem> items) {
+        List<Video> result = new ArrayList<>();
+        for (MediaItem item : items) {
+            if (item.getVideoId() != null) {
+                result.add(Video.from(item));
+            }
+        }
+        return result;
     }
 
     /**

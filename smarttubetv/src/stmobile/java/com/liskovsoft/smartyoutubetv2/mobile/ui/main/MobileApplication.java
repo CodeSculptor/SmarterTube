@@ -15,6 +15,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.views.ViewManager;
 import com.liskovsoft.smartyoutubetv2.common.app.views.WebBrowserView;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerConstants;
+import com.liskovsoft.smartyoutubetv2.common.app.presenters.BrowsePresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.service.SidebarService;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.settings.GeneralSettingsPresenter;
 import com.liskovsoft.smartyoutubetv2.common.prefs.AppPrefs;
@@ -69,6 +70,10 @@ public class MobileApplication extends MainApplication {
         // is created so the first frame uses the correct values/ vs values-night/ tokens
         // - avoids a recreate-flicker on cold start.
         MobileThemePrefs.apply(this);
+        // YouTube's notifications inbox endpoint is dead (HTTP 400 -> "Can't load content"), so the
+        // Notifications tab shows the uploads the upload-notifications poll has picked up instead.
+        // Set before super.onCreate() so it's in place before BrowsePresenter is ever created.
+        BrowsePresenter.sNotificationsSource = () -> MobileNotificationPrefs.getHistory(this);
         super.onCreate();
 
         // Always surface the YouTube notifications inbox as a phone nav-drawer tab, for every
