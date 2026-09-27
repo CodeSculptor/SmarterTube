@@ -83,9 +83,9 @@ public class MobileAppDialogActivity extends MobileActivity {
         if (mSheetMode) {
             // The player runs fullscreen with a translucent nav bar (App.Theme.Leanback.Player:
             // windowFullscreen + windowTranslucentNavigation). Match those flags here so dropping a
-            // translucent dialog over it does not make the system bars reappear and resize the
-            // player window — that resize leaves the video SurfaceView rendering scaled-down in the
-            // top-left corner with black around it.
+            // translucent dialog over it does not make the system bars reappear over the player.
+            // (The video shrinking into the corner under a dialog, #29, was NOT the bars: it was
+            // upstream's "resize video to fit dialog" zoom, turned off in MobileApplication.)
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN
                     | WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
         }

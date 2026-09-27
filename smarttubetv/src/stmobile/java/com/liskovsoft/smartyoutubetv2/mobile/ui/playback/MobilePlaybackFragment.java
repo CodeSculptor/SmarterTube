@@ -84,6 +84,8 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     private boolean mStripMode;
     /** Applied layout: 0 = full-screen, 1 = regular 16:9 strip, 2 = Shorts 9:16 strip. */
     private int mLayoutState;
+    /** Shorts strip sized from the available height and centred (wide portrait screens, #30). */
+    private boolean mShortsFit;
     private String mLastVideoId;
     private VideoPlayerGlue mLastGlue;
     private boolean mLastCompact;
@@ -158,6 +160,8 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     private static final int SHORTS_FRAME_TIMEOUT_MS = 2500;
     // Tint applied to the rail like/dislike icon when active (YouTube blue).
     private static final int SHORTS_ACTIVE_TINT = 0xFF3EA6FF;
+    // Height kept below a fitted Shorts strip for the info bar (padding + 2-line title + channel).
+    private static final int SHORTS_INFO_BAR_RESERVE_DP = 112;
 
     // Held so we can re-send the lockscreen notification when the video changes.
     private MediaSessionCompat.Token mSessionToken;
@@ -737,10 +741,15 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         // Keyed on the 3-value state (not just the boolean) so a regular<->Shorts switch — both of
         // which are "strip" — still re-applies the new dimension ratio.
         int layoutState = !strip ? 0 : (isShorts ? 2 : 1);
-        if (layoutState == mLayoutState) {
+        // #30: on a portrait screen wider than ~10:16 (tablets, foldables) a full-width 9:16 strip
+        // is taller than the screen and the Short gets cropped. Fit it instead: size the strip from
+        // the height above the info bar + nav bar and centre it (pillarbox).
+        boolean shortsFit = layoutState == 2 && isWidePortrait();
+        if (layoutState == mLayoutState && shortsFit == mShortsFit) {
             return;
         }
         mLayoutState = layoutState;
+        mShortsFit = shortsFit;
         mStripMode = strip;
 
         // Hide auto-hide chrome and dismiss any open sheet immediately on any layout change.
@@ -775,9 +784,18 @@ public class MobilePlaybackFragment extends PlaybackFragment {
 
         ConstraintSet set = new ConstraintSet();
         set.clone(mRoot);
-        if (strip) {
+        if (shortsFit) {
+            // Height runs down to the nav bar, less room for the info bar; width follows from 9:16
+            // and the start/end constraints centre it.
+            int infoBarReserve = (int) (SHORTS_INFO_BAR_RESERVE_DP * getResources().getDisplayMetrics().density);
+            set.connect(R.id.playback_controls_fragment, ConstraintSet.BOTTOM,
+                    R.id.mobile_shorts_nav_bar, ConstraintSet.TOP, infoBarReserve);
+            set.setDimensionRatio(R.id.playback_controls_fragment, "W,9:16");
+        } else if (strip) {
             set.clear(R.id.playback_controls_fragment, ConstraintSet.BOTTOM);
             set.setDimensionRatio(R.id.playback_controls_fragment, ratio);
+        }
+        if (strip) {
             set.setVisibility(R.id.mobile_below_video_panel, showPanel ? View.VISIBLE : View.GONE);
             set.setVisibility(R.id.mobile_shorts_info_bar, isShorts ? View.VISIBLE : View.GONE);
             set.setVisibility(R.id.mobile_shorts_nav_bar, View.VISIBLE);
@@ -1377,6 +1395,12 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     private boolean isInPipMode() {
         Activity activity = getActivity();
         return VERSION.SDK_INT >= VERSION_CODES.N && activity != null && activity.isInPictureInPictureMode();
+    }
+
+    /** Screen wider than ~10:16, where a full-width 9:16 Shorts strip no longer fits (#30). */
+    private boolean isWidePortrait() {
+        Configuration config = getResources().getConfiguration();
+        return config.screenWidthDp * 16 > config.screenHeightDp * 10;
     }
 
     /**

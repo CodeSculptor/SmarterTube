@@ -84,6 +84,7 @@ public class MobileApplication extends MainApplication {
         NotificationPollWorker.schedule(this);
 
         hideScreenDimmingButtonOnce();
+        keepVideoSizeUnderDialogsOnce();
         defaultBackgroundPlaybackOnce();
 
         // Ticking a context-menu item in Settings > General just enables it (in its default slot)
@@ -120,6 +121,22 @@ public class MobileApplication extends MainApplication {
         if (!prefs.getBoolean("screen_dimming_hidden", false)) {
             PlayerTweaksData.instance(this).setPlayerButtonDisabled(PlayerTweaksData.PLAYER_BUTTON_SCREEN_DIMMING);
             prefs.edit().putBoolean("screen_dimming_hidden", true).apply();
+        }
+    }
+
+    /**
+     * Stop the player shrinking behind settings dialogs (#29). Upstream's "resize video to fit
+     * dialog" zooms the video to ~63% and pins it to the left so a TV side-panel dialog doesn't
+     * cover it; phone dialogs are bottom sheets or full screen, so in landscape it just leaves a
+     * small video in the corner. Turning on "Don't resize video to fit dialog" skips it. Done once
+     * so a user who deliberately turns it back off keeps their choice. stmobile-only; shared common
+     * code is untouched, keeping the fork upstream-mergeable.
+     */
+    private void keepVideoSizeUnderDialogsOnce() {
+        SharedPreferences prefs = getSharedPreferences("mobile_player_prefs", MODE_PRIVATE);
+        if (!prefs.getBoolean("dialog_resize_disabled", false)) {
+            PlayerTweaksData.instance(this).setDontResizeVideoToFitDialogEnabled(true);
+            prefs.edit().putBoolean("dialog_resize_disabled", true).apply();
         }
     }
 
