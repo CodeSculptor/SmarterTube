@@ -35,6 +35,13 @@
     <string name="mobile_about_check_failed">Couldn\'t check for updates. Check your connection and try again.</string>
     <string name="mobile_about_open_releases">Open releases</string>
     <string name="mobile_about_download">Download APK</string>
+    <string name="mobile_whats_new_title">What\'s new in %1$s</string>
+    <string name="mobile_whats_new_full_notes">Release notes</string>
+    <string name="mobile_update_notice">SmarterTube %1$s is available</string>
+    <string name="mobile_update_notice_view">View</string>
+    <string name="mobile_update_details_title">Update available: %1$s</string>
+    <string name="mobile_update_details_no_notes">A newer version of SmarterTube is available.</string>
+    <string name="mobile_update_later">Later</string>
     <string name="mobile_about_url_releases" translatable="false">https://github.com/CodeSculptor/SmarterTube/releases</string>
     <!-- GitHub releases LIST endpoint (not /releases/latest, which hides prereleases/betas). -->
     <string name="mobile_about_url_releases_api" translatable="false">https://api.github.com/repos/CodeSculptor/SmarterTube/releases?per_page=30</string>

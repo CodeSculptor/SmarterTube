@@ -57,12 +57,18 @@ public final class MobileUpdateChecker {
         public final boolean prerelease; // GitHub's own prerelease flag (cross-checked, not trusted alone)
         public final String htmlUrl;    // release notes page
         public final List<Asset> assets;
+        public final String body;       // release notes markdown (may be null)
 
         public ReleaseInfo(String tag, boolean prerelease, String htmlUrl, List<Asset> assets) {
+            this(tag, prerelease, htmlUrl, assets, null);
+        }
+
+        public ReleaseInfo(String tag, boolean prerelease, String htmlUrl, List<Asset> assets, String body) {
             this.tag = tag;
             this.prerelease = prerelease;
             this.htmlUrl = htmlUrl;
             this.assets = assets != null ? assets : new ArrayList<>();
+            this.body = body;
         }
     }
 
@@ -82,13 +88,23 @@ public final class MobileUpdateChecker {
         public final String upstreamBase; // e.g. "31.93" (display/diagnostics)
         public final String assetUrl;     // direct APK url when UPDATE_AVAILABLE
         public final String releaseUrl;   // release notes page
+        public final String latestNotes;  // latest release's notes markdown (may be null)
+        /** The release matching the installed build, or null if not found (e.g. a dev build). */
+        public final ReleaseInfo installedRelease;
 
         public Result(Status status, String latestTag, String upstreamBase, String assetUrl, String releaseUrl) {
+            this(status, latestTag, upstreamBase, assetUrl, releaseUrl, null, null);
+        }
+
+        public Result(Status status, String latestTag, String upstreamBase, String assetUrl, String releaseUrl,
+                      String latestNotes, ReleaseInfo installedRelease) {
             this.status = status;
             this.latestTag = latestTag;
             this.upstreamBase = upstreamBase;
             this.assetUrl = assetUrl;
             this.releaseUrl = releaseUrl;
+            this.latestNotes = latestNotes;
+            this.installedRelease = installedRelease;
         }
     }
 
@@ -142,6 +158,7 @@ public final class MobileUpdateChecker {
 
         ReleaseInfo bestRelease = null;
         SmarterTubeVersion bestVersion = null;
+        ReleaseInfo installed = null;
         for (ReleaseInfo r : releases) {
             if (r == null) {
                 continue;
@@ -150,6 +167,9 @@ public final class MobileUpdateChecker {
             if (v == null) {
                 Log.d(TAG, "Ignoring unrecognised release tag: %s", r.tag);
                 continue; // upstream-only or malformed -> ignore
+            }
+            if (installed == null && !v.isLegacy() && v.compareTo(current) == 0) {
+                installed = r; // the installed build's own release (for "What's new")
             }
             // Trust the parsed SmarterTube channel over GitHub's prerelease flag; log a mismatch.
             boolean parsedPrerelease = v.getChannel() != Channel.STABLE;
@@ -167,11 +187,11 @@ public final class MobileUpdateChecker {
         }
 
         if (bestVersion == null) {
-            return new Result(Status.UP_TO_DATE, null, null, null, null);
+            return new Result(Status.UP_TO_DATE, null, null, null, null, null, installed);
         }
         if (bestVersion.compareTo(current) <= 0) {
             return new Result(Status.UP_TO_DATE, bestVersion.getRaw(), bestVersion.getUpstreamBase(),
-                    null, bestRelease.htmlUrl);
+                    null, bestRelease.htmlUrl, bestRelease.body, installed);
         }
 
         List<String> names = new ArrayList<>();
@@ -183,11 +203,11 @@ public final class MobileUpdateChecker {
         String chosenName = ApkAssetSelector.select(names, deviceAbi);
         if (chosenName == null) {
             return new Result(Status.NO_COMPATIBLE_ASSET, bestVersion.getRaw(),
-                    bestVersion.getUpstreamBase(), null, bestRelease.htmlUrl);
+                    bestVersion.getUpstreamBase(), null, bestRelease.htmlUrl, bestRelease.body, installed);
         }
         String assetUrl = urlForName(bestRelease.assets, chosenName);
         return new Result(Status.UPDATE_AVAILABLE, bestVersion.getRaw(),
-                bestVersion.getUpstreamBase(), assetUrl, bestRelease.htmlUrl);
+                bestVersion.getUpstreamBase(), assetUrl, bestRelease.htmlUrl, bestRelease.body, installed);
     }
 
     /** Parses the GitHub {@code /releases} JSON array. Tolerates malformed entries (skips them). */
@@ -209,6 +229,7 @@ public final class MobileUpdateChecker {
                 }
                 boolean prerelease = o.optBoolean("prerelease", false);
                 String htmlUrl = o.optString("html_url", null);
+                String body = o.isNull("body") ? null : o.optString("body", null);
                 List<Asset> assets = new ArrayList<>();
                 JSONArray assetArr = o.optJSONArray("assets");
                 if (assetArr != null) {
@@ -223,7 +244,7 @@ public final class MobileUpdateChecker {
                         }
                     }
                 }
-                out.add(new ReleaseInfo(tag, prerelease, htmlUrl, assets));
+                out.add(new ReleaseInfo(tag, prerelease, htmlUrl, assets, body));
             }
         } catch (Exception e) {
             // Not a JSON array (e.g. a GitHub error object) -> no releases.

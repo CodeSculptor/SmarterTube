@@ -126,6 +126,26 @@ public class MobileUpdateCheckerTest {
     // ---- helpers ----
 
     /** A release carrying universal + arm64 + armeabi APK assets named per the doc convention. */
+    @Test
+    public void findsInstalledReleaseIgnoringUpstreamBase() {
+        List<ReleaseInfo> releases = Arrays.asList(
+                release("v0.6.1-beta.1+st32.59", false),
+                release("v0.7.0-beta.1+st32.59", false),
+                release("v0.8.0-beta.1+st32.60", false));
+        Result r = MobileUpdateChecker.selectFrom(releases, "v0.7.0-beta.1+st32.59", ABI, Channel.BETA);
+        assertEquals(Status.UPDATE_AVAILABLE, r.status);
+        assertNotNull(r.installedRelease);
+        assertEquals("v0.7.0-beta.1+st32.59", r.installedRelease.tag);
+    }
+
+    @Test
+    public void noInstalledReleaseForUnreleasedBuild() {
+        List<ReleaseInfo> releases = Collections.singletonList(release("v0.7.0-beta.1+st32.59", false));
+        Result r = MobileUpdateChecker.selectFrom(releases, "v0.7.1-beta.1+st32.59", ABI, Channel.BETA);
+        assertEquals(Status.UP_TO_DATE, r.status);
+        assertEquals(null, r.installedRelease);
+    }
+
     private static ReleaseInfo release(String tag, boolean prerelease) {
         String base = "SmarterTube-" + tag.replace('+', '-');
         List<Asset> assets = new ArrayList<>();

@@ -15,6 +15,7 @@ import com.liskovsoft.smartyoutubetv2.mobile.notifications.NotificationPollWorke
 import com.liskovsoft.smartyoutubetv2.mobile.ui.base.MobileActivity;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobileNotificationPrefs;
 import com.liskovsoft.youtubeapi.service.YouTubeServiceManager;
+import com.liskovsoft.smartyoutubetv2.mobile.update.LaunchUpdateNotices;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 
 /**
@@ -40,6 +41,8 @@ public class MobileBrowseActivity extends MobileActivity {
         if (savedInstanceState == null) {
             checkUploadNotifications();
         }
+
+        LaunchUpdateNotices.onHomeCreated(this); // update-available notice + one-time "What's new"
     }
 
     /**
