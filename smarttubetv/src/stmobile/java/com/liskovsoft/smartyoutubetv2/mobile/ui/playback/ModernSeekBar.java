@@ -21,7 +21,7 @@ import java.util.List;
  * them all (a new video).
  */
 public class ModernSeekBar extends SeekBar {
-    private static final float MIN_MARK_DP = 2.5f;
+    private static final float MIN_MARK_DP = 4f; // chapter starts are points: wide enough to read over video
 
     private final List<Mark> mMarks = new ArrayList<>();
     private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);

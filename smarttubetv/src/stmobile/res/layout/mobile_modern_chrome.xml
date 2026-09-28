@@ -154,7 +154,7 @@
             android:minHeight="3dp"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
-            android:progressBackgroundTint="#66FFFFFF"
+            android:progressBackgroundTint="#99FFFFFF"
             android:progressTint="@color/brand_accent"
             android:splitTrack="false"
             android:thumbTint="@color/brand_accent" />
