@@ -9,5 +9,4 @@ enabled = false
 [[d1_databases]]
 binding = "DB"
 database_name = "smartertube-stats"
-# Fill in after `npx wrangler d1 create smartertube-stats` (see README.md).
-database_id = "REPLACE_WITH_DATABASE_ID"
+database_id = "ac085c5d-744e-46de-a0b0-bf9dd5f95b98"

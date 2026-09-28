@@ -25,6 +25,8 @@ of everyone.
 
 ## Deploy (one time)
 
+**Deployed 2026-09-28** at `https://smartertube-stats.codesculptor.workers.dev` (Cloudflare account of the maintainer, D1 database `smartertube-stats` in WEUR). The `ADMIN_TOKEN` is kept outside the repo. To ship a code change, run `npx wrangler deploy` from this folder.
+
 Needs Node.js and a free Cloudflare account.
 
 ```bash

@@ -15,9 +15,7 @@ SmarterTube is a phone and tablet client for YouTube. It is a fork of [SmartTube
 
 **Nothing, unless you opt in to anonymous stats.**
 
-The app contains an *opt-in* anonymous-stats feature, but it is **switched off in current releases**: no server address is configured, so you are never asked, no Settings row appears, nothing is recorded, and nothing is sent. If a future release switches it on, this section will say so and the rules below apply.
-
-When it is switched on, SmarterTube asks you once (on the Home screen) whether to send anonymous stats. You can change your answer any time in **Settings → Anonymous stats**. If you say no, nothing is sent.
+Releases up to v0.8.0-beta.1 don't include this feature and send nothing. Later releases ask you once, on the Home screen, whether to send anonymous stats. You can change your answer any time in **Settings → Anonymous stats**. If you say no, nothing is sent.
 
 If you opt in, the app sends the following to the developer's own server (a Cloudflare Worker whose source is in [`stats-worker/`](stats-worker/)):
 
