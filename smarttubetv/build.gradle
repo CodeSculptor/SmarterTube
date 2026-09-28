@@ -258,6 +258,8 @@ android {
             // 23731 = v0.7.0-beta.1+st32.59 (player styles: Classic / Modern / Tap to pause #46; double-tap ripple side fix).
             // 23732 = v0.8.0-beta.1+st32.59 (landscape swipe gestures #48; notch/cutout guard #47; upload-notification
             //         prompt + Notifications tab; launch update notice + one-time "What's new").
+            // 23733 = v0.9.0-beta.1+st32.59 (parity pass: channel sort/search + Shorts/playlist cards, #25 tablet/theme fixes;
+            //         Modern seek bar previews + SponsorBlock/chapter marks + chapters strip; opt-in anonymous stats).
             versionCode 23732
             versionName "v0.8.0-beta.1+st32.59"
         }
