@@ -1119,16 +1119,15 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     }
 
     /**
-     * Hide the Leanback transport buttons (play/pause/skip/time) while keeping the seek bar
-     * visible for Shorts. Controls are inflated lazily — null-checks are intentional; this is
-     * also called from showControlsOverlay() to catch the first inflate.
-     */
-    /**
-     * Toggle the whole Leanback control row (transport buttons + seek bar + time readout). In
-     * Shorts this is driven by setShortsChrome so the controls auto-hide together with the action
-     * rail; toggling the row's view visibility directly avoids Leanback's translate animation
-     * (which left the seek bar stuck near the top). INVISIBLE, not GONE, keeps the row's layout
-     * slot so nothing reflows when it comes back.
+     * Toggle the Leanback control row. In Shorts this is driven by setShortsChrome so the seek bar
+     * auto-hides together with the action rail; toggling the row's view visibility directly avoids
+     * Leanback's translate animation (which left the seek bar stuck near the top). INVISIBLE, not
+     * GONE, keeps the row's layout slot so nothing reflows when it comes back.
+     * <p>
+     * Shorts show only the seek bar from this row (#50): the button rows and time readout are
+     * collapsed — play/pause is a tap on the video and the rest lives on the action rail. They come
+     * back as soon as the layout leaves Shorts. Controls are inflated lazily, so this is also
+     * called from showControlsOverlay() to catch the first inflate.
      */
     private void setShortsControlsVisible(boolean visible) {
         if (getView() == null) return;
@@ -1136,11 +1135,17 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         if (transportRow != null) {
             transportRow.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
         }
+        int docks = mLayoutState == 2 ? View.GONE : View.VISIBLE;
+        for (int id : new int[]{R.id.controls_dock, R.id.secondary_controls_dock, R.id.time_info}) {
+            View dock = getView().findViewById(id);
+            if (dock != null) dock.setVisibility(docks);
+        }
     }
 
     /**
-     * Show or hide the full Shorts overlay chrome: action rail + back button + the entire Leanback
-     * control row (play/pause, skip, CC, seek bar, time). They all reveal and auto-hide together.
+     * Show or hide the full Shorts overlay chrome: action rail + back button + the seek bar (the
+     * Leanback control row minus its buttons, see setShortsControlsVisible). They all reveal and
+     * auto-hide together.
      */
     private void setShortsChrome(boolean visible) {
         int vis = visible ? View.VISIBLE : View.INVISIBLE;

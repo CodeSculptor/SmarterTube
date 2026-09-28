@@ -82,11 +82,13 @@ Reworked for touch ([#26], verified on device — Player, General, Auto Frame Ra
   and controls the bar's visibility directly. Dim scrim removed for Shorts. Auto-hide honours
   the *Auto-hide UI* timeout setting; when the setting is off (0s) the seek bar stays visible.
   **VERIFIED-ON-DEVICE.**
-- **Open: Classic control rows show over the Shorts action rail** ([#50]). With Player style set
-  to Modern, tapping a Short also shows both Classic (Leanback) control rows over the side rail
-  and seek bar, so the screen is cluttered and the rail is hard to use. Seen in
-  `v0.9.0-beta.1` on a Samsung phone; cause not yet investigated (possibly the #28 always-shown
-  overlay or the #46 Player style work).
+- **Classic control rows no longer show over the Shorts action rail** — fixed after
+  `v0.9.0-beta.1` ([#50]; ships in the next release). Tapping a Short showed the Leanback button
+  rows and time readout over the rail: the [#28] fix reveals the whole control row to show the
+  seek bar, which brought the compact button row back (Classic, since beta.8), and the Modern
+  styles keep the full action set, so they got both rows (since `v0.7.0-beta.1`). Shorts now
+  collapse the button rows and time readout and show only the rail and seek bar, in every
+  Player style; they return as soon as the player leaves Shorts.
 
 [#50]: https://github.com/CodeSculptor/SmarterTube/issues/50
 
