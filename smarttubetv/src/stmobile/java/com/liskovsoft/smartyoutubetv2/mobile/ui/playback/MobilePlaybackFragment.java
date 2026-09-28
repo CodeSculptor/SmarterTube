@@ -39,6 +39,7 @@ import com.liskovsoft.sharedutils.helpers.Helpers;
 import com.liskovsoft.sharedutils.rx.RxHelper;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.VideoGroup;
+import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.SeekBarSegment;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.controllers.SuggestionsController;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerUI;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.BrowsePresenter;
@@ -478,8 +479,16 @@ public class MobilePlaybackFragment extends PlaybackFragment {
 
         mSuggestionGroups.add(group);
 
-        // Chapters and Shorts shelves are rows-only content — the panel is a plain up-next list.
-        if (group.isShorts() || group.isChapters()) {
+        // Chapters get their own labelled strip at the top of the list (tap = seek).
+        if (group.isChapters()) {
+            if (initPanelViews()) {
+                mUpNextAdapter.setChapters(group.getVideos());
+            }
+            return;
+        }
+
+        // Shorts shelves are rows-only content — the panel is a plain up-next list.
+        if (group.isShorts()) {
             return;
         }
 
@@ -1002,6 +1011,31 @@ public class MobilePlaybackFragment extends PlaybackFragment {
 
     UpNextRowAdapter upNextAdapter() {
         return mUpNextAdapter;
+    }
+
+    /** The current video's chapters (each a Video with startTimeMs), in order; empty if none. */
+    List<Video> chapters() {
+        for (int i = mSuggestionGroups.size() - 1; i >= 0; i--) {
+            VideoGroup group = mSuggestionGroups.get(i);
+            if (group.isChapters()) {
+                return group.getVideos();
+            }
+        }
+        return java.util.Collections.emptyList();
+    }
+
+    @Override
+    public void setSeekBarSegments(List<SeekBarSegment> segments) {
+        super.setSeekBarSegments(segments);
+        // The Modern seek bar mirrors the Leanback one (SponsorBlock + chapter marks).
+        if (mModernChrome != null) mModernChrome.setSeekBarSegments(segments);
+    }
+
+    @Override
+    public void loadStoryboard() {
+        super.loadStoryboard();
+        // Storyboard frames for the Modern seek bar's scrub preview.
+        if (mModernChrome != null) mModernChrome.loadStoryboard(getVideo(), getDurationMs());
     }
 
     RecyclerView upNextList() {

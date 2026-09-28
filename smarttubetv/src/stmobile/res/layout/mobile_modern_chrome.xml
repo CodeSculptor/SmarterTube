@@ -145,7 +145,8 @@
                 android:src="@drawable/ic_modern_fullscreen" />
         </LinearLayout>
 
-        <SeekBar
+        <!-- Draws SponsorBlock / chapter marks too (ModernSeekBar). -->
+        <com.liskovsoft.smartyoutubetv2.mobile.ui.playback.ModernSeekBar
             android:id="@+id/modern_seek"
             android:layout_width="match_parent"
             android:layout_height="24dp"
@@ -238,5 +239,53 @@
                 android:textColor="#FFFFFFFF"
                 android:textSize="14sp" />
         </LinearLayout>
+    </LinearLayout>
+
+    <!--
+        Scrub preview (storyboard thumbnail, chapter title, time) shown above the seek bar thumb
+        while dragging. Positioned by ModernPlayerChrome; not clickable.
+    -->
+    <LinearLayout
+        android:id="@+id/modern_seek_preview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/modern_seek_preview_image"
+            android:layout_width="160dp"
+            android:layout_height="90dp"
+            android:background="@drawable/bg_modern_seek_preview"
+            android:contentDescription="@null"
+            android:padding="2dp"
+            android:scaleType="centerCrop" />
+
+        <TextView
+            android:id="@+id/modern_seek_preview_chapter"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:shadowColor="#CC000000"
+            android:shadowRadius="4"
+            android:textColor="#FFFFFFFF"
+            android:textSize="13sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/modern_seek_preview_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:shadowColor="#CC000000"
+            android:shadowRadius="4"
+            android:textColor="#FFFFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
     </LinearLayout>
 </FrameLayout>

@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -23,9 +24,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerUI;
+import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.SeekBarSegment;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.other.VideoPlayerGlue;
+import com.liskovsoft.smartyoutubetv2.tv.ui.playback.previewtimebar.StoryboardManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +47,10 @@ import java.util.List;
  * dislike, comments, save, share, more) with a More videos button. Everything else the player can
  * do is in the settings sheet, built from the user's own player-button list, so nothing needs a
  * rotation to reach.
+ *
+ * The seek bar matches the Classic transport row: SponsorBlock and chapter marks
+ * ({@link ModernSeekBar}), and while dragging a preview bubble above the thumb with the storyboard
+ * frame (upstream's {@link StoryboardManager}), the chapter title and the time.
  */
 final class ModernPlayerChrome {
     private static final int POLL_MS = 200;
@@ -51,6 +58,8 @@ final class ModernPlayerChrome {
     private static final int ACTIVE_TINT = 0xFF3EA6FF; // same "on" tint as the Shorts action rail
     private static final int SHEET_MAX_WIDTH_DP = 560;
     private static final int SHEET_ROW_HEIGHT_DP = 52;
+    private static final int PREVIEW_WIDTH_DP = 160;
+    private static final int PREVIEW_WIDTH_LANDSCAPE_DP = 208;
 
     private final MobilePlaybackFragment mHost;
     private final Activity mActivity;
@@ -62,7 +71,16 @@ final class ModernPlayerChrome {
     private final ImageButton mPlayPause;
     private final TextView mTime;
     private final ImageButton mFullscreen;
-    private final SeekBar mSeek;
+    private final ModernSeekBar mSeek;
+    private final View mTopBar;
+    private final View mCentre;
+    private final View mBottom;
+    private final View mPreview;
+    private final ImageView mPreviewImage;
+    private final TextView mPreviewChapter;
+    private final TextView mPreviewTime;
+    private final StoryboardManager mStoryboard;
+    private int mPreviewIndex = -1;
     private final View mActions;
     private final ImageButton mLike;
     private final ImageButton mDislike;
@@ -104,6 +122,14 @@ final class ModernPlayerChrome {
         mTime = mRoot.findViewById(R.id.modern_time);
         mFullscreen = mRoot.findViewById(R.id.modern_fullscreen);
         mSeek = mRoot.findViewById(R.id.modern_seek);
+        mTopBar = mRoot.findViewById(R.id.modern_top_bar);
+        mCentre = mRoot.findViewById(R.id.modern_centre);
+        mBottom = mRoot.findViewById(R.id.modern_bottom);
+        mPreview = mRoot.findViewById(R.id.modern_seek_preview);
+        mPreviewImage = mRoot.findViewById(R.id.modern_seek_preview_image);
+        mPreviewChapter = mRoot.findViewById(R.id.modern_seek_preview_chapter);
+        mPreviewTime = mRoot.findViewById(R.id.modern_seek_preview_time);
+        mStoryboard = new StoryboardManager(activity);
         mActions = mRoot.findViewById(R.id.modern_actions);
         mLike = mRoot.findViewById(R.id.modern_like);
         mDislike = mRoot.findViewById(R.id.modern_dislike);
@@ -158,6 +184,7 @@ final class ModernPlayerChrome {
                 if (fromUser) {
                     long duration = mHost.getDurationMs();
                     mTime.setText(formatTime(duration * progress / SEEK_MAX, duration));
+                    updatePreview(progress);
                     mHost.tickle(); // keep the controls up while dragging
                 }
             }
@@ -165,6 +192,8 @@ final class ModernPlayerChrome {
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
                 mUserSeeking = true;
+                showPreview(true);
+                updatePreview(seekBar.getProgress());
             }
 
             @Override
@@ -174,9 +203,89 @@ final class ModernPlayerChrome {
                     mHost.setPositionMs(duration * seekBar.getProgress() / SEEK_MAX);
                 }
                 mUserSeeking = false;
+                showPreview(false);
                 mHost.tickle();
             }
         });
+    }
+
+    // ---- Seek bar extras -----------------------------------------------------------------------
+
+    /** Upstream's loadStoryboard(): the video and its length are known, fetch the storyboard. */
+    void loadStoryboard(Video video, long durationMs) {
+        mStoryboard.init(video, durationMs);
+    }
+
+    /** Upstream's setSeekBarSegments(): null clears (new video), a list adds marks. */
+    void setSeekBarSegments(List<SeekBarSegment> segments) {
+        mSeek.addSegments(segments);
+    }
+
+    private void showPreview(boolean show) {
+        if (show) {
+            // YouTube-style: the other controls step aside so the preview reads over the video.
+            mTopBar.setVisibility(View.INVISIBLE);
+            mCentre.setVisibility(View.INVISIBLE);
+            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) mPreview.getLayoutParams();
+            lp.bottomMargin = mRoot.getHeight() - (mBottom.getTop() + mSeek.getTop());
+            mPreview.setLayoutParams(lp);
+            mPreviewIndex = -1;
+            mPreviewImage.setImageDrawable(null);
+            mPreviewImage.setVisibility(mStoryboard.getSeekPositions() != null ? View.VISIBLE : View.GONE);
+            mPreview.setVisibility(View.VISIBLE);
+        } else {
+            mTopBar.setVisibility(View.VISIBLE);
+            mCentre.setVisibility(View.VISIBLE);
+            mPreview.setVisibility(View.GONE);
+            mPreviewIndex = -1;
+        }
+    }
+
+    private void updatePreview(int progress) {
+        long duration = mHost.getDurationMs();
+        long position = duration * progress / SEEK_MAX;
+        mPreviewTime.setText(format(position));
+
+        String chapter = chapterTitleAt(position);
+        mPreviewChapter.setText(chapter != null ? chapter : "");
+        mPreviewChapter.setVisibility(chapter != null ? View.VISIBLE : View.GONE);
+
+        // Keep the bubble centred over the thumb, inside the chrome's (padded) bounds.
+        int width = dp(mLandscape ? PREVIEW_WIDTH_LANDSCAPE_DP : PREVIEW_WIDTH_DP);
+        int trackWidth = mSeek.getWidth() - mSeek.getPaddingLeft() - mSeek.getPaddingRight();
+        float thumbX = mBottom.getLeft() + mSeek.getLeft() + mSeek.getPaddingLeft() + trackWidth * (float) progress / SEEK_MAX;
+        float left = Math.max(mRoot.getPaddingLeft(),
+                Math.min(thumbX - width / 2f, mRoot.getWidth() - mRoot.getPaddingRight() - width));
+        mPreview.setTranslationX(left - mRoot.getPaddingLeft());
+
+        long[] positions = mStoryboard.getSeekPositions();
+        if (positions == null || duration <= 0) {
+            return;
+        }
+        mPreviewImage.setVisibility(View.VISIBLE); // the storyboard may have arrived mid-drag
+        int index = (int) Math.min(positions.length - 1, position * positions.length / duration);
+        if (index == mPreviewIndex) {
+            return;
+        }
+        mPreviewIndex = index;
+        mStoryboard.getBitmap(index, bitmap -> {
+            // Frames arrive async: drop ones for a position the finger has already left.
+            if (mUserSeeking && index == mPreviewIndex) {
+                mPreviewImage.setImageBitmap(bitmap);
+            }
+        });
+    }
+
+    /** Title of the chapter containing the position, or null if the video has no chapters. */
+    private String chapterTitleAt(long positionMs) {
+        String title = null;
+        for (Video chapter : mHost.chapters()) {
+            if (chapter.startTimeMs > positionMs) {
+                break;
+            }
+            title = chapter.getTitle();
+        }
+        return title;
     }
 
     /** Start following the overlay state (player resumed). */
@@ -196,6 +305,10 @@ final class ModernPlayerChrome {
         if (!show && mSheet.getVisibility() == View.VISIBLE && !mHost.modernChromeAllowed()) {
             closeSheet(); // e.g. entering PIP or switching to a Short
         }
+        if (!show && mPreview.getVisibility() == View.VISIBLE) {
+            mUserSeeking = false; // hidden mid-drag (rotation, PIP): no stop-tracking callback follows
+            showPreview(false);
+        }
         mRoot.setVisibility(show ? View.VISIBLE : View.GONE);
         if (show) {
             update();
@@ -208,6 +321,14 @@ final class ModernPlayerChrome {
         // Portrait keeps the title block's space (it pushes CC/settings to the right) but not its text.
         mTitleBlock.setVisibility(landscape ? View.VISIBLE : View.INVISIBLE);
         mActions.setVisibility(landscape ? View.VISIBLE : View.GONE);
+        int previewWidth = dp(landscape ? PREVIEW_WIDTH_LANDSCAPE_DP : PREVIEW_WIDTH_DP);
+        ViewGroup.LayoutParams imageLp = mPreviewImage.getLayoutParams();
+        imageLp.width = previewWidth;
+        imageLp.height = previewWidth * 9 / 16;
+        mPreviewImage.setLayoutParams(imageLp);
+        ViewGroup.LayoutParams chapterLp = mPreviewChapter.getLayoutParams();
+        chapterLp.width = previewWidth;
+        mPreviewChapter.setLayoutParams(chapterLp);
         applySidePadding();
         mFullscreen.setImageResource(landscape ? R.drawable.ic_modern_fullscreen_exit : R.drawable.ic_modern_fullscreen);
         if (mSheet.getVisibility() == View.VISIBLE) {

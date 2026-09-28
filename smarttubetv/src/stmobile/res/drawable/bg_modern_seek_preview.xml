@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Frame of the Modern seek bar's scrub preview thumbnail: dark fill (shown until the storyboard
+     frame loads) with a thin white border. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="6dp" />
+    <solid android:color="#CC000000" />
+    <stroke android:width="2dp" android:color="#FFFFFFFF" />
+</shape>
