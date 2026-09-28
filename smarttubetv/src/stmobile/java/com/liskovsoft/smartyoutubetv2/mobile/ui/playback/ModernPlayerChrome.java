@@ -183,7 +183,7 @@ final class ModernPlayerChrome {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
                     long duration = mHost.getDurationMs();
-                    mTime.setText(formatTime(duration * progress / SEEK_MAX, duration));
+                    mTime.setText(timeWithChapter(duration * progress / SEEK_MAX, duration));
                     updatePreview(progress);
                     mHost.tickle(); // keep the controls up while dragging
                 }
@@ -276,6 +276,12 @@ final class ModernPlayerChrome {
         });
     }
 
+    /** "1:17 / 19:06 • Chapter title" (YouTube-style), or just the times without chapters. */
+    private String timeWithChapter(long positionMs, long durationMs) {
+        String chapter = chapterTitleAt(positionMs);
+        return chapter != null ? formatTime(positionMs, durationMs) + "  •  " + chapter : formatTime(positionMs, durationMs);
+    }
+
     /** Title of the chapter containing the position, or null if the video has no chapters. */
     private String chapterTitleAt(long positionMs) {
         String title = null;
@@ -366,7 +372,7 @@ final class ModernPlayerChrome {
         long duration = mHost.getDurationMs();
         if (!mUserSeeking) {
             long position = mHost.getPositionMs();
-            mTime.setText(formatTime(position, duration));
+            mTime.setText(timeWithChapter(position, duration));
             mSeek.setProgress(duration > 0 ? (int) (position * SEEK_MAX / duration) : 0);
         }
         mCc.setAlpha(isOn(R.id.lb_control_closed_captioning) ? 1f : 0.6f);
