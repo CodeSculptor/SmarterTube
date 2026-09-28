@@ -73,7 +73,7 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | SponsorBlock | Works | Upstream feature. Per-channel exclusion via long-press menu (enable in Settings > General > Context menu) and optional player button (Settings > Player > Setup player buttons; landscape only) — verified on device (#40). Also in the up-next long-press menu (#42, beta.8) |
 | Return YouTube Dislike | Works | Upstream feature |
 | DeArrow | Unknown | Upstream feature; verify in phone UI |
-| Casting / Chromecast | Not implemented | |
+| Casting to Chromecast | Not supported (by design) | Needs Google Play Services (Cast SDK); upstream has none either. Receiver side: Settings > Remote control (#7) |
 
 ## Updates & distribution
 

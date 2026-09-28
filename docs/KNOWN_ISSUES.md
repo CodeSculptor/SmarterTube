@@ -31,7 +31,12 @@ Current release: `v0.8.0-beta.1+st32.59`  ·  Upstream SmartTube base: `32.59`  
   that drives upload alerts.
 - **No in-app APK install.** The launch update notice and "Check for updates" detect a newer
   release and open the GitHub APK/release URL; the user installs the APK manually.
-- **Casting / Chromecast is not implemented.**
+- **Casting to a Chromecast is not supported** (by design, same as upstream SmartTube): a Cast
+  sender needs Google's Cast SDK, which requires Google Play Services; SmartTube deliberately runs
+  without them (also a condition for F-Droid). Upstream's receiver side is available: Settings >
+  Remote control links the YouTube app on another device to SmarterTube. Closed [#7].
+
+[#7]: https://github.com/CodeSculptor/SmarterTube/issues/7
 
 ## Settings UI (mobile-friendly inputs)
 

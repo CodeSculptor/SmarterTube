@@ -163,7 +163,7 @@ Specific gaps:
 
 - **TV / leanback interface** — install [upstream SmartTube](https://github.com/yuliskov/SmartTube) for Android TV boxes and sticks.
 - **Official F-Droid / IzzyOnDroid index** — not listed there; instead use GitHub Releases, [Obtainium](#auto-updates-via-obtainium), or SmarterTube's own [F-Droid repo](#install-via-f-droid-self-hosted-repo).
-- **Casting / Chromecast** — not currently exposed in the phone UI.
+- **Casting to a Chromecast** — not supported, same as upstream SmartTube: sending to a Chromecast needs Google's Cast SDK, which requires Google Play Services, and SmartTube is deliberately built without them. The reverse works: under Settings > Remote control, the YouTube app on another device can link to SmarterTube and control playback.
 
 ---
 
