@@ -261,8 +261,8 @@ android {
             // 23733 = v0.9.0-beta.1+st32.59 (parity pass: channel sort/search + Shorts/playlist cards, #25 tablet/theme fixes;
             //         Modern seek bar previews + SponsorBlock/chapter marks + chapters strip; opt-in anonymous stats).
             // 23734 = v0.9.1-beta.1+st32.59 (Shorts show only the action rail + seek bar, no Classic control rows #50).
-            versionCode 23733
-            versionName "v0.9.0-beta.1+st32.59"
+            versionCode 23734
+            versionName "v0.9.1-beta.1+st32.59"
         }
     }
 }
