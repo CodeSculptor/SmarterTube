@@ -87,8 +87,10 @@ Reworked for touch ([#26], verified on device — Player, General, Auto Frame Ra
   rows and time readout over the rail: the [#28] fix reveals the whole control row to show the
   seek bar, which brought the compact button row back (Classic, since beta.8), and the Modern
   styles keep the full action set, so they got both rows (since `v0.7.0-beta.1`). Shorts now
-  collapse the button rows and time readout and show only the rail and seek bar, in every
-  Player style; they return as soon as the player leaves Shorts.
+  hide the button rows and time readout and show only the rail and seek bar (kept at the
+  bottom), in every Player style — also on the first Short after opening Shorts or resuming the
+  app, when the player rebuilds its controls. They return as soon as the player leaves Shorts.
+  **VERIFIED-ON-DEVICE.**
 
 [#50]: https://github.com/CodeSculptor/SmarterTube/issues/50
 
