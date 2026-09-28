@@ -1125,9 +1125,11 @@ public class MobilePlaybackFragment extends PlaybackFragment {
      * GONE, keeps the row's layout slot so nothing reflows when it comes back.
      * <p>
      * Shorts show only the seek bar from this row (#50): the button rows and time readout are
-     * collapsed — play/pause is a tap on the video and the rest lives on the action rail. They come
-     * back as soon as the layout leaves Shorts. Controls are inflated lazily, so this is also
-     * called from showControlsOverlay() to catch the first inflate.
+     * hidden — play/pause is a tap on the video and the rest lives on the action rail. They come
+     * back as soon as the layout leaves Shorts. INVISIBLE, not GONE: a shorter row makes the
+     * Leanback grid re-align it and the seek bar jumps up towards the top of the Short. Controls
+     * are inflated lazily, so this is also called from showControlsOverlay() to catch the first
+     * inflate.
      */
     private void setShortsControlsVisible(boolean visible) {
         if (getView() == null) return;
@@ -1135,7 +1137,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         if (transportRow != null) {
             transportRow.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
         }
-        int docks = mLayoutState == 2 ? View.GONE : View.VISIBLE;
+        int docks = mLayoutState == 2 ? View.INVISIBLE : View.VISIBLE;
         for (int id : new int[]{R.id.controls_dock, R.id.secondary_controls_dock, R.id.time_info}) {
             View dock = getView().findViewById(id);
             if (dock != null) dock.setVisibility(docks);
