@@ -47,7 +47,7 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | Sign out | Works | |
 | Account switcher | Unknown | Verify if exposed in phone UI |
 | Subscribe / unsubscribe | Works | Channel-page pill; state resolved from first upload's metadata |
-| Notification bell / inbox | Not implemented | Upstream source was dead; pivoted to subscriptions feed |
+| Notification bell / inbox | Works (uploads) | YouTube inbox is dead; tab lists uploads found by the subscriptions-feed poll |
 | Upload notifications (push) | Works | Subscriptions-feed poll, shipped 31.93-mobile-1.3 |
 | Status bar insets | Works | Screens pad below system bars that are actually showing (#37, beta.8): with Fullscreen mode on (default) the bars are hidden and nothing changes; if the OS keeps the status bar visible (seen on a Pixel, Android 17) or Fullscreen mode is off, the top bar sits below it. Verified on device (no change on Samsung) and on an API 36 emulator with forced edge-to-edge; the Pixel case is confirmed by the emulator repro only |
 
@@ -80,6 +80,7 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | Feature | Status | Notes |
 |---|---|---|
 | Check for updates (phone) | Works | Gate A: scheme-aware, channel + ABI; see UPDATER_COMPATIBILITY.md |
+| Update notice on launch + one-time "What's new" | Works | v0.8.0-beta.1; parsed from the release notes' "What's new" section |
 | Upstream auto-update check on phone | Not applicable | Inert (phone versionCode ≫ upstream); fork uses its own checker |
 | In-app APK install | Not implemented | Update opens the GitHub asset/release URL for manual install |
 | Self-hosted F-Droid repo | Works | GitHub Pages, our own signed APKs; auto-published on release (fdroid/) |

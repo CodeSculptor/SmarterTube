@@ -131,7 +131,13 @@ If the hash matches the one GitHub shows for that asset, the file is intact.
 - Portrait settings screen
 - Sign in / sign out — OAuth device-code flow via in-app browser tab. Switch between multiple accounts with one tap on the toolbar avatar (long-press for account management), or from Settings
 - About screen (drawer footer)
-- Playback: landscape for regular videos, portrait for Shorts
+- Playback: landscape for regular videos, portrait for Shorts (swipe up/down for the next one)
+- Player styles: **Modern** phone-style controls, **Tap to pause**, or the **Classic** SmartTube controls (Settings > Player style)
+- Landscape swipe gestures: swipe up/down on the right for volume, on the left for brightness
+- Portrait player with up-next list and in-panel comments (read-only)
+- Watched-progress bars on thumbnails, plus video length badges
+- New-upload notifications from your subscriptions (opt-in; you're asked once after signing in)
+- Update notice when a new release is out, and a short "What's new" after you update
 
 ### From upstream SmartTube (YouTube client engine, unchanged)
 - SponsorBlock integration
@@ -158,6 +164,14 @@ Specific gaps:
 - **TV / leanback interface** — install [upstream SmartTube](https://github.com/yuliskov/SmartTube) for Android TV boxes and sticks.
 - **Official F-Droid / IzzyOnDroid index** — not listed there; instead use GitHub Releases, [Obtainium](#auto-updates-via-obtainium), or SmarterTube's own [F-Droid repo](#install-via-f-droid-self-hosted-repo).
 - **Casting / Chromecast** — not currently exposed in the phone UI.
+
+---
+
+## Community & support
+
+- Telegram: https://t.me/SmarterTubeApp
+- Discord: https://discord.gg/kVCkEWvEjt
+- Bug reports: https://github.com/CodeSculptor/SmarterTube/issues
 
 ---
 

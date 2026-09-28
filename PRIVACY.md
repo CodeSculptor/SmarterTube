@@ -1,7 +1,7 @@
 # Privacy Policy — SmarterTube
 
 **Package ID:** `com.codesculptor.smartertube`  
-**Last updated:** May 2026
+**Last updated:** September 2026
 
 ---
 
@@ -13,7 +13,7 @@ SmarterTube is a phone and tablet client for YouTube. It is a fork of [SmartTube
 
 ## Data the developer collects
 
-**None.** SmarterTube has no developer-controlled backend, no telemetry, no analytics, no crash reporting, and no self-update mechanism. The developer receives no data about you or your usage.
+**None.** SmarterTube has no developer-controlled backend, no telemetry, no analytics, and no crash reporting. The developer receives no data about you or your usage.
 
 ---
 
@@ -35,6 +35,9 @@ When enabled, the following features contact third-party APIs with the ID of the
 | DeArrow | [dearrow.ajay.app](https://dearrow.ajay.app) | Video ID |
 
 These services are independently operated and have their own privacy policies.
+
+### Update check (GitHub)
+When the app opens (at most about twice a day), and when you tap **Check for updates** in About, it reads the public list of SmarterTube releases from GitHub's API (`api.github.com`) to see whether a newer version exists and to show the release notes. The request carries no account or personal identifiers; like any web request, GitHub sees your IP address. This is governed by [GitHub's Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 
 ---
 

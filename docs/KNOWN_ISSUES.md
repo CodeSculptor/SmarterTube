@@ -3,7 +3,7 @@
 Tracked issues for the current beta. Keep this honest and current — it is part of the release
 checklist and what makes a beta release trustworthy.
 
-Current release: `v0.7.0-beta.1+st32.59`  ·  Upstream SmartTube base: `32.59`  ·  Channel: beta
+Current release: `v0.8.0-beta.1+st32.59`  ·  Upstream SmartTube base: `32.59`  ·  Channel: beta
 
 ## Status / classification
 
@@ -26,10 +26,11 @@ Current release: `v0.7.0-beta.1+st32.59`  ·  Upstream SmartTube base: `32.59`  
 
 - **Comments are read-only.** Posting comments is blocked on innertube authentication + PoToken
   work; the TV client has no composer. Not planned for the beta line.
-- **Notification bell / inbox is not implemented.** The upstream notifications source was dead;
-  upload alerts are delivered via a subscriptions-feed poll instead.
-- **No in-app APK install.** "Check for updates" detects a newer release and opens the GitHub
-  asset/release URL; the user installs the APK manually.
+- **YouTube's own notification inbox is not available.** The upstream notifications source is
+  dead; the Notifications tab instead lists the new uploads found by the subscriptions-feed poll
+  that drives upload alerts.
+- **No in-app APK install.** The launch update notice and "Check for updates" detect a newer
+  release and open the GitHub APK/release URL; the user installs the APK manually.
 - **Casting / Chromecast is not implemented.**
 
 ## Settings UI (mobile-friendly inputs)
