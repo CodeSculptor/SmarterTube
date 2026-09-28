@@ -48,7 +48,8 @@ the feature is dormant: no prompt, no Settings row, no network.
 |---|---|---|
 | `POST /ping` | app | `{v, sdk, new_week, new_month, first}` |
 | `POST /crash` | app | `{v, sdk, device, trace}` |
-| `GET /stats?days=90` | public | daily / weekly / monthly actives, version and Android breakdown (JSON) |
+| `GET /` | public | readable dashboard page ([`src/page.html`](src/page.html)) that renders `/stats` |
+| `GET /stats?days=90` | public | daily / weekly / monthly actives, version and Android breakdown (JSON). `days` snaps to 7 / 30 / 90 / 365 / 730, and each result is cached for 5 minutes (`stats_cache` table + in memory), so repeated views read one row instead of re-scanning `pings` |
 | `GET /crashes` | `Authorization: Bearer <ADMIN_TOKEN>` | latest 200 crash groups |
 
 ```bash
@@ -58,6 +59,8 @@ curl https://smartertube-stats.<you>.workers.dev/stats
 ```bash
 curl -H "Authorization: Bearer <ADMIN_TOKEN>" https://smartertube-stats.<you>.workers.dev/crashes
 ```
+
+If you change `schema.sql`, re-run the `d1 execute ... --remote --file=schema.sql` line (every statement is `IF NOT EXISTS`) before `npx wrangler deploy`.
 
 Aggregate counts are public on purpose, so anyone can see exactly what is collected.
 

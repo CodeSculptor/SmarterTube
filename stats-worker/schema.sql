@@ -26,3 +26,11 @@ CREATE TABLE IF NOT EXISTS crashes (
   trace     TEXT    NOT NULL,
   PRIMARY KEY (sig, version)
 );
+
+-- Cached /stats responses (one row per rounded ?days value), so public page views read one row
+-- instead of re-scanning `pings`. Refreshed at most every few minutes (see src/index.js).
+CREATE TABLE IF NOT EXISTS stats_cache (
+  days INTEGER PRIMARY KEY,
+  body TEXT    NOT NULL,
+  at   INTEGER NOT NULL
+);

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmarterTube Stats</title>
+<meta name="description" content="Public, anonymous usage counts from SmarterTube users who opted in.">
+<style>
+  :root {
+    color-scheme: light;
+    --surface-0: #f4f4f2;
+    --surface-1: #fcfcfb;
+    --border: #e2e1dc;
+    --grid: #ebeae6;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #77766f;
+    --series-1: #2a78d6;
+    --series-1-wash: rgba(42, 120, 214, 0.14);
+    --accent: #2a78d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --surface-0: #111110;
+      --surface-1: #1a1a19;
+      --border: #2e2e2c;
+      --grid: #262624;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #94938a;
+      --series-1: #3987e5;
+      --series-1-wash: rgba(57, 135, 229, 0.2);
+      --accent: #5c9ded;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-0: #111110;
+    --surface-1: #1a1a19;
+    --border: #2e2e2c;
+    --grid: #262624;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #94938a;
+    --series-1: #3987e5;
+    --series-1-wash: rgba(57, 135, 229, 0.2);
+    --accent: #5c9ded;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--surface-0);
+    color: var(--text-primary);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 32px 16px 48px; }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  p { margin: 0; }
+  a { color: var(--accent); }
+  .lede { color: var(--text-secondary); max-width: 62ch; }
+  .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 24px 0 16px; }
+  .range { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface-1); }
+  .range button {
+    font: inherit; font-size: 14px; border: 0; background: none; color: var(--text-secondary);
+    padding: 6px 12px; cursor: pointer;
+  }
+  .range button + button { border-left: 1px solid var(--border); }
+  .range button[aria-pressed="true"] { background: var(--series-1-wash); color: var(--text-primary); font-weight: 600; }
+  .updated { color: var(--text-muted); font-size: 13px; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+  .kpi .label { color: var(--text-secondary); font-size: 13px; }
+  .kpi .value { font-size: 30px; font-weight: 650; line-height: 1.2; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .kpi .sub { color: var(--text-muted); font-size: 12px; }
+  .chart-card { margin-bottom: 12px; }
+  .chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .chart-wrap { position: relative; margin-top: 8px; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .axis text { fill: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .gridline { stroke: var(--grid); stroke-width: 1; }
+  .baseline { stroke: var(--border); stroke-width: 1; }
+  .bar { fill: var(--series-1); }
+  .hit { fill: transparent; cursor: crosshair; }
+  .hit:hover + .hl, .hl.on { opacity: 1; }
+  .hl { fill: var(--series-1-wash); opacity: 0; pointer-events: none; }
+  .tip {
+    position: absolute; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 10px; font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); display: none;
+  }
+  .tip b { font-variant-numeric: tabular-nums; }
+  .tip .d { color: var(--text-secondary); }
+  details { margin-top: 12px; }
+  summary { cursor: pointer; color: var(--text-secondary); font-size: 13px; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--text-muted); font-weight: 500; font-size: 12px; padding: 0 0 6px; }
+  td { padding: 6px 0; border-top: 1px solid var(--grid); vertical-align: middle; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .share { display: flex; align-items: center; gap: 8px; }
+  .share .track { flex: 1; height: 8px; border-radius: 4px; background: var(--grid); min-width: 40px; }
+  .share .fill { height: 100%; border-radius: 4px; background: var(--series-1); }
+  .scroll { max-height: 320px; overflow: auto; }
+  .note { color: var(--text-secondary); font-size: 14px; }
+  .note ul { margin: 8px 0 0; padding-left: 20px; }
+  .empty, .error { color: var(--text-secondary); padding: 24px 0; text-align: center; }
+  @media (max-width: 720px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .split { grid-template-columns: 1fr; }
+    .kpi .value { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>SmarterTube stats</h1>
+  <p class="lede">Anonymous usage counts from people who opted in to sharing them in
+    <a href="https://github.com/CodeSculptor/SmarterTube">SmarterTube</a>, the Android phone and tablet
+    companion to SmartTube. Only counters are stored: no accounts, no device IDs, no IP addresses.</p>
+
+  <div class="toolbar">
+    <div class="range" role="group" aria-label="Time range">
+      <button type="button" data-days="7">7 days</button>
+      <button type="button" data-days="30">30 days</button>
+      <button type="button" data-days="90" aria-pressed="true">90 days</button>
+      <button type="button" data-days="365">1 year</button>
+    </div>
+    <span class="updated" id="updated"></span>
+  </div>
+
+  <section class="kpis" aria-label="Headline numbers">
+    <div class="card kpi"><div class="label">Active today</div><div class="value" id="k-today">–</div><div class="sub" id="k-today-sub">UTC day</div></div>
+    <div class="card kpi"><div class="label">Active this week</div><div class="value" id="k-week">–</div><div class="sub" id="k-week-sub">since Monday</div></div>
+    <div class="card kpi"><div class="label">Active this month</div><div class="value" id="k-month">–</div><div class="sub" id="k-month-sub"></div></div>
+    <div class="card kpi"><div class="label">First counted</div><div class="value" id="k-new">–</div><div class="sub" id="k-new-sub">in range</div></div>
+  </section>
+
+  <section class="card chart-card">
+    <div class="chart-head">
+      <h2>Daily active users</h2>
+      <span class="updated">opted-in installs that opened the app, per UTC day</span>
+    </div>
+    <div class="chart-wrap" id="chart"></div>
+    <details>
+      <summary>Show as table</summary>
+      <div class="scroll"><table id="daily-table"></table></div>
+    </details>
+  </section>
+
+  <div class="split">
+    <section class="card">
+      <h2>App versions</h2>
+      <table id="versions"></table>
+    </section>
+    <section class="card">
+      <h2>Android versions</h2>
+      <table id="android"></table>
+    </section>
+  </div>
+
+  <section class="card note">
+    <h2>How to read this</h2>
+    <ul>
+      <li>Only people who said yes to anonymous stats are counted, so real usage is higher.</li>
+      <li>Each opted-in install is counted at most once per UTC day, with no ID, so counts can't be linked to anyone.</li>
+      <li>"First counted" includes existing users who have just opted in, not only new installs.</li>
+      <li>Weeks start on Monday. Numbers refresh every few minutes. Raw data: <a href="stats">/stats</a> (JSON).</li>
+      <li>Details: <a href="https://github.com/CodeSculptor/SmarterTube/blob/master/PRIVACY.md">privacy policy</a> ·
+        <a href="https://github.com/CodeSculptor/SmarterTube/tree/master/stats-worker">server source</a>.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(() => {
+  const ANDROID = { 17: "4.2", 18: "4.3", 19: "4.4", 20: "4.4W", 21: "5.0", 22: "5.1", 23: "6", 24: "7.0", 25: "7.1",
+    26: "8.0", 27: "8.1", 28: "9", 29: "10", 30: "11", 31: "12", 32: "12L", 33: "13", 34: "14", 35: "15", 36: "16", 37: "17" };
+  const fmt = new Intl.NumberFormat();
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const utcDay = (d) => d.toISOString().slice(0, 10);
+  const shortDate = (iso) => new Date(iso + "T00:00:00Z").toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
+  const longDate = (iso) => new Date(iso + "T00:00:00Z").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+
+  let days = 90;
+  try { const saved = parseInt(localStorage.getItem("st-days"), 10); if ([7, 30, 90, 365].includes(saved)) days = saved; } catch (e) {}
+
+  document.querySelectorAll(".range button").forEach((b) => {
+    b.addEventListener("click", () => {
+      days = parseInt(b.dataset.days, 10);
+      try { localStorage.setItem("st-days", String(days)); } catch (e) {}
+      load();
+    });
+  });
+
+  async function load() {
+    document.querySelectorAll(".range button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.days === days)));
+    try {
+      const res = await fetch("stats?days=" + days);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      render(await res.json());
+    } catch (e) {
+      $("chart").innerHTML = '<p class="error">Couldn\'t load the stats. Try again in a minute.</p>';
+    }
+  }
+
+  function render(s) {
+    // Fill every day in range (days with no pings are zero, not missing).
+    const byDay = new Map(s.daily.map((r) => [r.day, r]));
+    const series = [];
+    const end = new Date();
+    for (let i = days - 1; i >= 0; i--) {
+      const d = utcDay(new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate() - i)));
+      const r = byDay.get(d);
+      series.push({ day: d, value: r ? r.daily_active : 0 });
+    }
+    const today = utcDay(end);
+    const week = s.weekly.length ? s.weekly[s.weekly.length - 1] : null;
+    const month = s.monthly.length ? s.monthly[s.monthly.length - 1] : null;
+    const thisMonday = utcDay(new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate() - ((end.getUTCDay() + 6) % 7))));
+    $("k-today").textContent = fmt.format(byDay.has(today) ? byDay.get(today).daily_active : 0);
+    $("k-week").textContent = fmt.format(week && week.week === thisMonday ? week.weekly_active : 0);
+    $("k-month").textContent = fmt.format(month && month.month === today.slice(0, 7) ? month.monthly_active : 0);
+    $("k-month-sub").textContent = new Date(today + "T00:00:00Z").toLocaleDateString(undefined, { month: "long", year: "numeric", timeZone: "UTC" });
+    $("k-new").textContent = fmt.format(s.daily.reduce((n, r) => n + (r.new_installs || 0), 0));
+    $("k-new-sub").textContent = "last " + (days === 365 ? "year" : days + " days");
+    $("updated").textContent = s.generated ? "Updated " + new Date(s.generated).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : "";
+
+    drawChart(series);
+    $("daily-table").innerHTML = '<tr><th>Day (UTC)</th><th class="num">Active</th></tr>' +
+      series.slice().reverse().map((p) => `<tr><td>${longDate(p.day)}</td><td class="num">${fmt.format(p.value)}</td></tr>`).join("");
+    shareTable($("versions"), "Version", s.versions.map((r) => ({ label: r.version, value: r.pings })));
+    shareTable($("android"), "Android", s.android_sdk.map((r) => ({ label: ANDROID[r.sdk] ? `Android ${ANDROID[r.sdk]} (API ${r.sdk})` : `API ${r.sdk}`, value: r.pings })));
+  }
+
+  function shareTable(el, head, rows) {
+    const total = rows.reduce((n, r) => n + r.value, 0);
+    if (!total) { el.innerHTML = '<tr><td class="empty">No data in this range yet.</td></tr>'; return; }
+    el.innerHTML = `<tr><th>${head}</th><th>Share of daily counts</th><th class="num">Counts</th></tr>` + rows.map((r) => {
+      const pct = (r.value / total) * 100;
+      return `<tr><td>${esc(r.label)}</td><td><div class="share"><div class="track"><div class="fill" style="width:${pct.toFixed(1)}%"></div></div>` +
+        `<span class="updated">${pct < 1 ? "<1" : Math.round(pct)}%</span></div></td><td class="num">${fmt.format(r.value)}</td></tr>`;
+    }).join("");
+  }
+
+  function niceMax(v) {
+    if (v <= 4) return 4;
+    const p = Math.pow(10, Math.floor(Math.log10(v)));
+    for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= v) return m * p;
+    return 10 * p;
+  }
+
+  let lastSeries = null, resizeTimer = 0;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { if (lastSeries) drawChart(lastSeries); }, 150);
+  });
+
+  function drawChart(series) {
+    const wrap = $("chart");
+    lastSeries = series;
+    const W = Math.max(280, Math.round(wrap.clientWidth || 880)), H = W < 500 ? 200 : 240, L = 36, R = 8, T = 8, B = 26;
+    const max = niceMax(Math.max(1, ...series.map((p) => p.value)));
+    const band = (W - L - R) / series.length;
+    const bw = Math.min(24, Math.max(1, band * 0.7));
+    const y = (v) => T + (H - T - B) * (1 - v / max);
+    const ticks = [0, max / 4, max / 2, (3 * max) / 4, max].filter((t) => Number.isInteger(t));
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Daily active users over the last ${series.length} days">`;
+    svg += '<g class="axis">';
+    for (const t of ticks) {
+      svg += `<line class="gridline" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/>`;
+      svg += `<text x="${L - 8}" y="${y(t) + 4}" text-anchor="end">${fmt.format(t)}</text>`;
+    }
+    const labelIdx = [0, Math.floor((series.length - 1) / 2), series.length - 1];
+    for (const i of new Set(labelIdx)) {
+      const cx = L + band * i + band / 2;
+      const anchor = i === 0 ? "start" : i === series.length - 1 ? "end" : "middle";
+      const x = anchor === "start" ? cx - bw / 2 : anchor === "end" ? cx + bw / 2 : cx;
+      svg += `<text x="${x}" y="${H - 6}" text-anchor="${anchor}">${shortDate(series[i].day)}</text>`;
+    }
+    svg += "</g>";
+    series.forEach((p, i) => {
+      const cx = L + band * i + band / 2;
+      if (p.value > 0) {
+        const top = y(p.value), h = y(0) - top, r = Math.min(4, bw / 2, h);
+        const x0 = cx - bw / 2, x1 = cx + bw / 2, yb = y(0);
+        svg += `<path class="bar" d="M${x0},${yb}V${top + r}Q${x0},${top} ${x0 + r},${top}H${x1 - r}Q${x1},${top} ${x1},${top + r}V${yb}Z"/>`;
+      }
+    });
+    svg += `<line class="baseline" x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}"/>`;
+    series.forEach((p, i) => {
+      const x = L + band * i;
+      svg += `<rect class="hit" data-i="${i}" x="${x}" y="${T}" width="${band}" height="${H - T - B}"/>` +
+        `<rect class="hl" x="${x}" y="${T}" width="${band}" height="${H - T - B}"/>`;
+    });
+    svg += "</svg>";
+    wrap.innerHTML = svg + '<div class="tip" id="tip"></div>';
+    if (series.every((p) => p.value === 0)) {
+      wrap.insertAdjacentHTML("beforeend", '<p class="empty">No opted-in usage in this range yet.</p>');
+    }
+
+    const tip = $("tip");
+    const svgEl = wrap.querySelector("svg");
+    const show = (i) => {
+      const p = series[i];
+      const box = svgEl.getBoundingClientRect(), scale = box.width / W;
+      const cx = (L + band * i + band / 2) * scale;
+      tip.innerHTML = `<div class="d">${longDate(p.day)}</div><b>${fmt.format(p.value)}</b> active`;
+      tip.style.display = "block";
+      tip.style.left = Math.min(Math.max(cx, 80), box.width - 80) + "px";
+      tip.style.top = y(p.value) * scale + "px";
+    };
+    wrap.querySelectorAll(".hit").forEach((el) => {
+      el.addEventListener("mouseenter", () => show(+el.dataset.i));
+      el.addEventListener("touchstart", () => show(+el.dataset.i), { passive: true });
+    });
+    svgEl.addEventListener("mouseleave", () => { tip.style.display = "none"; });
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>

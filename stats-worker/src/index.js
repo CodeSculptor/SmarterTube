@@ -9,12 +9,20 @@
 // Routes:
 //   POST /ping    {v, sdk, new_week, new_month, first}   -> bumps today's counters
 //   POST /crash   {v, sdk, device, trace}                -> upserts a crash group
-//   GET  /stats   public aggregate counts (JSON; ?days=N, default 90)
+//   GET  /        public dashboard page (renders /stats)
+//   GET  /stats   public aggregate counts (JSON; ?days=7|30|90|365|730, default 90; cached)
 //   GET  /crashes crash groups — needs "Authorization: Bearer <ADMIN_TOKEN>"
+
+import PAGE_HTML from "./page.html";
 
 const MAX_BODY = 64 * 1024;
 const MAX_TRACE = 32 * 1024;
 const VERSION_RE = /^[0-9A-Za-z.+\-]{1,40}$/;
+// /stats is public, so bound its database reads: ?days snaps to one of these, and each result is
+// cached (in D1 + in the isolate) for STATS_TTL_MS. A page view then costs at most one row read.
+const STATS_DAYS = [7, 30, 90, 365, 730];
+const STATS_TTL_MS = 5 * 60 * 1000;
+const memCache = new Map(); // days -> {body, at}
 
 export default {
   async fetch(request, env) {
@@ -22,6 +30,7 @@ export default {
     try {
       if (request.method === "POST" && url.pathname === "/ping") return await ping(request, env);
       if (request.method === "POST" && url.pathname === "/crash") return await crash(request, env);
+      if (request.method === "GET" && url.pathname === "/") return page();
       if (request.method === "GET" && url.pathname === "/stats") return await stats(url, env);
       if (request.method === "GET" && url.pathname === "/crashes") return await crashes(request, env);
       return new Response("Not found", { status: 404 });
@@ -91,7 +100,33 @@ async function crash(request, env) {
 }
 
 async function stats(url, env) {
-  const days = Math.min(Math.max(parseInt(url.searchParams.get("days") || "90", 10) || 90, 1), 730);
+  const asked = parseInt(url.searchParams.get("days") || "90", 10) || 90;
+  const days = STATS_DAYS.find((d) => d >= asked) || STATS_DAYS[STATS_DAYS.length - 1];
+  const now = Date.now();
+  let hit = memCache.get(days);
+  if (!hit || now - hit.at >= STATS_TTL_MS) {
+    const row = await env.DB.prepare("SELECT body, at FROM stats_cache WHERE days = ?1").bind(days).first();
+    hit = row && now - row.at < STATS_TTL_MS ? { body: row.body, at: row.at } : null;
+    if (!hit) {
+      hit = { body: JSON.stringify(await computeStats(env, days)), at: now };
+      await env.DB.prepare(
+        `INSERT INTO stats_cache (days, body, at) VALUES (?1, ?2, ?3)
+         ON CONFLICT (days) DO UPDATE SET body = excluded.body, at = excluded.at`
+      ).bind(days, hit.body, hit.at).run();
+    }
+    memCache.set(days, hit);
+  }
+  const maxAge = Math.max(0, Math.round((STATS_TTL_MS - (now - hit.at)) / 1000));
+  return new Response(hit.body, {
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": `public, max-age=${maxAge}`,
+    },
+  });
+}
+
+async function computeStats(env, days) {
   const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
   const daily = await env.DB.prepare(
     `SELECT day, SUM(pings) AS daily_active, SUM(new_week) AS new_week, SUM(new_month) AS new_month,
@@ -113,10 +148,17 @@ async function stats(url, env) {
   const android = await env.DB.prepare(
     `SELECT sdk, SUM(pings) AS pings FROM pings WHERE day >= ?1 GROUP BY sdk ORDER BY sdk`
   ).bind(since).all();
-  return Response.json(
-    { since, daily: daily.results, weekly: weekly.results, monthly: monthly.results, versions: versions.results, android_sdk: android.results },
-    { headers: { "Access-Control-Allow-Origin": "*", "Cache-Control": "max-age=300" } }
-  );
+  return {
+    since, days, generated: new Date().toISOString(),
+    daily: daily.results, weekly: weekly.results, monthly: monthly.results,
+    versions: versions.results, android_sdk: android.results,
+  };
+}
+
+function page() {
+  return new Response(PAGE_HTML, {
+    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" },
+  });
 }
 
 async function crashes(request, env) {
