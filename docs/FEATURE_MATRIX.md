@@ -30,7 +30,7 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | Search (input + suggestions) | Works | |
 | Search results grid | Works | |
 | Voice search | Works | Mic button in search toolbar (RecognizerIntent); falls back to keyboard if no recognizer. Verified on device (#8) |
-| Channel page (header/tabs) | Works | Identity header (circular avatar + subscriber count); native content tabs (Videos / Shorts / Live / Playlists, one swipeable 2-column grid per group) |
+| Channel page (header/tabs) | Works | Identity header (circular avatar + subscriber count); native content tabs (Videos / Shorts / Live / Playlists, one swipeable 2-column grid per group); sort chips (Latest / Popular / Oldest) on the Videos tab; in-channel search (results open as their own tab); vertical 9:16 Shorts cards and playlist cards with a video-count badge |
 | Channel uploads | Works | |
 | Subscriptions feed | Works | Drives upload notifications |
 | History | Unknown | Not re-verified this cycle |
@@ -91,8 +91,8 @@ explicitly re-tested as provisional and confirm against the release checklist be
 |---|---|---|
 | Phone portrait | Works | Primary target |
 | Phone landscape | Works | #25 audit (v0.6.0-beta.1): only the player and its sheets/dialogs rotate on phones; browse, search, channel and settings are portrait-locked by design. Landscape player, controls and settings sheets verified on device (#29 fixed) |
-| Tablet portrait | Works | #25 audit on a 1536x2048 sw768dp emulator (API 36): Home rows, side menu, search grid (3 columns), channel page + tabs, settings, portrait player strip + up-next, Shorts (fitted, #30). Minor: light-theme side-menu icons are near-invisible (theme issue, tracked with the Theme row) |
-| Tablet landscape | Works | #25 audit (same emulator): Home rows, side menu (scrolls), search, channel, settings, full-screen player + settings sheet (#29 fixed). Cosmetic: the channel grid keeps 3 fixed-width columns with wide gaps (Home uses 4) |
+| Tablet portrait | Works | #25 audit on a 1536x2048 sw768dp emulator (API 36): Home rows, side menu, search grid (3 columns), channel page + tabs, settings, portrait player strip + up-next, Shorts (fitted, #30). Light-theme side-menu icons fixed (tinted to the text colour) |
+| Tablet landscape | Works | #25 audit (same emulator): Home rows, side menu (scrolls), search, channel, settings, full-screen player + settings sheet (#29 fixed). Channel grid re-flows to 4 columns on rotation, like Home (fixed) |
 | TV / leanback interface | Not applicable | Phone/tablet product; use upstream SmartTube for TV |
 
 ## Platform

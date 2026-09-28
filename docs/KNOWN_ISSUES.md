@@ -59,11 +59,12 @@ Reworked for touch ([#26], verified on device — Player, General, Auto Frame Ra
 
 - Audited for `v0.6.0-beta.1`: phone landscape (player only; other phone screens are
   portrait-locked by design) and tablet portrait/landscape on a 1536x2048 emulator. All core
-  screens work. Remaining cosmetic items:
-  - **Tablet landscape channel grid** keeps 3 fixed-width columns with wide gaps between them
-    (Home switches to 4 columns).
-  - **Light theme: side-menu icons are nearly invisible** (white icons on a light-grey drawer).
-    Dark theme is unaffected.
+  screens work. The two cosmetic follow-ups are fixed (next release, verified on the tablet
+  emulator):
+  - **Tablet landscape channel grid** now re-flows on rotation to 4 columns like Home (the
+    channel page kept its portrait column count and card width).
+  - **Light theme: side-menu icons** are now tinted to the text colour and clearly visible.
+  - Real large-tablet reports are still welcome on [#25].
 
 [#25]: https://github.com/CodeSculptor/SmarterTube/issues/25
 
@@ -85,13 +86,15 @@ Reworked for touch ([#26], verified on device — Player, General, Auto Frame Ra
 ## Channel page (native content tabs)
 
 Native content tabs (Videos / Shorts / Live / Playlists — one swipeable 2-column grid per group)
-are **VERIFIED-ON-DEVICE**. Remaining items:
+are **VERIFIED-ON-DEVICE**. Added in the next release (verified on the phone and the tablet
+emulator):
 
-- **Shorts / Playlists cards render with the landscape video-card layout.** Shorts are portrait
-  and playlist cards differ, but every tab reuses the standard 16:9 card for now. Cosmetic; a
-  per-card-type layout is a later refinement.
-- **Sort chips (Latest / Popular / Oldest) are not wired.** Upstream exposes them separately from
-  the content tabs; the native channel page does not surface them yet.
+- **Sort chips (Latest / Popular / Oldest)** above the Videos tab, the same options as upstream's
+  channel sort; the sorted list keeps paging as you scroll.
+- **In-channel search**: the search button in the channel title bar opens a search field; the
+  results open as their own "Search: …" tab, and closing the field removes it.
+- **Shorts and Playlists cards**: the Shorts tab uses vertical 9:16 cards (3 columns on phones),
+  and playlists show a stacked card with a video-count badge, like the YouTube app.
 
 Resolved this release:
 
