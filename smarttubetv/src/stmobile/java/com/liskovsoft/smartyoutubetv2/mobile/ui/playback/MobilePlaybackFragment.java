@@ -1137,10 +1137,21 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         if (transportRow != null) {
             transportRow.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
         }
+        applyShortsDocks();
+    }
+
+    /**
+     * Hide the Leanback button rows and time readout in Shorts, show them everywhere else. Also
+     * run on every global layout (see initPanelViews): a glue rebuild (engine init on the first
+     * Short, a Short→Short swipe) rebinds the row with the docks visible again, and nothing else
+     * toggles the chrome until the next tap (#50).
+     */
+    private void applyShortsDocks() {
+        if (getView() == null) return;
         int docks = mLayoutState == 2 ? View.INVISIBLE : View.VISIBLE;
         for (int id : new int[]{R.id.controls_dock, R.id.secondary_controls_dock, R.id.time_info}) {
             View dock = getView().findViewById(id);
-            if (dock != null) dock.setVisibility(docks);
+            if (dock != null && dock.getVisibility() != docks) dock.setVisibility(docks);
         }
     }
 
@@ -1698,6 +1709,14 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             mPanel = null;
             return false;
         }
+
+        // Keep the Shorts button rows and strip decor (title/quality/date) hidden across glue
+        // rebuilds (#50). Outside Shorts both are handled by the layout/overlay paths already.
+        mRoot.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            if (mLayoutState != 2) return;
+            applyShortsDocks();
+            applyOverlayDecorVisibility(true);
+        });
 
         View titleRow = activity.findViewById(R.id.mobile_video_title_row);
         titleRow.setOnClickListener(v ->
