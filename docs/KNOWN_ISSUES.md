@@ -3,7 +3,7 @@
 Tracked issues for the current beta. Keep this honest and current — it is part of the release
 checklist and what makes a beta release trustworthy.
 
-Current release: `v0.9.0-beta.1+st32.59`  ·  Upstream SmartTube base: `32.59`  ·  Channel: beta
+Current release: `v0.9.1-beta.1+st32.59`  ·  Upstream SmartTube base: `32.59`  ·  Channel: beta
 
 ## Status / classification
 
@@ -82,8 +82,8 @@ Reworked for touch ([#26], verified on device — Player, General, Auto Frame Ra
   and controls the bar's visibility directly. Dim scrim removed for Shorts. Auto-hide honours
   the *Auto-hide UI* timeout setting; when the setting is off (0s) the seek bar stays visible.
   **VERIFIED-ON-DEVICE.**
-- **Classic control rows no longer show over the Shorts action rail** — fixed after
-  `v0.9.0-beta.1` ([#50]; ships in the next release). Tapping a Short showed the Leanback button
+- **Classic control rows no longer show over the Shorts action rail** — fixed in
+  `v0.9.1-beta.1` ([#50]). Tapping a Short showed the Leanback button
   rows and time readout over the rail: the [#28] fix reveals the whole control row to show the
   seek bar, which brought the compact button row back (Classic, since beta.8), and the Modern
   styles keep the full action set, so they got both rows (since `v0.7.0-beta.1`). Shorts now
