@@ -107,9 +107,10 @@ Resolved this release:
 ## Player
 
 - **Player style** ([#46]): Settings > Player style picks Classic (SmartTube control rows),
-  Modern (phone-style controls; the default on new installs) or Tap to pause. Known gaps in the
-  Modern styles: the seek bar has no preview thumbnails while dragging (Classic keeps them), and
-  Tap to pause's double-tap seek shows the seek bar rather than the ripple. The portrait panel
+  Modern (phone-style controls; the default on new installs) or Tap to pause. The Modern seek bar
+  now matches Classic: storyboard preview thumbnails (with chapter title and time) while dragging,
+  and SponsorBlock / chapter marks on the bar. Known gap: Tap to pause's double-tap seek shows the
+  seek bar rather than the ripple. The portrait panel
   under the video keeps its current look for now.
 - **Swipe gestures in the landscape player** — added ([#48], verified on device): with the controls
   hidden, swipe up/down on the right half for volume, on the left half for brightness. Settings >
