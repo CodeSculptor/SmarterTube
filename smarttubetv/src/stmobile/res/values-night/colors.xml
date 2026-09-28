@@ -25,4 +25,9 @@
 
     <color name="mobile_divider">#33FFFFFF</color>
     <color name="mobile_thumbnail_placeholder">#000000</color>
+
+    <!-- Channel page: sort chips + playlist-card stack strips. -->
+    <color name="mobile_chip_background">#FF272727</color>
+    <color name="mobile_playlist_stack_back">#FF3A3A3A</color>
+    <color name="mobile_playlist_stack_front">#FF5A5A5A</color>
 </resources>

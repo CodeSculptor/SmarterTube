@@ -109,4 +109,9 @@
     <string name="mobile_stats_crash_send">Send</string>
     <string name="mobile_stats_crash_discard">Don\'t send</string>
 
+    <!-- Channel page: sort + in-channel search (parity pass, session A) -->
+    <string name="mobile_channel_search_hint">Search this channel</string>
+    <string name="mobile_channel_search_close">Close search</string>
+    <string name="mobile_channel_search_tab">Search: %1$s</string>
+
 </resources>

@@ -1,10 +1,19 @@
 package com.liskovsoft.smartyoutubetv2.mobile.ui.channel;
 
+import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -19,7 +28,9 @@ import android.app.AlertDialog;
 import com.bumptech.glide.Glide;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+import com.liskovsoft.mediaserviceinterfaces.ContentService;
 import com.liskovsoft.mediaserviceinterfaces.MediaItemService;
+import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import java.util.List;
 import com.liskovsoft.mediaserviceinterfaces.ServiceManager;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItemMetadata;
@@ -70,6 +81,21 @@ public class MobileChannelFragment extends Fragment implements ChannelView {
     private Disposable mSubscribeAction;
     private Disposable mHeaderAction;
     private List<NotificationState> mNotificationStates;
+    // In-channel search: upstream ChannelPresenter.onSearchSubmit emits its result as an
+    // ACTION_REPLACE with this id at position 0; it becomes its own "Search: ..." tab.
+    private static final int SEARCH_GROUP_ID = 112;
+    // Our re-sorted Videos tab (the id upstream's sort uses for its replacement row).
+    private static final int SORT_GROUP_ID = 144;
+    private View mSearchBar;
+    private EditText mSearchInput;
+    private String mSearchQuery;
+    private View mSortScroll;
+    private LinearLayout mSortChips;
+    private List<MediaGroup> mSortOptions;
+    private int mSortIdx;
+    private int mSortTabId = -1;
+    private Disposable mSortOptionsAction;
+    private Disposable mSortAction;
 
     @Nullable
     @Override
@@ -99,9 +125,15 @@ public class MobileChannelFragment extends Fragment implements ChannelView {
             }
         });
 
+        mSearchBar = view.findViewById(R.id.channel_search_bar);
+        mSearchInput = view.findViewById(R.id.channel_search_input);
+        mSortScroll = view.findViewById(R.id.channel_sort_scroll);
+        mSortChips = view.findViewById(R.id.channel_sort_chips);
+        setupSearch(view);
+
         int span = getResources().getInteger(R.integer.mobile_grid_span);
-        int cardWidth = getResources().getDisplayMetrics().widthPixels / span;
-        mTabsAdapter = new ChannelTabsAdapter(cardWidth, span, mVideoClick, mVideoLongClick,
+        mTabsAdapter = new ChannelTabsAdapter(getResources().getDisplayMetrics().widthPixels, span,
+                mVideoClick, mVideoLongClick,
                 last -> {
                     if (mPresenter != null && last != null) {
                         mPresenter.onScrollEnd(last);
@@ -124,6 +156,11 @@ public class MobileChannelFragment extends Fragment implements ChannelView {
             public void onItemRangeInserted(int positionStart, int itemCount) {
                 updateTabStripVisibility();
             }
+
+            @Override
+            public void onItemRangeRemoved(int positionStart, int itemCount) {
+                updateTabStripVisibility();
+            }
         });
 
         mSwipeRefresh.setColorSchemeResources(R.color.brand_accent);
@@ -142,6 +179,11 @@ public class MobileChannelFragment extends Fragment implements ChannelView {
             @Override
             public void onPageScrollStateChanged(int state) {
                 mSwipeRefresh.setEnabled(state == ViewPager2.SCROLL_STATE_IDLE);
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                updateSortChipsVisibility();
             }
         });
         mSwipeRefresh.setOnRefreshListener(() -> {
@@ -380,7 +422,7 @@ public class MobileChannelFragment extends Fragment implements ChannelView {
         if (mTabsMediator != null) {
             mTabsMediator.detach();
         }
-        RxHelper.disposeActions(mSubscribeAction, mHeaderAction);
+        RxHelper.disposeActions(mSubscribeAction, mHeaderAction, mSortOptionsAction, mSortAction);
         if (mPresenter != null) {
             mPresenter.onViewDestroyed();
         }
@@ -412,12 +454,23 @@ public class MobileChannelFragment extends Fragment implements ChannelView {
         }
         switch (group.getAction()) {
             case VideoGroup.ACTION_REPLACE:
-                // Some flows (sort change, in-channel search) emit a replace; wipe the tabs
-                // before appending. A "replace" carrying a single group ends up as one tab.
+                if (group.getPosition() >= 0) {
+                    // A positioned replace (upstream in-channel search; TV swaps one row at
+                    // the top) becomes one tab at that position; the other tabs stay.
+                    if (!group.isEmpty()) {
+                        String title = group.getId() == SEARCH_GROUP_ID && mSearchQuery != null
+                                ? getString(R.string.mobile_channel_search_tab, mSearchQuery) : group.getTitle();
+                        int idx = mTabsAdapter.putTab(group.getPosition(), group, title);
+                        mPager.setCurrentItem(idx, false);
+                        scrollCurrentPageToTop();
+                    }
+                    break;
+                }
+                // A full replace wipes the tabs before appending.
                 mTabsAdapter.clear();
+                resetSortTab();
                 if (!group.isEmpty()) {
-                    mTabsAdapter.appendGroup(group);
-                    maybeResolveSubscribedState(group);
+                    appendTab(group);
                 }
                 break;
             case VideoGroup.ACTION_REMOVE:
@@ -431,17 +484,22 @@ public class MobileChannelFragment extends Fragment implements ChannelView {
             default: // ACTION_APPEND / ACTION_PREPEND — a new group is a new tab, a
                      // continuation appends to its existing page.
                 if (!group.isEmpty()) {
-                    mTabsAdapter.appendGroup(group);
-                    maybeResolveSubscribedState(group);
+                    appendTab(group);
                 }
                 break;
         }
     }
 
+    private void appendTab(VideoGroup group) {
+        mTabsAdapter.appendGroup(group);
+        maybeResolveSubscribedState(group);
+        maybePickSortTab(group);
+    }
+
     @Override
     public void setPosition(int index) {
-        // Touch UI: no D-pad focus to restore. A scroll-to-row could go here if the
-        // in-channel search ever lands natively; not needed for the basic flow.
+        // Touch UI: no D-pad focus to restore. The in-channel search result is already
+        // selected as its own tab in update() (upstream calls setPosition(1) after it).
     }
 
     @Override
@@ -467,6 +525,210 @@ public class MobileChannelFragment extends Fragment implements ChannelView {
     public void clear() {
         if (mTabsAdapter != null) {
             mTabsAdapter.clear();
+        }
+        resetSortTab();
+    }
+
+    // ----- sort (Latest / Popular / Oldest) -----
+
+    /**
+     * The first plain-video tab (not Shorts, not playlists) is the channel's Videos tab, the
+     * one YouTube's sort chips apply to. Pick it once, then fetch its sort options.
+     */
+    private void maybePickSortTab(VideoGroup group) {
+        if (mSortTabId != -1 || group.isShorts() || firstPlayable(group) == null) {
+            return;
+        }
+        if (VideoCardAdapter.styleOf(group.getVideos().get(0)) != VideoCardAdapter.STYLE_VIDEO) {
+            return;
+        }
+        mSortTabId = group.getId();
+        mSortIdx = 0;
+        if (mSortOptions != null) {
+            bindSortChips();
+        } else {
+            loadSortOptions();
+        }
+    }
+
+    private void resetSortTab() {
+        mSortTabId = -1;
+        RxHelper.disposeActions(mSortAction);
+        updateSortChipsVisibility();
+    }
+
+    private void loadSortOptions() {
+        String channelId = mPresenter != null ? mPresenter.getChannelId() : null;
+        ContentService service = YouTubeServiceManager.instance().getContentService();
+        if (channelId == null || service == null || RxHelper.isAnyActionRunning(mSortOptionsAction)) {
+            return;
+        }
+        mSortOptionsAction = RxHelper.execute(service.getChannelSortingOptionsObserve(channelId),
+                (List<MediaGroup> options) -> {
+                    if (!isAdded()) {
+                        return;
+                    }
+                    mSortOptions = options;
+                    bindSortChips();
+                },
+                error -> {});
+    }
+
+    private void bindSortChips() {
+        if (mSortChips == null || getContext() == null) {
+            return;
+        }
+        mSortChips.removeAllViews();
+        if (mSortOptions != null) {
+            float density = getResources().getDisplayMetrics().density;
+            int padH = Math.round(12 * density);
+            int padV = Math.round(6 * density);
+            for (int i = 0; i < mSortOptions.size(); i++) {
+                MediaGroup option = mSortOptions.get(i);
+                if (option == null || TextUtils.isEmpty(option.getTitle())) {
+                    continue;
+                }
+                final int idx = i;
+                boolean selected = i == mSortIdx;
+                TextView chip = new TextView(getContext());
+                chip.setText(option.getTitle());
+                chip.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                chip.setBackgroundResource(R.drawable.bg_sort_chip);
+                chip.setPadding(padH, padV, padH, padV);
+                chip.setSelected(selected);
+                chip.setTextColor(getResources().getColor(
+                        selected ? R.color.mobile_background : R.color.mobile_text_primary));
+                chip.setOnClickListener(c -> onSortChipClicked(idx));
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                lp.setMarginEnd(Math.round(8 * density));
+                mSortChips.addView(chip, lp);
+            }
+        }
+        updateSortChipsVisibility();
+    }
+
+    private void onSortChipClicked(int idx) {
+        ContentService service = YouTubeServiceManager.instance().getContentService();
+        if (idx == mSortIdx || mSortOptions == null || idx >= mSortOptions.size() || service == null) {
+            return;
+        }
+        mSortIdx = idx;
+        bindSortChips();
+        RxHelper.disposeActions(mSortAction);
+        showProgressBar(true);
+        // Same as upstream ChannelPresenter.onSearchSettingsClicked: each option is a
+        // continuation that loads the Videos tab in that order.
+        mSortAction = RxHelper.execute(service.continueGroupObserve(mSortOptions.get(idx)),
+                (MediaGroup mediaGroup) -> {
+                    showProgressBar(false);
+                    int tab = mTabsAdapter != null ? mTabsAdapter.indexOfId(mSortTabId) : -1;
+                    if (!isAdded() || mediaGroup == null || tab < 0) {
+                        return;
+                    }
+                    VideoGroup sorted = VideoGroup.from(mediaGroup);
+                    sorted.setId(SORT_GROUP_ID);
+                    mTabsAdapter.replaceTab(tab, sorted);
+                    mSortTabId = SORT_GROUP_ID;
+                    scrollCurrentPageToTop();
+                },
+                error -> showProgressBar(false));
+    }
+
+    private void updateSortChipsVisibility() {
+        if (mSortScroll == null) {
+            return;
+        }
+        boolean show = mSortTabId != -1 && mSortChips != null && mSortChips.getChildCount() > 1
+                && mPager != null && mTabsAdapter != null
+                && mTabsAdapter.getId(mPager.getCurrentItem()) == mSortTabId;
+        mSortScroll.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
+    // ----- in-channel search -----
+
+    private void setupSearch(View root) {
+        root.findViewById(R.id.btn_channel_search).setOnClickListener(v -> {
+            if (mSearchBar.getVisibility() == View.VISIBLE) {
+                submitSearch();
+            } else {
+                mSearchBar.setVisibility(View.VISIBLE);
+                mSearchInput.requestFocus();
+                showKeyboard(true);
+            }
+        });
+        root.findViewById(R.id.btn_channel_search_close).setOnClickListener(v -> closeSearch());
+        mSearchInput.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH
+                    || (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+                        && event.getAction() == KeyEvent.ACTION_DOWN)) {
+                submitSearch();
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private void submitSearch() {
+        String query = mSearchInput.getText() != null ? mSearchInput.getText().toString().trim() : "";
+        if (query.isEmpty() || mPresenter == null) {
+            return;
+        }
+        mSearchQuery = query;
+        showKeyboard(false);
+        mSearchInput.clearFocus();
+        mPresenter.onSearchSubmit(query);
+    }
+
+    private void closeSearch() {
+        showKeyboard(false);
+        mSearchInput.setText("");
+        mSearchInput.clearFocus();
+        mSearchBar.setVisibility(View.GONE);
+        mSearchQuery = null;
+        if (mTabsAdapter != null) {
+            mTabsAdapter.removeTabById(SEARCH_GROUP_ID);
+        }
+    }
+
+    private void showKeyboard(boolean show) {
+        InputMethodManager imm = getContext() != null
+                ? (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE) : null;
+        if (imm == null || mSearchInput == null) {
+            return;
+        }
+        if (show) {
+            imm.showSoftInput(mSearchInput, InputMethodManager.SHOW_IMPLICIT);
+        } else {
+            imm.hideSoftInputFromWindow(mSearchInput.getWindowToken(), 0);
+        }
+    }
+
+    private void scrollCurrentPageToTop() {
+        if (mPager == null) {
+            return;
+        }
+        mPager.post(() -> {
+            RecyclerView grid = currentPageGrid();
+            if (grid != null) {
+                grid.scrollToPosition(0);
+            }
+        });
+    }
+
+    // Hosting activity declares configChanges="orientation|..." so it is NOT recreated on
+    // rotation; re-read the grid span (values-sw600dp-land widens it) and re-flow every tab.
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (mTabsAdapter != null) {
+            mTabsAdapter.setSize(getResources().getDisplayMetrics().widthPixels,
+                    getResources().getInteger(R.integer.mobile_grid_span));
+        }
+        // The re-flow repopulates the tab strip, which scrolls back to the start; bring the
+        // selected tab back into view.
+        if (mTabs != null && mPager != null) {
+            mTabs.post(() -> mTabs.setScrollPosition(mPager.getCurrentItem(), 0f, true));
         }
     }
 

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Vertical 9:16 Shorts card (channel Shorts tab), like the YouTube phone app: title and
+    view count overlaid on the bottom of the thumbnail. Same view ids as mobile_video_card
+    so VideoCardAdapter binds it unchanged; width and frame height are set in code.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="3dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:background="?android:attr/selectableItemBackground">
+
+    <FrameLayout
+        android:id="@+id/card_thumb_frame"
+        android:layout_width="match_parent"
+        android:layout_height="1dp">
+
+        <ImageView
+            android:id="@+id/card_thumb"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:background="@color/mobile_thumbnail_placeholder"
+            android:contentDescription="@null" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:orientation="vertical"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="6dp"
+            android:background="@drawable/bg_card_scrim">
+
+            <TextView
+                android:id="@+id/card_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:textColor="#FFFFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:shadowColor="#99000000"
+                android:shadowRadius="2" />
+
+            <TextView
+                android:id="@+id/card_author"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:textColor="#DDFFFFFF"
+                android:textSize="11sp"
+                android:shadowColor="#99000000"
+                android:shadowRadius="2" />
+        </LinearLayout>
+
+        <!-- Kept for the shared ViewHolder; bindWatchedBar hides it on Shorts. -->
+        <ProgressBar
+            android:id="@+id/card_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:layout_gravity="bottom"
+            android:max="100"
+            android:progressDrawable="@drawable/mobile_watched_progress"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/card_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_margin="4dp"
+            android:background="@drawable/mobile_badge_bg"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp"
+            android:textColor="#FFFFFFFF"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </FrameLayout>
+</LinearLayout>

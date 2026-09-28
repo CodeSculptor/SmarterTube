@@ -33,8 +33,8 @@ public class ChannelTabsAdapter extends RecyclerView.Adapter<ChannelTabsAdapter.
         void onTabScrollEnd(Video lastVideo);
     }
 
-    private final int mCardWidth;
-    private final int mSpan;
+    private int mWidthPx;
+    private int mSpan;
     private final VideoCardAdapter.OnVideoAction mClick;
     private final VideoCardAdapter.OnVideoAction mLongClick;
     private final OnTabScrollEnd mScrollEnd;
@@ -46,9 +46,13 @@ public class ChannelTabsAdapter extends RecyclerView.Adapter<ChannelTabsAdapter.
     private final List<VideoGroup> mGroups = new ArrayList<>();
     private final RecyclerView.RecycledViewPool mPool = new RecyclerView.RecycledViewPool();
 
-    public ChannelTabsAdapter(int cardWidth, int span, VideoCardAdapter.OnVideoAction click,
+    /**
+     * @param widthPx the grid's width; each tab's card width is {@code widthPx / spanFor(tab)}
+     * @param span the base column count ({@code R.integer.mobile_grid_span})
+     */
+    public ChannelTabsAdapter(int widthPx, int span, VideoCardAdapter.OnVideoAction click,
                               VideoCardAdapter.OnVideoAction longClick, OnTabScrollEnd scrollEnd) {
-        mCardWidth = cardWidth;
+        mWidthPx = widthPx;
         mSpan = span;
         mClick = click;
         mLongClick = longClick;
@@ -74,14 +78,97 @@ public class ChannelTabsAdapter extends RecyclerView.Adapter<ChannelTabsAdapter.
             }
             mGroups.set(idx, group);
         } else {
-            VideoCardAdapter adapter = new VideoCardAdapter(mCardWidth, mClick, mLongClick);
-            adapter.setVideos(group.getVideos());
-            mIds.add(group.getId());
-            mTitles.add(group.getTitle() != null ? group.getTitle() : "");
-            mAdapters.add(adapter);
-            mGroups.add(group);
-            notifyItemInserted(mAdapters.size() - 1);
+            insertTab(mAdapters.size(), group, group.getTitle());
         }
+    }
+
+    private void insertTab(int position, VideoGroup group, String title) {
+        position = Math.max(0, Math.min(position, mAdapters.size()));
+        VideoCardAdapter adapter = new VideoCardAdapter(cardWidthFor(group), mClick, mLongClick);
+        adapter.setAdaptiveStyles(true);
+        adapter.setVerticalShorts(group.isShorts());
+        adapter.setVideos(group.getVideos());
+        mIds.add(position, group.getId());
+        mTitles.add(position, title != null ? title : "");
+        mAdapters.add(position, adapter);
+        mGroups.add(position, group);
+        notifyItemInserted(position);
+    }
+
+    /**
+     * Swap the content of the tab at {@code index} for {@code group} (e.g. a re-sorted Videos
+     * tab). The tab keeps its title; it takes the new group's id so continuations of the new
+     * group keep landing on it.
+     */
+    public void replaceTab(int index, VideoGroup group) {
+        if (index < 0 || index >= mAdapters.size()) {
+            return;
+        }
+        mIds.set(index, group.getId());
+        mGroups.set(index, group);
+        VideoCardAdapter adapter = mAdapters.get(index);
+        adapter.setCardWidth(cardWidthFor(group));
+        adapter.setVerticalShorts(group.isShorts());
+        adapter.setVideos(group.getVideos());
+        notifyItemChanged(index);
+    }
+
+    /**
+     * Put {@code group} at {@code position} as its own tab titled {@code title}: replaces the
+     * tab with the same id if there is one (a repeated in-channel search), else inserts it.
+     * Returns the tab's index.
+     */
+    public int putTab(int position, VideoGroup group, String title) {
+        int idx = mIds.indexOf(group.getId());
+        if (idx >= 0) {
+            mTitles.set(idx, title != null ? title : "");
+            replaceTab(idx, group);
+            return idx;
+        }
+        insertTab(position, group, title);
+        return Math.max(0, Math.min(position, mAdapters.size() - 1));
+    }
+
+    public void removeTabById(int id) {
+        int idx = mIds.indexOf(id);
+        if (idx < 0) {
+            return;
+        }
+        mIds.remove(idx);
+        mTitles.remove(idx);
+        mAdapters.remove(idx);
+        mGroups.remove(idx);
+        notifyItemRemoved(idx);
+    }
+
+    public int indexOfId(int id) {
+        return mIds.indexOf(id);
+    }
+
+    public int getId(int position) {
+        return position >= 0 && position < mIds.size() ? mIds.get(position) : -1;
+    }
+
+    /** Re-flow every page after a rotation: new base span and grid width. */
+    public void setSize(int widthPx, int span) {
+        if (mWidthPx == widthPx && mSpan == span) {
+            return;
+        }
+        mWidthPx = widthPx;
+        mSpan = span;
+        for (int i = 0; i < mAdapters.size(); i++) {
+            mAdapters.get(i).setCardWidth(cardWidthFor(mGroups.get(i)));
+        }
+        notifyItemRangeChanged(0, mAdapters.size());
+    }
+
+    /** Shorts tabs get half again as many (narrower, 9:16) columns, like the YouTube app. */
+    private int spanFor(VideoGroup group) {
+        return group != null && group.isShorts() ? Math.max(3, mSpan * 3 / 2) : mSpan;
+    }
+
+    private int cardWidthFor(VideoGroup group) {
+        return mWidthPx / spanFor(group);
     }
 
     public void removeVideos(List<Video> videos) {
@@ -130,6 +217,8 @@ public class ChannelTabsAdapter extends RecyclerView.Adapter<ChannelTabsAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        // Pages are recycled across tabs, so the column count is per bind, not per holder.
+        ((GridLayoutManager) holder.grid.getLayoutManager()).setSpanCount(spanFor(mGroups.get(position)));
         holder.grid.setAdapter(mAdapters.get(position));
     }
 

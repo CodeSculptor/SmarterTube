@@ -38,6 +38,18 @@
             android:textColor="@color/mobile_text_primary"
             android:textSize="18sp" />
 
+        <!-- In-channel search (upstream ChannelPresenter.onSearchSubmit). Opens the search row. -->
+        <ImageView
+            android:id="@+id/btn_channel_search"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:padding="11dp"
+            android:scaleType="fitCenter"
+            android:src="@android:drawable/ic_menu_search"
+            android:tint="@color/mobile_text_primary"
+            android:contentDescription="@string/mobile_channel_search_hint"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
+
         <TextView
             android:id="@+id/btn_subscribe"
             android:layout_width="wrap_content"
@@ -68,6 +80,44 @@
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/notification_bell"
             android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- In-channel search field; shown by the toolbar search button. -->
+    <LinearLayout
+        android:id="@+id/channel_search_bar"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:background="@color/mobile_primary"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/channel_search_input"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@null"
+            android:hint="@string/mobile_channel_search_hint"
+            android:textColorHint="@color/mobile_text_secondary"
+            android:textColor="@color/mobile_text_primary"
+            android:textSize="16sp"
+            android:singleLine="true"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:importantForAutofill="no" />
+
+        <TextView
+            android:id="@+id/btn_channel_search_close"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:text="✕"
+            android:textColor="@color/mobile_text_primary"
+            android:textSize="18sp"
+            android:contentDescription="@string/mobile_channel_search_close"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
     </LinearLayout>
 
     <!--
@@ -120,6 +170,28 @@
         app:tabIndicatorColor="@color/brand_accent"
         app:tabSelectedTextColor="@color/brand_accent"
         app:tabTextColor="@color/mobile_text_secondary" />
+
+    <!--
+        Sort chips (Latest / Popular / Oldest) for the channel's Videos tab, from upstream
+        ContentService.getChannelSortingOptionsObserve. Shown only while that tab is selected.
+    -->
+    <HorizontalScrollView
+        android:id="@+id/channel_sort_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/channel_sort_chips"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp" />
+    </HorizontalScrollView>
 
     <FrameLayout
         android:layout_width="match_parent"

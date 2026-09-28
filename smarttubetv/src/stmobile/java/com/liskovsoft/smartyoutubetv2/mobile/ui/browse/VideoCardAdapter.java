@@ -29,10 +29,19 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
         void onVideo(Video video);
     }
 
+    /** Standard 16:9 video card. */
+    public static final int STYLE_VIDEO = 0;
+    /** Vertical 9:16 Shorts card with the title overlaid on the thumbnail. */
+    public static final int STYLE_SHORT = 1;
+    /** Playlist card: stacked-thumbnail look plus a video-count badge. */
+    public static final int STYLE_PLAYLIST = 2;
+
     private int mCardWidth;
     private final OnVideoAction mClick;
     private final OnVideoAction mLongClick;
     private final List<Video> mVideos = new ArrayList<>();
+    private boolean mAdaptiveStyles;
+    private boolean mVerticalShorts;
 
     public VideoCardAdapter(int cardWidth, OnVideoAction click, OnVideoAction longClick) {
         mCardWidth = cardWidth;
@@ -51,6 +60,46 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
             mCardWidth = cardWidth;
             notifyDataSetChanged();
         }
+    }
+
+    /**
+     * Opt in to per-item card styles (a 9:16 card for Shorts, a playlist card for playlists)
+     * instead of the uniform 16:9 card. Used by the channel tabs; Home/Search keep the default.
+     */
+    public void setAdaptiveStyles(boolean adaptive) {
+        if (mAdaptiveStyles != adaptive) {
+            mAdaptiveStyles = adaptive;
+            notifyDataSetChanged();
+        }
+    }
+
+    /**
+     * With adaptive styles on, draw Shorts as vertical 9:16 cards. Only for an all-Shorts grid:
+     * one tall card in a mixed grid (e.g. search results) leaves ragged rows.
+     */
+    public void setVerticalShorts(boolean vertical) {
+        if (mVerticalShorts != vertical) {
+            mVerticalShorts = vertical;
+            notifyDataSetChanged();
+        }
+    }
+
+    public static int styleOf(Video video) {
+        if (video == null) {
+            return STYLE_VIDEO;
+        }
+        if (video.isShorts) {
+            return STYLE_SHORT;
+        }
+        if (video.isPlaylistAsChannel() || video.isBadgePlaylistInChannel()
+                || (video.videoId == null && video.hasPlaylist())) {
+            return STYLE_PLAYLIST;
+        }
+        return STYLE_VIDEO;
+    }
+
+    private static int thumbHeight(int style, int cardWidth) {
+        return style == STYLE_SHORT ? cardWidth * 16 / 9 : cardWidth * 9 / 16;
     }
 
     public void setVideos(List<Video> videos) {
@@ -116,16 +165,26 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
         return mVideos.size();
     }
 
+    @Override
+    public int getItemViewType(int position) {
+        if (!mAdaptiveStyles) {
+            return STYLE_VIDEO;
+        }
+        int style = styleOf(mVideos.get(position));
+        return style == STYLE_SHORT && !mVerticalShorts ? STYLE_VIDEO : style;
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.mobile_video_card, parent, false);
+        int layout = viewType == STYLE_SHORT ? R.layout.mobile_short_card
+                : viewType == STYLE_PLAYLIST ? R.layout.mobile_playlist_card : R.layout.mobile_video_card;
+        View view = LayoutInflater.from(parent.getContext()).inflate(layout, parent, false);
         if (view.getLayoutParams() != null) {
             view.getLayoutParams().width = mCardWidth;
         }
-        ViewHolder holder = new ViewHolder(view);
-        holder.thumbFrame.getLayoutParams().height = mCardWidth * 9 / 16;
+        ViewHolder holder = new ViewHolder(view, viewType);
+        holder.thumbFrame.getLayoutParams().height = thumbHeight(viewType, mCardWidth);
         return holder;
     }
 
@@ -136,11 +195,17 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
         if (holder.itemView.getLayoutParams() != null) {
             holder.itemView.getLayoutParams().width = mCardWidth;
         }
-        holder.thumbFrame.getLayoutParams().height = mCardWidth * 9 / 16;
+        holder.thumbFrame.getLayoutParams().height = thumbHeight(holder.style, mCardWidth);
 
         Video video = mVideos.get(position);
         holder.title.setText(video.getTitle());
         String author = video.getAuthor();
+        if (holder.style != STYLE_VIDEO && (author == null || author.isEmpty())) {
+            // Shorts/playlist tiles often carry no author; show their secondary line
+            // (view count / "View full playlist") instead.
+            CharSequence second = video.getSecondTitle();
+            author = second != null ? second.toString() : null;
+        }
         holder.author.setText(author != null ? author : "");
 
         // Duration/length badge overlaid on the thumbnail (YouTube-style). video.badge holds
@@ -204,6 +269,7 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
+        final int style;
         final View thumbFrame;
         final ImageView thumb;
         final TextView duration;
@@ -211,8 +277,9 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
         final TextView title;
         final TextView author;
 
-        ViewHolder(View itemView) {
+        ViewHolder(View itemView, int style) {
             super(itemView);
+            this.style = style;
             thumbFrame = itemView.findViewById(R.id.card_thumb_frame);
             thumb = itemView.findViewById(R.id.card_thumb);
             duration = itemView.findViewById(R.id.card_duration);

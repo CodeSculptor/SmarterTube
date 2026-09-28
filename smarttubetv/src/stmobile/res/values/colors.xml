@@ -29,4 +29,9 @@
 
     <!-- Dim behind a bottom-sheet sub-dialog. Theme-independent (same in light/night). -->
     <color name="mobile_scrim">#99000000</color>
+
+    <!-- Channel page: sort chips + playlist-card stack strips. -->
+    <color name="mobile_chip_background">#FFEDEDED</color>
+    <color name="mobile_playlist_stack_back">#FFC4C4C4</color>
+    <color name="mobile_playlist_stack_front">#FF9E9E9E</color>
 </resources>
