@@ -1,7 +1,13 @@
 name: Publish F-Droid repo
 
 # Regenerates SmarterTube's self-hosted F-Droid repository index from the APKs
-# attached to GitHub Releases and deploys it to GitHub Pages.
+# attached to GitHub Releases and deploys it to GitHub Pages, together with the
+# site root (docs/index.html).
+#
+# This workflow is the ONLY thing that may deploy Pages (repo Settings > Pages >
+# Source = "GitHub Actions"). Each Pages deploy replaces the whole site, so a second
+# deployer (the old "Deploy from branch master:/docs") wiped fdroid/ on every master
+# push, and this workflow wiped the docs/ root on every release (root 404).
 #
 # It serves OUR already-signed APKs as-is (F-Droid does not re-sign), so an F-Droid
 # install upgrades in place over a GitHub/Obtainium install. Only the repo INDEX is
@@ -12,6 +18,9 @@ on:
   release:
     types: [published]   # fires right after release.ps1 publishes a release
   workflow_dispatch:      # manual re-run / first-time smoke test
+  push:
+    branches: [master]
+    paths: ['docs/index.html'] # redeploy when the site root page changes
 
 permissions:
   contents: read
@@ -78,9 +87,10 @@ jobs:
           fdroid update --pretty --create-metadata
           fdroid lint || true
 
-      - name: Assemble Pages site (repo/ + archive/ only — never config/keystore)
+      - name: Assemble Pages site (root page + repo/ + archive/ — never config/keystore)
         run: |
           mkdir -p _site/fdroid
+          cp docs/index.html _site/index.html
           cp -r fdroid/repo _site/fdroid/repo
           [ -d fdroid/archive ] && cp -r fdroid/archive _site/fdroid/archive || true
           # Safety: ensure no secrets leaked into the published artifact.
