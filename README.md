@@ -61,6 +61,18 @@ Upstream SmartTube is built for Android TV — a leanback, 10-foot, D-pad interf
 
 ---
 
+## Device compatibility
+
+SmarterTube is for **Android phones and tablets** with a touchscreen, running **Android 4.2 or newer**. It is a companion to [SmartTube](https://github.com/yuliskov/SmartTube), not a replacement: TV devices should run upstream SmartTube, and the app declares a touchscreen requirement so app stores don't offer it on TVs. It is not available for iPhone/iPad or desktop.
+
+<p align="center">
+  <img src="images/compatibility.png" width="300" alt="SmarterTube device compatibility: supported on Android phones, tablets, older 32-bit phones and foldables; partial on Chromebooks, car head units and emulators; use SmartTube instead on Android TV / Google TV, Fire TV and Nvidia Shield; not supported on iPhone/iPad or desktop"/>
+</p>
+
+The chart's source is [`images/compatibility.html`](images/compatibility.html).
+
+---
+
 ## Download
 
 [**GitHub Releases →**](https://github.com/CodeSculptor/SmarterTube/releases)

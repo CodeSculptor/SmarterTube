@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:#ffffff;
+    width:300px;
+  }
+  #card { width:300px; padding:0 0 10px; }
+
+  .badge {
+    display:flex; align-items:center; gap:8px;
+    color:#fff; font-weight:700; font-size:18px;
+    border-radius:22px; padding:9px 16px; margin:12px 14px 4px;
+    width:max-content;
+  }
+  .badge .ico { font-size:18px; line-height:1; }
+  .green  { background:#3fae4f; }
+  .red    { background:#e2483d; }
+  .orange { background:#ef8a3b; }
+  .blue   { background:#3f76d6; }
+
+  .note { font-size:10px; color:#777; margin:0 16px 6px; line-height:1.3; }
+
+  .section { border-radius:14px; margin:4px 10px 0; padding:6px 0 10px; }
+  .sec-green  { background:#eef6ec; }
+  .sec-red    { background:#fbecea; }
+  .sec-orange { background:#fdf0e6; }
+  .sec-blue   { background:#eaf1fc; }
+
+  .row { display:flex; align-items:center; gap:12px; padding:9px 16px; }
+  .icon {
+    width:46px; height:46px; flex:0 0 46px;
+    border-radius:12px; display:flex; align-items:center; justify-content:center;
+    font-size:24px; background:#fff;
+    box-shadow:0 1px 3px rgba(0,0,0,.12);
+  }
+  .text { display:flex; flex-direction:column; }
+  .title { font-size:15px; font-weight:600; color:#222; }
+  .sub { font-size:10.5px; color:#777; margin-top:1px; }
+</style>
+</head>
+<body>
+<div id="card">
+
+  <div class="badge green"><span class="ico">&#10003;</span> Supported</div>
+  <div class="section sec-green">
+    <div class="row"><div class="icon">&#128241;</div><div class="text"><span class="title">Android phones</span><span class="sub">arm64-v8a &middot; most phones since 2016</span></div></div>
+    <div class="row"><div class="icon">&#128242;</div><div class="text"><span class="title">Android tablets</span><span class="sub">Portrait &amp; landscape layouts</span></div></div>
+    <div class="row"><div class="icon">&#128223;</div><div class="text"><span class="title">Older 32-bit phones</span><span class="sub">armeabi-v7a builds</span></div></div>
+    <div class="row"><div class="icon">&#128214;</div><div class="text"><span class="title">Foldables</span><span class="sub">Pixel Fold, Galaxy Z, and similar</span></div></div>
+  </div>
+
+  <div class="badge orange"><span class="ico">&#9888;</span> Partial Support</div>
+  <div class="note">Installs and runs, but phones &amp; tablets are the design target &mdash; these may have rough edges.</div>
+  <div class="section sec-orange">
+    <div class="row"><div class="icon">&#128187;</div><div class="text"><span class="title">Chromebooks</span><span class="sub">Via Android app support</span></div></div>
+    <div class="row"><div class="icon">&#128663;</div><div class="text"><span class="title">Car head units</span><span class="sub">Android-powered displays</span></div></div>
+    <div class="row"><div class="icon">&#128421;</div><div class="text"><span class="title">Emulators</span><span class="sub">x86 build, for testing</span></div></div>
+  </div>
+
+  <div class="badge blue"><span class="ico">&#128250;</span> Use SmartTube instead</div>
+  <div class="note">These are TV devices. Install upstream <b>SmartTube</b> &mdash; SmarterTube is its phone/tablet companion, not a TV build.</div>
+  <div class="section sec-blue">
+    <div class="row"><div class="icon">&#128250;</div><div class="text"><span class="title">Android TV / Google TV</span><span class="sub">Leanback 10-foot UI</span></div></div>
+    <div class="row"><div class="icon">&#128293;</div><div class="text"><span class="title">Fire TV / Fire Stick</span><span class="sub">Amazon TV devices</span></div></div>
+    <div class="row"><div class="icon">&#127918;</div><div class="text"><span class="title">Nvidia Shield</span><span class="sub">Android TV streamer</span></div></div>
+  </div>
+
+  <div class="badge red"><span class="ico">&#10007;</span> Not supported</div>
+  <div class="section sec-red">
+    <div class="row"><div class="icon">&#127822;</div><div class="text"><span class="title">iPhone / iPad</span><span class="sub">iOS &mdash; Android only</span></div></div>
+    <div class="row"><div class="icon">&#128421;</div><div class="text"><span class="title">Desktop &amp; web</span><span class="sub">Windows, macOS, Linux, browsers</span></div></div>
+  </div>
+
+</div>
+</body>
+</html>
