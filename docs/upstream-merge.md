@@ -74,6 +74,24 @@ gh pr create --base master --title "Upstream sync — manual merge"
 
 Then let `stmobile-validate` run, smoke-test, merge.
 
+## MediaServiceCore is pinned to our fork
+
+`MediaServiceCore` points at [CodeSculptor/MediaServiceCore](https://github.com/CodeSculptor/MediaServiceCore), branch `smartertube`, not upstream. The branch is upstream `master` plus one commit that sets `FormatInfoWrapper.mTryInnertubeFirst = false`, so videos load through the legacy client list (visionOS first) again. Upstream's newer Innertube (WEB/SABR) path starts slowly because of a SABR ads backoff, and its caption URLs come back empty, which crashes the player when subtitles are on. See [#53](https://github.com/CodeSculptor/SmarterTube/issues/53), [#52](https://github.com/CodeSculptor/SmarterTube/issues/52), [yuliskov/SmartTube#6281](https://github.com/yuliskov/SmartTube/issues/6281).
+
+When an upstream sync bumps `MediaServiceCore`, the submodule pointer conflicts with ours. Merge upstream into the fork branch (merge, never rebase or force-push: older SmarterTube commits pin older fork commits), then pin the result:
+
+```bash
+cd MediaServiceCore
+git fetch https://github.com/yuliskov/MediaServiceCore master
+git checkout smartertube
+git merge FETCH_HEAD
+git push fork smartertube        # remote "fork" = CodeSculptor/MediaServiceCore
+cd ..
+git add MediaServiceCore         # resolves the submodule conflict to the new fork commit
+```
+
+Check that `FormatInfoWrapper.kt` still has `mTryInnertubeFirst = false` after the merge. Once upstream fixes #6281, point `.gitmodules` back at `yuliskov/MediaServiceCore`, drop `branch = smartertube`, and pin an upstream commit again.
+
 ## What to do when validate fails
 
 If `stmobile-validate` flags a missing integration point on a PR:

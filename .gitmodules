@@ -3,4 +3,5 @@
 	url = https://github.com/yuliskov/SharedModules
 [submodule "MediaServiceCore"]
 	path = MediaServiceCore
-	url = https://github.com/yuliskov/MediaServiceCore
+	url = https://github.com/CodeSculptor/MediaServiceCore
+	branch = smartertube
