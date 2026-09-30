@@ -263,8 +263,8 @@ android {
             // 23734 = v0.9.1-beta.1+st32.59 (Shorts show only the action rail + seek bar, no Classic control rows #50).
             // 23735 = v0.9.2-beta.1+st32.59 (videos load via visionOS again: fast starts #53, subtitles no longer crash #52;
             //         MediaServiceCore pinned to the CodeSculptor fork, upstream tcl TV-player bump).
-            versionCode 23734
-            versionName "v0.9.1-beta.1+st32.59"
+            versionCode 23735
+            versionName "v0.9.2-beta.1+st32.59"
         }
     }
 }
