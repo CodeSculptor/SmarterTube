@@ -20,6 +20,7 @@ public final class MobilePlayerStylePrefs {
     private static final String PREFS_NAME = "mobile_player_style_prefs";
     private static final String KEY_STYLE = "style";
     private static final String KEY_SWIPE_GESTURES = "swipe_gestures";
+    private static final String KEY_SWIPE_BRIGHTNESS = "swipe_brightness";
 
     public enum Style {
         CLASSIC, MODERN, TAP_TO_PAUSE;
@@ -68,6 +69,15 @@ public final class MobilePlayerStylePrefs {
 
     public static void setSwipeGesturesEnabled(Context context, boolean enabled) {
         prefs(context).edit().putBoolean(KEY_SWIPE_GESTURES, enabled).apply();
+    }
+
+    /** Whether the left-half brightness swipe is active (the right-half volume swipe is separate). */
+    public static boolean isBrightnessSwipeEnabled(Context context) {
+        return prefs(context).getBoolean(KEY_SWIPE_BRIGHTNESS, true);
+    }
+
+    public static void setBrightnessSwipeEnabled(Context context, boolean enabled) {
+        prefs(context).edit().putBoolean(KEY_SWIPE_BRIGHTNESS, enabled).apply();
     }
 
     private static SharedPreferences prefs(Context context) {

@@ -449,7 +449,7 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
                 .show();
     }
 
-    /** Phone-only "Swipe gestures" on/off (#48); the player reads it when it resumes. */
+    /** Phone-only "Swipe gestures" on / volume only / off (#48, #47); the player reads it when it resumes. */
     private void showSwipeGesturesToggle() {
         Context context = getContext();
         if (context == null) {
@@ -457,13 +457,18 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
         }
         String[] labels = {
                 context.getString(R.string.mobile_swipe_gestures_on),
+                context.getString(R.string.mobile_swipe_gestures_volume_only),
                 context.getString(R.string.mobile_swipe_gestures_off),
         };
-        int checked = MobilePlayerStylePrefs.isSwipeGesturesEnabled(context) ? 0 : 1;
+        int checked = !MobilePlayerStylePrefs.isSwipeGesturesEnabled(context) ? 2
+                : MobilePlayerStylePrefs.isBrightnessSwipeEnabled(context) ? 0 : 1;
         new AlertDialog.Builder(context)
                 .setTitle(R.string.mobile_swipe_gestures_title)
                 .setSingleChoiceItems(labels, checked, (dialog, which) -> {
-                    MobilePlayerStylePrefs.setSwipeGesturesEnabled(context, which == 0);
+                    MobilePlayerStylePrefs.setSwipeGesturesEnabled(context, which != 2);
+                    if (which != 2) {
+                        MobilePlayerStylePrefs.setBrightnessSwipeEnabled(context, which == 0);
+                    }
                     dialog.dismiss();
                 })
                 .show();

@@ -75,6 +75,7 @@
     <!-- Swipe gestures (#48) -->
     <string name="mobile_swipe_gestures_title">Swipe gestures</string>
     <string name="mobile_swipe_gestures_on">On: swipe up/down for volume (right) and brightness (left) in landscape</string>
+    <string name="mobile_swipe_gestures_volume_only">Volume only: swipe up/down on the right in landscape; the left side is left alone</string>
     <string name="mobile_swipe_gestures_off">Off</string>
 
     <!-- Channel page -->

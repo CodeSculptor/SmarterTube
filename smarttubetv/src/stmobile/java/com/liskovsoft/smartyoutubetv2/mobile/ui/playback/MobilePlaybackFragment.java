@@ -13,6 +13,7 @@ import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
@@ -150,6 +151,13 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     private float   mSwipeRawStartY;
     private float   mSwipeRawStartX;
     private long    mTouchDownTime;
+    // Double-tap to like: a single tap waits one double-tap window for a second tap before it
+    // toggles pause. mLastShortsTapTime also chains further quick taps into more hearts.
+    private long    mLastShortsTapTime;
+    private final Runnable mPendingShortsTap = () -> {
+        onShortsTap();
+        revealShortsChrome();
+    };
     private boolean mShortsSwipeDragging;
     private int     mDragThresholdPx; // initialised to 15dp in initShortsViews
     // Non-Shorts: the current gesture started on empty video while the controls were showing.
@@ -236,6 +244,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     public void onPause() {
         super.onPause();
         mChromeHandler.removeCallbacks(mHideShortsChr);
+        mChromeHandler.removeCallbacks(mPendingShortsTap);
         mChromeHandler.removeCallbacks(mShortsFramePoll);
         mChromeHandler.removeCallbacks(mShortsFrameTimeout);
         mChromeHandler.removeCallbacks(mShortsLoopPoll);
@@ -612,6 +621,10 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         float density = getResources().getDisplayMetrics().density;
         float edgeX = 32 * density;
         float edgeY = 48 * density;
+        boolean volumeSide = down.getX() >= playerView.getWidth() / 2f;
+        if (!volumeSide && !MobilePlayerStylePrefs.isBrightnessSwipeEnabled(requireContext())) {
+            return false; // "Volume only": the left half behaves as if swipes were off
+        }
         return down.getX() > edgeX && down.getX() < playerView.getWidth() - edgeX
                 && down.getY() > edgeY && down.getY() < playerView.getHeight() - edgeY;
     }
@@ -772,6 +785,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
                 float dy = event.getY() - mSwipeRawStartY;
                 if (!mShortsSwipeDragging && Math.abs(dy) > mDragThresholdPx) {
                     mShortsSwipeDragging = true;
+                    mChromeHandler.removeCallbacks(mPendingShortsTap);
                     mChromeHandler.removeCallbacks(mHideShortsChr);
                     setShortsChrome(false);
                     // Abandon any in-flight transition from a previous swipe before starting fresh.
@@ -800,8 +814,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
                     if (touchHitsButton(event.getRawX(), event.getRawY())) {
                         return false; // let normal dispatch fire the button's onClick
                     }
-                    onShortsTap();
-                    revealShortsChrome();
+                    onShortsTapUp(event.getRawX(), event.getRawY());
                     return true;
                 }
                 return false;
@@ -1156,6 +1169,28 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     }
 
     /**
+     * Shorts: sit the seek bar on the bottom edge of the rendered video, not the bottom of the
+     * 9:16 strip. A letterboxed or non-9:16 Short (and any size change, e.g. the next Short in a
+     * different aspect) leaves the video shorter than the strip, so the bar would float in the
+     * black bars. Run on every layout pass, so it follows the video's aspect-ratio updates. Outside
+     * Shorts the bar is left where the Leanback row puts it.
+     */
+    private void anchorSeekBarToVideo() {
+        View root = getView();
+        if (root == null) return;
+        View bar = root.findViewById(R.id.playback_progress);
+        if (bar == null) return;
+        float shift = 0f;
+        if (mLayoutState == 2) {
+            View video = root.findViewById(R.id.surface_root);
+            if (video != null && video.getHeight() > 0 && root.getHeight() > 0) {
+                shift = Math.min(0f, video.getBottom() - root.getHeight());
+            }
+        }
+        if (bar.getTranslationY() != shift) bar.setTranslationY(shift);
+    }
+
+    /**
      * Show or hide the full Shorts overlay chrome: action rail + back button + the seek bar (the
      * Leanback control row minus its buttons, see setShortsControlsVisible). They all reveal and
      * auto-hide together.
@@ -1183,6 +1218,52 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         if (PlayerData.instance(getContext()).getUiHideTimeoutSec() > 0) {
             mChromeHandler.postDelayed(mHideShortsChr, 3000);
         }
+    }
+
+    /**
+     * A tap on the video area. The first tap waits one double-tap window: if a second tap lands in
+     * it, that's a like (heart burst, never an unlike); otherwise it toggles pause as before.
+     */
+    private void onShortsTapUp(float x, float y) {
+        long now = android.os.SystemClock.uptimeMillis();
+        boolean doubleTap = now - mLastShortsTapTime <= ViewConfiguration.getDoubleTapTimeout();
+        mLastShortsTapTime = now;
+        mChromeHandler.removeCallbacks(mPendingShortsTap);
+        if (!doubleTap) {
+            mChromeHandler.postDelayed(mPendingShortsTap, ViewConfiguration.getDoubleTapTimeout());
+            return;
+        }
+        if (getButtonState(R.id.action_thumbs_up) != PlayerUI.BUTTON_ON) {
+            PlaybackPresenter.instance(getContext())
+                    .onButtonClicked(R.id.action_thumbs_up, PlayerUI.BUTTON_OFF);
+        }
+        showShortsHeart(x, y);
+    }
+
+    /** Heart burst at the tap point (screen coordinates). */
+    private void showShortsHeart(float rawX, float rawY) {
+        if (mRoot == null) return;
+        int[] loc = new int[2];
+        mRoot.getLocationOnScreen(loc);
+        float x = rawX - loc[0];
+        float y = rawY - loc[1];
+        int size = (int) (96 * getResources().getDisplayMetrics().density);
+        ImageView heart = new ImageView(requireContext());
+        heart.setImageResource(R.drawable.ic_shorts_heart);
+        heart.setColorFilter(0xFFFF3B5C);
+        heart.setLayoutParams(new ViewGroup.LayoutParams(size, size));
+        heart.setX(x - size / 2f);
+        heart.setY(y - size / 2f);
+        heart.setScaleX(0.4f);
+        heart.setScaleY(0.4f);
+        heart.setAlpha(1f);
+        heart.setElevation(64f);
+        mRoot.addView(heart);
+        heart.animate().scaleX(1.2f).scaleY(1.2f).setDuration(220)
+                .withEndAction(() -> heart.animate().alpha(0f).scaleX(1.4f).scaleY(1.4f)
+                        .setStartDelay(150).setDuration(250)
+                        .withEndAction(() -> mRoot.removeView(heart)).start())
+                .start();
     }
 
     /** Tap on the video area: toggle play/pause and flash the indicator icon. */
@@ -1713,6 +1794,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         // Keep the Shorts button rows and strip decor (title/quality/date) hidden across glue
         // rebuilds (#50). Outside Shorts both are handled by the layout/overlay paths already.
         mRoot.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            anchorSeekBarToVideo();
             if (mLayoutState != 2) return;
             applyShortsDocks();
             applyOverlayDecorVisibility(true);
