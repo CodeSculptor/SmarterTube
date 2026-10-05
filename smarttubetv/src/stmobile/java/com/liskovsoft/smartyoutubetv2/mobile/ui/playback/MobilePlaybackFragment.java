@@ -223,7 +223,10 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         mStyle = MobilePlayerStylePrefs.getStyle(requireContext());
         mSwipeEnabled = MobilePlayerStylePrefs.isSwipeGesturesEnabled(requireContext());
         applyMobileLayout();
-        if (mModernChrome != null) mModernChrome.start();
+        if (mModernChrome != null) {
+            mModernChrome.start();
+            mModernChrome.onHostResumed();
+        }
     }
 
     @Override

@@ -124,6 +124,15 @@ public class MobileBrowseActivity extends MobileActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        // The theme was changed on the Settings screen that sat on top of us.
+        if (MobileSettingsRows.consumeThemeChanged()) {
+            recreate();
+        }
+    }
+
+    @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQ_POST_NOTIFICATIONS && mAfterPermission != null) {

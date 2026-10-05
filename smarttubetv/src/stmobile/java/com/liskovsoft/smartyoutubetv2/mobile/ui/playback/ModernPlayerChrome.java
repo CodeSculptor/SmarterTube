@@ -15,6 +15,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.leanback.widget.Action;
 import androidx.leanback.widget.ArrayObjectAdapter;
 import androidx.leanback.widget.ObjectAdapter;
@@ -26,6 +27,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerUI;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.SeekBarSegment;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.browse.MobileSettingsActivity;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.other.VideoPlayerGlue;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.previewtimebar.StoryboardManager;
@@ -68,6 +70,7 @@ final class ModernPlayerChrome {
     private final TextView mTitle;
     private final TextView mChannel;
     private final ImageButton mCc;
+    private boolean mResumeAfterSettings;
     private final ImageButton mPlayPause;
     private final TextView mTime;
     private final ImageButton mFullscreen;
@@ -300,6 +303,21 @@ final class ModernPlayerChrome {
         mHandler.post(mPoll);
     }
 
+    /** Pause, open the app's Settings screen over the player, and resume when the user comes back. */
+    private void openAppSettings() {
+        mResumeAfterSettings = mHost.getPlayWhenReady();
+        mHost.setPlayWhenReady(false);
+        MobileSettingsActivity.start(mActivity, true);
+    }
+
+    /** The host is in front again: resume a video that {@link #openAppSettings} paused. */
+    void onHostResumed() {
+        if (mResumeAfterSettings) {
+            mResumeAfterSettings = false;
+            mHost.setPlayWhenReady(true);
+        }
+    }
+
     /** Stop following (player paused / backgrounded). */
     void stop() {
         mHandler.removeCallbacks(mPoll);
@@ -432,6 +450,10 @@ final class ModernPlayerChrome {
                 actions.add(action);
             }
         }
+        // The app's Settings screen, opened over the player so Back returns to this video.
+        Action appSettings = new Action(R.id.action_mobile_app_settings, mActivity.getString(R.string.mobile_app_settings));
+        appSettings.setIcon(ContextCompat.getDrawable(mActivity, R.drawable.ic_modern_settings));
+        actions.add(appSettings);
         mSheetTitle.setText(R.string.mobile_player_settings);
         mSheetList.setAdapter(new ActionAdapter(actions));
         showSheet(Math.min(actions.size() * dp(SHEET_ROW_HEIGHT_DP), maxSheetListHeight()));
@@ -608,6 +630,10 @@ final class ModernPlayerChrome {
                     // Subtitle language picker, not the on/off toggle.
                     PlaybackPresenter.instance(mActivity).onButtonLongClicked(R.id.lb_control_closed_captioning,
                             isOn(R.id.lb_control_closed_captioning) ? PlayerUI.BUTTON_ON : PlayerUI.BUTTON_OFF);
+                    return;
+                }
+                if (action.getId() == R.id.action_mobile_app_settings) {
+                    openAppSettings();
                     return;
                 }
                 VideoPlayerGlue glue = mHost.glue();

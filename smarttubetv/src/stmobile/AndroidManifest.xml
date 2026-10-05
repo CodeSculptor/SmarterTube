@@ -143,6 +143,17 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.SmarterTube.Mobile" />
 
+        <!-- Phone Settings screen. Opens over Home or the player; translucent window (theme set in
+             initTheme) so the screen underneath is paused, not stopped. "behind" keeps the
+             orientation of whatever it was opened from. -->
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.mobile.ui.browse.MobileSettingsActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|layoutDirection|keyboardHidden"
+            android:screenOrientation="behind"
+            android:theme="@style/Theme.SmarterTube.Mobile.TranslucentPanel" />
+
         <!-- Native phone About screen (fork-attribution surface). -->
         <activity
             android:name="com.liskovsoft.smartyoutubetv2.mobile.ui.about.MobileAboutActivity"

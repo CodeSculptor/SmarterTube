@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The phone Settings screen: a back bar over the settings list. Opaque background: the
+     window itself is translucent so the screen underneath is only paused (see MobileSettingsActivity). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/mobile_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@color/mobile_primary">
+
+        <TextView
+            android:id="@+id/btn_back"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:gravity="center"
+            android:text="←"
+            android:textColor="@color/mobile_text_primary"
+            android:textSize="22sp"
+            android:background="?android:attr/selectableItemBackground" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:text="@string/header_settings"
+            android:singleLine="true"
+            android:textColor="@color/mobile_text_primary"
+            android:textSize="18sp" />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/settings_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+</LinearLayout>

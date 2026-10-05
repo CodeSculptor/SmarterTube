@@ -1,7 +1,5 @@
 package com.liskovsoft.smartyoutubetv2.mobile.ui.browse;
 
-import android.app.AlertDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
@@ -31,7 +29,6 @@ import com.bumptech.glide.Glide;
 import com.liskovsoft.mediaserviceinterfaces.oauth.Account;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.BrowseSection;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.SettingsGroup;
-import com.liskovsoft.smartyoutubetv2.common.app.models.data.SettingsItem;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.VideoGroup;
 import com.liskovsoft.smartyoutubetv2.common.app.models.errors.ErrorFragmentData;
@@ -41,16 +38,9 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.dialogs.AccountSelec
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.settings.AccountSettingsPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.BrowseView;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
-import com.liskovsoft.smartyoutubetv2.mobile.notifications.NotificationPollWorker;
-import com.liskovsoft.smartyoutubetv2.mobile.stats.StatsDialogs;
-import com.liskovsoft.smartyoutubetv2.mobile.stats.StatsReporter;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.about.MobileAboutActivity;
-import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobileNotificationPrefs;
-import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobilePlayerStylePrefs;
-import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobileThemePrefs;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -168,6 +158,12 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
     private void onSectionPicked(BrowseSection section) {
         if (mDrawer != null) {
             mDrawer.closeDrawer(GravityCompat.START);
+        }
+        if (section.getType() == BrowseSection.TYPE_SETTINGS_GRID && getContext() != null) {
+            // Settings is its own screen on top of this one, not a section: Back returns to the
+            // section the user was on, untouched (no reload, scroll position kept).
+            MobileSettingsActivity.start(getContext(), false);
+            return;
         }
         selectSection(mSectionAdapter.indexOf(section), true);
     }
@@ -337,175 +333,9 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
         hideEmptyMessage();
         mShelfAdapter = null;
         mGridAdapter = null;
-        mSettingsAdapter = new SettingsItemAdapter(prependThemeRow(group.getItems()));
+        mSettingsAdapter = new SettingsItemAdapter(MobileSettingsRows.build(getActivity(), group.getItems()));
         mContentList.setLayoutManager(new LinearLayoutManager(getContext()));
         mContentList.setAdapter(mSettingsAdapter);
-    }
-
-    /**
-     * Prepend a phone-only "Theme" row to the upstream Settings list. Upstream's
-     * ColorScheme picker is TV-only (all 8 schemes are dark variants) and isn't
-     * surfaced in the stmobile UI, so this is a dedicated Day-Night toggle that
-     * drives {@link MobileThemePrefs}.
-     */
-    private List<SettingsItem> prependThemeRow(List<SettingsItem> upstreamItems) {
-        Context context = getContext();
-        List<SettingsItem> items = new ArrayList<>();
-        if (context != null) {
-            items.add(new SettingsItem(
-                    context.getString(R.string.mobile_theme_title),
-                    this::showThemePicker,
-                    R.drawable.settings_theme));
-            items.add(new SettingsItem(
-                    context.getString(R.string.mobile_player_style_title),
-                    this::showPlayerStylePicker,
-                    R.drawable.settings_player_style));
-            items.add(new SettingsItem(
-                    context.getString(R.string.mobile_swipe_gestures_title),
-                    this::showSwipeGesturesToggle,
-                    R.drawable.settings_swipe_gestures));
-            items.add(new SettingsItem(
-                    context.getString(R.string.mobile_notifications_title),
-                    this::showNotificationsToggle,
-                    R.drawable.settings_notifications));
-            if (StatsReporter.isConfigured(context)) {
-                items.add(new SettingsItem(
-                        context.getString(R.string.mobile_stats_title),
-                        () -> StatsDialogs.showSettingsPicker(context),
-                        R.drawable.settings_stats));
-            }
-        }
-        if (upstreamItems != null) {
-            // Drop upstream's "About" row: it's the TV-oriented About panel (dead
-            // "Check for updates", the meaningless ATV/Amazon "global search" bridge). The
-            // phone build's own About screen in the drawer footer (MobileAboutActivity) is
-            // the single About surface.
-            String aboutTitle = context != null ? context.getString(R.string.settings_about) : null;
-            for (SettingsItem item : upstreamItems) {
-                if (aboutTitle != null && aboutTitle.equals(item.title)) {
-                    continue;
-                }
-                items.add(item);
-            }
-        }
-        return items;
-    }
-
-    private void showThemePicker() {
-        Context context = getContext();
-        if (context == null) {
-            return;
-        }
-        MobileThemePrefs.Mode[] modes = MobileThemePrefs.Mode.values();
-        String[] labels = {
-                context.getString(R.string.mobile_theme_option_system),
-                context.getString(R.string.mobile_theme_option_light),
-                context.getString(R.string.mobile_theme_option_dark),
-        };
-        MobileThemePrefs.Mode current = MobileThemePrefs.getMode(context);
-        int checked = current.ordinal();
-        new AlertDialog.Builder(context)
-                .setTitle(R.string.mobile_theme_title)
-                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
-                    if (modes[which] == current) {
-                        dialog.dismiss();
-                        return;
-                    }
-                    MobileThemePrefs.setMode(context, modes[which]);
-                    dialog.dismiss();
-                    // MotherActivity is a FragmentActivity (not AppCompatActivity), so
-                    // setDefaultNightMode does not auto-recreate. MobileActivity reads
-                    // the pref in attachBaseContext, so a manual recreate() pulls in the
-                    // new uiMode override.
-                    if (getActivity() != null) {
-                        getActivity().recreate();
-                    }
-                })
-                .show();
-    }
-
-    /**
-     * Phone-only "Player style" picker (#46): Classic / Modern / Tap to pause. Drives
-     * {@link MobilePlayerStylePrefs}; the player reads it each time it resumes.
-     */
-    private void showPlayerStylePicker() {
-        Context context = getContext();
-        if (context == null) {
-            return;
-        }
-        MobilePlayerStylePrefs.Style[] styles = MobilePlayerStylePrefs.Style.values();
-        String[] labels = {
-                context.getString(R.string.mobile_player_style_classic),
-                context.getString(R.string.mobile_player_style_modern),
-                context.getString(R.string.mobile_player_style_tap_to_pause),
-        };
-        int checked = MobilePlayerStylePrefs.getStyle(context).ordinal();
-        new AlertDialog.Builder(context)
-                .setTitle(R.string.mobile_player_style_title)
-                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
-                    MobilePlayerStylePrefs.setStyle(context, styles[which]);
-                    dialog.dismiss();
-                })
-                .show();
-    }
-
-    /** Phone-only "Swipe gestures" on / volume only / off (#48, #47); the player reads it when it resumes. */
-    private void showSwipeGesturesToggle() {
-        Context context = getContext();
-        if (context == null) {
-            return;
-        }
-        String[] labels = {
-                context.getString(R.string.mobile_swipe_gestures_on),
-                context.getString(R.string.mobile_swipe_gestures_volume_only),
-                context.getString(R.string.mobile_swipe_gestures_off),
-        };
-        int checked = !MobilePlayerStylePrefs.isSwipeGesturesEnabled(context) ? 2
-                : MobilePlayerStylePrefs.isBrightnessSwipeEnabled(context) ? 0 : 1;
-        new AlertDialog.Builder(context)
-                .setTitle(R.string.mobile_swipe_gestures_title)
-                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
-                    MobilePlayerStylePrefs.setSwipeGesturesEnabled(context, which != 2);
-                    if (which != 2) {
-                        MobilePlayerStylePrefs.setBrightnessSwipeEnabled(context, which == 0);
-                    }
-                    dialog.dismiss();
-                })
-                .show();
-    }
-
-    /**
-     * Phone-only "Upload notifications" on/off toggle (Part 2 — push). Drives
-     * {@link MobileNotificationPrefs} and (re)schedules {@link NotificationPollWorker}. On enable,
-     * asks for the Android 13+ POST_NOTIFICATIONS permission via the host activity.
-     */
-    private void showNotificationsToggle() {
-        Context context = getContext();
-        if (context == null) {
-            return;
-        }
-        String[] labels = {
-                context.getString(R.string.mobile_notifications_option_off),
-                context.getString(R.string.mobile_notifications_option_on),
-        };
-        boolean enabled = MobileNotificationPrefs.isEnabled(context);
-        int checked = enabled ? 1 : 0;
-        new AlertDialog.Builder(context)
-                .setTitle(R.string.mobile_notifications_title)
-                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
-                    boolean turnOn = which == 1;
-                    dialog.dismiss();
-                    if (turnOn == enabled) {
-                        return;
-                    }
-                    MobileNotificationPrefs.setEnabled(context, turnOn);
-                    MobileNotificationPrefs.setPrompted(context); // chose here; never prompt on launch
-                    NotificationPollWorker.schedule(context);
-                    if (turnOn && getActivity() instanceof MobileBrowseActivity) {
-                        ((MobileBrowseActivity) getActivity()).requestPostNotificationsPermission();
-                    }
-                })
-                .show();
     }
 
     @Override

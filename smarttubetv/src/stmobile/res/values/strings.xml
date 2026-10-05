@@ -63,6 +63,7 @@
     <string name="mobile_player_collapse">Close player</string>
     <string name="mobile_player_captions">Captions</string>
     <string name="mobile_player_settings">Player settings</string>
+    <string name="mobile_app_settings">App settings</string>
     <string name="mobile_player_fullscreen">Full screen</string>
     <string name="mobile_player_like">Like</string>
     <string name="mobile_player_dislike">Dislike</string>
