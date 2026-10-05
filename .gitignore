@@ -51,7 +51,7 @@ android-upd2.keystore
 smartertube-release.jks
 keystore.properties
 
-# F-Droid self-hosted repo — committed: config.yml, metadata/, repo/icon.png, README.md.
+# F-Droid self-hosted repo — committed: config.yml, metadata/, icon.png, README.md.
 # Everything below is the repo-index secret, the served APKs, or generated index output.
 fdroid/keystore.p12
 fdroid/config.local.yml
