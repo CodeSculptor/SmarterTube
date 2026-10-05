@@ -421,6 +421,12 @@ final class ModernPlayerChrome {
 
     private void openActionsSheet() {
         List<Action> actions = new ArrayList<>();
+        // The CC button is an on/off toggle once a track was chosen; its language picker is a long-press,
+        // undiscoverable on a phone. This row (always present, independent of the "Setup player buttons"
+        // list) opens the picker.
+        Action subtitles = new Action(R.id.lb_control_closed_captioning, mActivity.getString(R.string.subtitle_category_title));
+        subtitles.setIcon(mCc.getDrawable());
+        actions.add(subtitles);
         for (Action action : rowActions()) {
             if (!isOnScreen(action)) {
                 actions.add(action);
@@ -598,6 +604,12 @@ final class ModernPlayerChrome {
             holder.label.setText(label != null ? label : "");
             holder.itemView.setOnClickListener(v -> {
                 closeSheet();
+                if (action.getId() == R.id.lb_control_closed_captioning) {
+                    // Subtitle language picker, not the on/off toggle.
+                    PlaybackPresenter.instance(mActivity).onButtonLongClicked(R.id.lb_control_closed_captioning,
+                            isOn(R.id.lb_control_closed_captioning) ? PlayerUI.BUTTON_ON : PlayerUI.BUTTON_OFF);
+                    return;
+                }
                 VideoPlayerGlue glue = mHost.glue();
                 if (glue != null) glue.onActionClicked(action);
             });
