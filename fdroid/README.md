@@ -30,7 +30,10 @@ the fingerprint changes and every user must re-add the repo.
 3. **Restore the committed `config.yml`** (this file's sibling) over the one `fdroid init`
    wrote — keep our public settings; make sure `repo_keyalias` matches what init created
    (default `repokey`). Do **not** add the password lines to the committed file.
-4. Provide the repo icon at `fdroid/repo/icon.png` (a copy of the launcher icon is fine).
+4. Provide the repo icon at `fdroid/icon.png` (a copy of the launcher icon is fine). The
+   workflow copies it to `repo/icons/` and `archive/icons/`, where fdroidserver expects
+   it. Do **not** put it (or any other non-APK file) directly in `fdroid/repo/` —
+   `fdroid update` indexes every loose file there as a package of its own.
 5. **Back up** `fdroid/keystore.p12` + the passwords + fingerprint to
    `C:\Users\steph\Backups\SmarterTube-release-key\` (alongside the APK key). See
    `memory/release_signing.md`.
@@ -51,6 +54,30 @@ the fingerprint changes and every user must re-add the repo.
 ## What is committed vs generated
 
 - **Committed:** `config.yml` (no passwords), `metadata/com.codesculptor.smartertube.yml`,
-  `repo/icon.png`, this README.
+  `icon.png`, this README.
 - **Gitignored / generated / secret:** `keystore.p12`, the APKs, and all generated index
   files (`index-*`, `entry-*`, `icons*/`, `archive/`). See the root `.gitignore`.
+
+## What gets published
+
+The workflow has two jobs: `build` (download APKs, sign the index, upload the Pages
+artifact) and `deploy` (publish it). The repo serves the APKs of the **two most recent
+releases** (`--limit 2` in the workflow, `archive_older: 8` in `config.yml` — four
+per-ABI APKs per release); older versions stay available on GitHub Releases. Every run
+re-uploads all served APKs as one Pages artifact (~125 MB per release), so raise those
+numbers with care. `build` fails if the index lists anything other than
+`com.codesculptor.smartertube`.
+
+## If a publish run fails
+
+**Re-dispatch, do not re-run:**
+
+```bash
+gh workflow run fdroid-publish.yml --repo CodeSculptor/SmarterTube --ref master
+```
+
+A re-run (`gh run rerun`, or "Re-run jobs" in the UI) keeps the previous attempt's
+Pages artifact attached to the run; on 2026-10-05 that made the re-run fail for good
+with "Multiple artifacts named github-pages". The artifact name now carries the run
+attempt to avoid this, but a fresh dispatch also picks up the current `master` and
+release list, so it is always the right recovery.

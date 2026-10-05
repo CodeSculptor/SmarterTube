@@ -13,6 +13,12 @@ name: Publish F-Droid repo
 # install upgrades in place over a GitHub/Obtainium install. Only the repo INDEX is
 # signed here, with the repo-index key from secrets — the APK signing key never
 # enters CI. See fdroid/README.md for the one-time bootstrap.
+#
+# Two jobs (the standard Pages pattern): `build` produces the Pages artifact, `deploy`
+# publishes it. Deploying in the same job right after the upload raced the artifact
+# listing ("No artifacts named github-pages were found", 2026-10-05). The artifact
+# name carries the run attempt so a re-run never trips over the previous attempt's
+# artifact ("Multiple artifacts named github-pages").
 
 on:
   release:
@@ -22,22 +28,18 @@ on:
     branches: [master]
     paths: ['docs/index.html'] # redeploy when the site root page changes
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 # Serialize Pages deploys; don't cancel a running publish.
 concurrency:
   group: fdroid-pages
   cancel-in-progress: false
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      contents: read
+    outputs:
+      artifact: ${{ steps.name.outputs.artifact }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -70,10 +72,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p fdroid/repo
-          # Pull the APKs from the most recent releases so the index keeps a little
-          # version history. The triggering release is included; --skip-existing
-          # avoids re-downloading. F-Droid handles the per-ABI splits per device.
-          gh release list --repo "$GITHUB_REPOSITORY" --limit 4 --json tagName --jq '.[].tagName' \
+          # Pull the APKs from the two most recent releases so the index keeps one
+          # version of history (older ones stay on GitHub Releases). Each release is
+          # ~125 MB of per-ABI splits and the whole lot is re-uploaded as the Pages
+          # artifact on every run, so keep this small — and in step with
+          # archive_older in fdroid/config.yml (4 APKs per release). The triggering
+          # release is included. F-Droid handles the per-ABI splits per device.
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 2 --json tagName --jq '.[].tagName' \
             | while read -r tag; do
                 echo "Downloading APKs for $tag"
                 gh release download "$tag" --repo "$GITHUB_REPOSITORY" \
@@ -81,11 +86,29 @@ jobs:
               done
           echo "APKs present:"; ls -1 fdroid/repo/*.apk || (echo "::error::no APKs downloaded"; exit 1)
 
+      - name: Place repo icon
+        run: |
+          # fdroidserver reads the repo icon from <repo>/icons/. Any non-APK file
+          # lying directly in repo/ gets indexed as a package of its own (the stray
+          # "icon" package), so the icon is committed outside repo/.
+          for d in repo archive; do
+            mkdir -p "fdroid/$d/icons"
+            cp fdroid/icon.png "fdroid/$d/icons/icon.png"
+          done
+
       - name: Build & sign repo index
         run: |
           cd fdroid
           fdroid update --pretty --create-metadata
           fdroid lint || true
+
+      - name: Check the index lists only SmarterTube
+        run: |
+          pkgs=$(jq -r '.packages | keys | join(" ")' fdroid/repo/index-v2.json)
+          echo "Packages in index: $pkgs"
+          if [ "$pkgs" != "com.codesculptor.smartertube" ]; then
+            echo "::error::unexpected packages in the F-Droid index: $pkgs"; exit 1
+          fi
 
       - name: Assemble Pages site (root page + repo/ + archive/ — never config/keystore)
         run: |
@@ -97,12 +120,42 @@ jobs:
           if find _site -name 'keystore.p12' -o -name 'config.yml' | grep -q .; then
             echo "::error::secret file found in Pages artifact — aborting"; exit 1
           fi
+          du -sh _site
+
+      - name: Name the Pages artifact
+        id: name
+        run: echo "artifact=github-pages-${{ github.run_attempt }}" >> "$GITHUB_OUTPUT"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
+          name: ${{ steps.name.outputs.artifact }}
           path: _site
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url || steps.deploy_retry.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deploy
+        continue-on-error: true
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ needs.build.outputs.artifact }}
+
+      - name: Wait before retrying
+        if: steps.deploy.outcome == 'failure'
+        run: sleep 60
+
+      - name: Deploy to GitHub Pages (retry)
+        id: deploy_retry
+        if: steps.deploy.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ needs.build.outputs.artifact }}

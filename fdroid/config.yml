@@ -12,9 +12,12 @@ repo_description: >-
   Self-hosted F-Droid repository for SmarterTube — the Android phone/tablet
   companion build of SmartTube. The APKs here are the exact builds published on
   GitHub Releases, signed with the same key, so installs upgrade in place.
+# The icon is committed at fdroid/icon.png; the workflow copies it into repo/icons/
+# and archive/icons/. Never put it in repo/ itself — fdroid indexes it as a package.
 repo_icon: icon.png
 
-archive_older: 6
+# Counts APKs, not versions: 8 = the two newest releases (4 per-ABI APKs each).
+archive_older: 8
 archive_url: https://codesculptor.github.io/SmarterTube/fdroid/archive
 archive_name: SmarterTube (archive)
 archive_description: >-
