@@ -263,6 +263,9 @@ android {
             // 23734 = v0.9.1-beta.1+st32.59 (Shorts show only the action rail + seek bar, no Classic control rows #50).
             // 23735 = v0.9.2-beta.1+st32.59 (videos load via visionOS again: fast starts #53, subtitles no longer crash #52;
             //         MediaServiceCore pinned to the CodeSculptor fork, upstream tcl TV-player bump).
+            // 23736 = v0.9.3-beta.1+st32.59 (Settings is its own screen, reachable from Home and the Modern player;
+            //         Subtitles language row in the gear sheet; Shorts double-tap like + seek bar on the video edge;
+            //         volume-only swipe option #47; upstream sync incl. YouTube Mix autoplay fix).
             versionCode 23735
             versionName "v0.9.2-beta.1+st32.59"
         }
