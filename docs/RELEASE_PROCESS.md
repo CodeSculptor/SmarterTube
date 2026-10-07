@@ -510,8 +510,8 @@ mandatory, not advisory.
   docs/FEATURE_MATRIX.md (and docs/KNOWN_ISSUES.md if behaviour is knowingly incomplete).
 - Do not edit the SharedModules or MediaServiceCore submodules. They track upstream and must
   stay clean for mergeability. Fork-owned phone code lives in the stmobile flavor source sets.
-  Exception: MediaServiceCore is pinned to the CodeSculptor fork branch `smartertube` (one
-  upstream-fix commit, see docs/upstream-merge.md); change it only there, never in this repo.
+  MediaServiceCore is pinned to upstream yuliskov/MediaServiceCore again (the fork pin was
+  removed once upstream shipped the legacy-first fix, see docs/upstream-merge.md).
 ```
 
 Every PR / change summary must include:
