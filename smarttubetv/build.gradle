@@ -266,6 +266,8 @@ android {
             // 23736 = v0.9.3-beta.1+st32.59 (Settings is its own screen, reachable from Home and the Modern player;
             //         Subtitles language row in the gear sheet; Shorts double-tap like + seek bar on the video edge;
             //         volume-only swipe option #47; upstream sync incl. YouTube Mix autoplay fix).
+            // 23737 = v0.9.4-beta.1+st32.60 (views + published time on Home cards, requested by KJ;
+            //         MediaServiceCore un-pinned back to upstream; upstream SmartTube 32.60 sync).
             versionCode 23736
             versionName "v0.9.3-beta.1+st32.59"
         }
