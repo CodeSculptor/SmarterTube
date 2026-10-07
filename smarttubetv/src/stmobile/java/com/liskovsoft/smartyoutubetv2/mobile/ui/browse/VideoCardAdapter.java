@@ -206,6 +206,13 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
             CharSequence second = video.getSecondTitle();
             author = second != null ? second.toString() : null;
         }
+        if (holder.style == STYLE_VIDEO && author != null && !author.isEmpty()) {
+            // Second line: "196K views • 2 wk ago" (the published time was missing on cards).
+            String stats = video.getSecondTitleAfterAuthor();
+            if (stats != null) {
+                author = author + "\n" + stats;
+            }
+        }
         holder.author.setText(author != null ? author : "");
 
         // Duration/length badge overlaid on the thumbnail (YouTube-style). video.badge holds

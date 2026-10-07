@@ -361,6 +361,37 @@ public final class Video {
         return !TextUtils.isEmpty(result) && (!belongsToChannelUploads() || !Helpers.isNumeric(result.substring(0, 1))) ? result.trim() : null;
     }
 
+    /**
+     * The part of the second title after the author (e.g. "196K views • 2 wk ago"), or null if none.
+     * Mirrors the author-index rule of {@link #extractAuthor(String)}.
+     */
+    public String getSecondTitleAfterAuthor() {
+        CharSequence second = getSecondTitle();
+        if (second == null) {
+            return null;
+        }
+
+        String[] split = second.toString().replace(TERTIARY_TEXT_DELIM + " LIVE", "").split(TERTIARY_TEXT_DELIM);
+        int authorIdx = split.length < 4 ? 0 : 1;
+        if (split.length <= 1 || split.length <= authorIdx + 1) {
+            return null;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = authorIdx + 1; i < split.length; i++) {
+            String part = split[i].trim();
+            if (part.isEmpty()) {
+                continue;
+            }
+            if (sb.length() > 0) {
+                sb.append(' ').append(TERTIARY_TEXT_DELIM).append(' ');
+            }
+            sb.append(part);
+        }
+
+        return sb.length() > 0 ? sb.toString() : null;
+    }
+
     public static List<Video> findVideosByAuthor(VideoGroup group, String author) {
         List<Video> result = new ArrayList<>();
 
