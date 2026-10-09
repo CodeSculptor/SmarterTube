@@ -268,6 +268,9 @@ android {
             //         volume-only swipe option #47; upstream sync incl. YouTube Mix autoplay fix).
             // 23737 = v0.9.4-beta.1+st32.60 (views + published time on Home cards, requested by KJ;
             //         MediaServiceCore un-pinned back to upstream; upstream SmartTube 32.60 sync).
+            // 23738 = v0.9.5-beta.1+st32.64 (portrait player: comments card + Subscribe/Share/Save/Queue under the video (#32),
+            //         tidier gear sheet with a More list, separate landscape ellipsis sheet; description no longer closes
+            //         when scrolled; upstream SmartTube 32.64 sync).
             versionCode 23737
             versionName "v0.9.4-beta.1+st32.60"
         }
