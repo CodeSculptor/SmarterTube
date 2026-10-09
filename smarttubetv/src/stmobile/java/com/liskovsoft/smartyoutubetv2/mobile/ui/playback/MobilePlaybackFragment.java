@@ -105,6 +105,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     // Portrait meta-block like/dislike buttons (TextViews showing thumb + count) and channel avatar.
     private TextView mPortraitLikeBtn;
     private TextView mPortraitDislikeBtn;
+    private TextView mPortraitSubscribeBtn;
     private ImageView mPortraitAvatarView;
     // Independent metadata fetch for the avatar — must NOT use the shared
     // MediaServiceManager singleton, whose single disposable is constantly disposed by the
@@ -414,6 +415,14 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         if (mShortsDislikeBtn != null) tintRailButton(mShortsDislikeBtn, disliked);
         tintPortraitButton(mPortraitLikeBtn,    liked);
         tintPortraitButton(mPortraitDislikeBtn, disliked);
+        syncPortraitSubscribe(getButtonState(R.id.action_subscribe) == PlayerUI.BUTTON_ON);
+    }
+
+    private void syncPortraitSubscribe(boolean subscribed) {
+        if (mPortraitSubscribeBtn != null) {
+            mPortraitSubscribeBtn.setText(subscribed ? R.string.subscribed_to_channel : R.string.action_subscribe);
+            mPortraitSubscribeBtn.setTextColor(subscribed ? 0xFFAAAAAA : 0xFFFFFFFF);
+        }
     }
 
     private void tintPortraitButton(TextView btn, boolean active) {
@@ -443,6 +452,8 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         } else if (buttonId == R.id.action_thumbs_down) {
             if (mShortsDislikeBtn    != null) tintRailButton(mShortsDislikeBtn,    active);
             tintPortraitButton(mPortraitDislikeBtn, active);
+        } else if (buttonId == R.id.action_subscribe) {
+            syncPortraitSubscribe(active);
         }
         if (mModernChrome != null) mModernChrome.update();
     }
@@ -1870,6 +1881,15 @@ public class MobilePlaybackFragment extends PlaybackFragment {
                                     currentButtonState(R.id.action_thumbs_down)));
         }
 
+        // Actions under the video. They go straight to the presenter, so they work whether or not
+        // the matching button is enabled in the user's "Setup player buttons" list.
+        mPortraitSubscribeBtn = activity.findViewById(R.id.mobile_video_subscribe_btn);
+        bindPanelAction(activity, R.id.mobile_video_subscribe_btn, R.id.action_subscribe);
+        bindPanelAction(activity, R.id.mobile_video_share_btn, R.id.action_share);
+        bindPanelAction(activity, R.id.mobile_video_save_btn, R.id.action_playlist_add);
+        bindPanelAction(activity, R.id.mobile_video_queue_btn, R.id.action_playback_queue);
+        bindPanelAction(activity, R.id.mobile_video_comments_card, R.id.action_chat);
+
         initShortsViews(activity);
         mModernChrome = ModernPlayerChrome.create(this, activity);
         initTapDetector(activity);
@@ -1877,6 +1897,14 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         initCutoutGuard(activity);
 
         return true;
+    }
+
+    private void bindPanelAction(Activity activity, int viewId, int actionId) {
+        View view = activity.findViewById(viewId);
+        if (view != null) {
+            view.setOnClickListener(v ->
+                    PlaybackPresenter.instance(getContext()).onButtonClicked(actionId, currentButtonState(actionId)));
+        }
     }
 
     private void initShortsViews(Activity activity) {

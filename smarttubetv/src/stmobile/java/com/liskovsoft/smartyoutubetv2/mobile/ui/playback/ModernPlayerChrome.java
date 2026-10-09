@@ -103,6 +103,7 @@ final class ModernPlayerChrome {
         }
     };
     private boolean mLandscape;
+    private List<Action> mMoreActions = new ArrayList<>();
     private boolean mUserSeeking;
     private androidx.core.graphics.Insets mCutoutBands = androidx.core.graphics.Insets.NONE;
 
@@ -445,10 +446,19 @@ final class ModernPlayerChrome {
         Action subtitles = new Action(R.id.lb_control_closed_captioning, mActivity.getString(R.string.subtitle_category_title));
         subtitles.setIcon(mCc.getDrawable());
         actions.add(subtitles);
+        List<Action> more = new ArrayList<>();
         for (Action action : rowActions()) {
-            if (!isOnScreen(action)) {
-                actions.add(action);
+            if (isOnScreen(action) || action.getId() == R.id.action_afr) { // AFR is a TV feature
+                continue;
             }
+            (isRarelyUsed(action) ? more : actions).add(action);
+        }
+        // Like YouTube's sheet: the everyday settings first, the rest one level down.
+        if (!more.isEmpty()) {
+            Action moreRow = new Action(R.id.action_mobile_more, mActivity.getString(R.string.mobile_player_more));
+            moreRow.setIcon(ContextCompat.getDrawable(mActivity, R.drawable.ic_modern_more));
+            actions.add(moreRow);
+            mMoreActions = more;
         }
         // The app's Settings screen, opened over the player so Back returns to this video.
         Action appSettings = new Action(R.id.action_mobile_app_settings, mActivity.getString(R.string.mobile_app_settings));
@@ -457,6 +467,12 @@ final class ModernPlayerChrome {
         mSheetTitle.setText(R.string.mobile_player_settings);
         mSheetList.setAdapter(new ActionAdapter(actions));
         showSheet(Math.min(actions.size() * dp(SHEET_ROW_HEIGHT_DP), maxSheetListHeight()));
+    }
+
+    private void openMoreSheet() {
+        mSheetTitle.setText(R.string.mobile_player_more);
+        mSheetList.setAdapter(new ActionAdapter(mMoreActions));
+        showSheet(Math.min(mMoreActions.size() * dp(SHEET_ROW_HEIGHT_DP), maxSheetListHeight()));
     }
 
     private void openUpNextSheet() {
@@ -508,7 +524,23 @@ final class ModernPlayerChrome {
         if (id == R.id.action_thumbs_up || id == R.id.action_thumbs_down) {
             return true;
         }
-        return mLandscape && (id == R.id.action_chat || id == R.id.action_playlist_add || id == R.id.action_share);
+        // Comments, save and share: the landscape action row, or the portrait panel under the video.
+        // Channel: the landscape title block, or the portrait panel's channel row.
+        if (id == R.id.action_chat || id == R.id.action_playlist_add || id == R.id.action_share
+                || id == R.id.action_channel) {
+            return true;
+        }
+        // Portrait only: the panel has Subscribe and Queue buttons, and the title opens the description.
+        return !mLandscape && (id == R.id.action_subscribe || id == R.id.action_playback_queue
+                || id == R.id.action_info);
+    }
+
+    /** Actions that go behind the sheet's "More" row. */
+    private static boolean isRarelyUsed(Action action) {
+        long id = action.getId();
+        return id == R.id.action_video_zoom || id == R.id.action_seek_interval || id == R.id.action_sound_off
+                || id == R.id.action_screen_dimming || id == R.id.action_pip || id == R.id.action_rotate
+                || id == R.id.action_flip || id == R.id.action_video_stats || id == R.id.action_search;
     }
 
     // ---- Actions -------------------------------------------------------------------------------
@@ -625,6 +657,10 @@ final class ModernPlayerChrome {
             CharSequence label = action.getLabel1() != null ? action.getLabel1() : action.getLabel2();
             holder.label.setText(label != null ? label : "");
             holder.itemView.setOnClickListener(v -> {
+                if (action.getId() == R.id.action_mobile_more) {
+                    openMoreSheet(); // swap the list in place
+                    return;
+                }
                 closeSheet();
                 if (action.getId() == R.id.lb_control_closed_captioning) {
                     // Subtitle language picker, not the on/off toggle.

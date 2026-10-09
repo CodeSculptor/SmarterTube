@@ -72,6 +72,8 @@
     <string name="mobile_player_share">Share</string>
     <string name="mobile_player_more">More</string>
     <string name="mobile_player_more_videos">More videos</string>
+    <string name="mobile_player_save_short">Save</string>
+    <string name="mobile_player_queue">Queue</string>
 
     <!-- Swipe gestures (#48) -->
     <string name="mobile_swipe_gestures_title">Swipe gestures</string>

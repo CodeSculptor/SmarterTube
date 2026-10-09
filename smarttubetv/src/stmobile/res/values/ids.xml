@@ -2,4 +2,6 @@
 <resources>
     <!-- Modern player sheet row that opens the app's Settings screen. -->
     <item name="action_mobile_app_settings" type="id" />
+    <!-- Modern player sheet row that opens the second level of rarely used actions. -->
+    <item name="action_mobile_more" type="id" />
 </resources>

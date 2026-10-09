@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pill behind the portrait player's action buttons and Comments card (under the video). -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="#40FFFFFF">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <solid android:color="#22FFFFFF" />
+        </shape>
+    </item>
+</ripple>
