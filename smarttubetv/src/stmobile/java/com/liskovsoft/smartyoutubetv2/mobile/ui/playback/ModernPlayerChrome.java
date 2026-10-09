@@ -148,7 +148,7 @@ final class ModernPlayerChrome {
         mCc.setOnClickListener(v -> clickAction(R.id.lb_control_closed_captioning));
         mCc.setOnLongClickListener(v -> longClickAction(R.id.lb_control_closed_captioning));
         mRoot.findViewById(R.id.modern_settings).setOnClickListener(v -> openActionsSheet());
-        mRoot.findViewById(R.id.modern_more).setOnClickListener(v -> openActionsSheet());
+        mRoot.findViewById(R.id.modern_more).setOnClickListener(v -> openVideoActionsSheet());
         mRoot.findViewById(R.id.modern_previous).setOnClickListener(v -> {
             VideoPlayerGlue glue = mHost.glue();
             if (glue != null) glue.previous();
@@ -448,7 +448,8 @@ final class ModernPlayerChrome {
         actions.add(subtitles);
         List<Action> more = new ArrayList<>();
         for (Action action : rowActions()) {
-            if (isOnScreen(action) || action.getId() == R.id.action_afr) { // AFR is a TV feature
+            // AFR is a TV feature; the video actions have the landscape "..." button (portrait: the panel).
+            if (isOnScreen(action) || action.getId() == R.id.action_afr || isVideoAction(action)) {
                 continue;
             }
             (isRarelyUsed(action) ? more : actions).add(action);
@@ -469,10 +470,31 @@ final class ModernPlayerChrome {
         showSheet(Math.min(actions.size() * dp(SHEET_ROW_HEIGHT_DP), maxSheetListHeight()));
     }
 
+    /** The landscape "..." button: things to do with this video, as opposed to the gear's player settings. */
+    private void openVideoActionsSheet() {
+        List<Action> actions = new ArrayList<>();
+        for (Action action : rowActions()) {
+            if (isVideoAction(action) && !isOnScreen(action)) {
+                actions.add(action);
+            }
+        }
+        if (actions.isEmpty()) {
+            openActionsSheet(); // none of them enabled in "Setup player buttons"
+            return;
+        }
+        mSheetTitle.setText(R.string.mobile_player_more);
+        mSheetList.setAdapter(new ActionAdapter(actions));
+        showSheet(Math.min(actions.size() * dp(SHEET_ROW_HEIGHT_DP), maxSheetListHeight()));
+    }
+
     private void openMoreSheet() {
         mSheetTitle.setText(R.string.mobile_player_more);
-        mSheetList.setAdapter(new ActionAdapter(mMoreActions));
-        showSheet(Math.min(mMoreActions.size() * dp(SHEET_ROW_HEIGHT_DP), maxSheetListHeight()));
+        // First row leads back to the gear sheet this list was opened from.
+        List<Action> rows = new ArrayList<>();
+        rows.add(new Action(R.id.action_mobile_back, mActivity.getString(R.string.mobile_player_back_to_settings)));
+        rows.addAll(mMoreActions);
+        mSheetList.setAdapter(new ActionAdapter(rows));
+        showSheet(Math.min(rows.size() * dp(SHEET_ROW_HEIGHT_DP), maxSheetListHeight()));
     }
 
     private void openUpNextSheet() {
@@ -533,6 +555,11 @@ final class ModernPlayerChrome {
         // Portrait only: the panel has Subscribe and Queue buttons, and the title opens the description.
         return !mLandscape && (id == R.id.action_subscribe || id == R.id.action_playback_queue
                 || id == R.id.action_info);
+    }
+
+    private static boolean isVideoAction(Action action) {
+        long id = action.getId();
+        return id == R.id.action_subscribe || id == R.id.action_playback_queue || id == R.id.action_info;
     }
 
     /** Actions that go behind the sheet's "More" row. */
@@ -657,6 +684,10 @@ final class ModernPlayerChrome {
             CharSequence label = action.getLabel1() != null ? action.getLabel1() : action.getLabel2();
             holder.label.setText(label != null ? label : "");
             holder.itemView.setOnClickListener(v -> {
+                if (action.getId() == R.id.action_mobile_back) {
+                    openActionsSheet();
+                    return;
+                }
                 if (action.getId() == R.id.action_mobile_more) {
                     openMoreSheet(); // swap the list in place
                     return;

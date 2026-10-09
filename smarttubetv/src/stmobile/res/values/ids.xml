@@ -4,4 +4,6 @@
     <item name="action_mobile_app_settings" type="id" />
     <!-- Modern player sheet row that opens the second level of rarely used actions. -->
     <item name="action_mobile_more" type="id" />
+    <!-- Back row at the top of the player sheet's "More" list. -->
+    <item name="action_mobile_back" type="id" />
 </resources>

@@ -71,6 +71,7 @@
     <string name="mobile_player_save">Save to playlist</string>
     <string name="mobile_player_share">Share</string>
     <string name="mobile_player_more">More</string>
+    <string name="mobile_player_back_to_settings">‹  Player settings</string>
     <string name="mobile_player_more_videos">More videos</string>
     <string name="mobile_player_save_short">Save</string>
     <string name="mobile_player_queue">Queue</string>
