@@ -1808,7 +1808,35 @@ public class MobilePlaybackFragment extends PlaybackFragment {
                 setDescriptionExpanded(mDescriptionView.getVisibility() != View.VISIBLE));
         // Long descriptions scroll inside the text view instead of pushing the list away.
         mDescriptionView.setMovementMethod(new android.text.method.ScrollingMovementMethod());
-        mDescriptionView.setOnClickListener(v -> setDescriptionExpanded(false));
+        // Tap collapses, but a drag-to-scroll must not: a plain OnClickListener also fires after a
+        // scroll gesture (ScrollingMovementMethod doesn't consume the ACTION_UP), so the opened
+        // description closed as soon as the user scrolled it. Only collapse on a real tap.
+        final int touchSlop = android.view.ViewConfiguration.get(activity).getScaledTouchSlop();
+        final float[] downXY = new float[2];
+        final boolean[] moved = new boolean[1];
+        mDescriptionView.setOnTouchListener((v, event) -> {
+            switch (event.getActionMasked()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    downXY[0] = event.getX();
+                    downXY[1] = event.getY();
+                    moved[0] = false;
+                    break;
+                case android.view.MotionEvent.ACTION_MOVE:
+                    if (Math.abs(event.getX() - downXY[0]) > touchSlop
+                            || Math.abs(event.getY() - downXY[1]) > touchSlop) {
+                        moved[0] = true;
+                    }
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                    if (!moved[0]) {
+                        setDescriptionExpanded(false);
+                    }
+                    break;
+                default:
+                    break;
+            }
+            return false; // let the text view keep scrolling
+        });
 
         mUpNextAdapter = new UpNextRowAdapter(
                 video -> PlaybackPresenter.instance(getContext()).onSuggestionItemClicked(video),
