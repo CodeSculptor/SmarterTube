@@ -13,7 +13,9 @@ Status values:
 - **Unknown** — not yet verified on a device.
 
 > **Unknown blocks a stable (1.0) release** for core user flows. Beta releases may ship with
-> Unknown rows, but they must be listed here honestly rather than assumed to work.
+> Unknown rows, but they must be listed here honestly rather than assumed to work. As of
+> 2026-10-12 there are no Unknown rows left: long-standing ones were accepted on the strength of
+> real-world use without reports.
 
 Last reviewed for: `v0.5.0-beta.8+st32.56`. Rows re-verified on a device this cycle: Status bar
 insets (#37), Player controls tap-to-hide (#39), Up-next long-press menu (#42), Settings screen
@@ -33,10 +35,10 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | Channel page (header/tabs) | Works | Identity header (circular avatar + subscriber count); native content tabs (Videos / Shorts / Live / Playlists, one swipeable 2-column grid per group); sort chips (Latest / Popular / Oldest) on the Videos tab; in-channel search (results open as their own tab); vertical 9:16 Shorts cards and playlist cards with a video-count badge |
 | Channel uploads | Works | |
 | Subscriptions feed | Works | Drives upload notifications |
-| History | Unknown | Not re-verified this cycle |
-| Playlists | Unknown | Not re-verified this cycle |
-| Settings screen (portrait) | Works | Mobile-friendly inputs (#26, verified on device): categorical single-choice settings collapse to a value row + bottom-sheet picker; numeric ranges (speed, zoom, video/audio formats, seek interval, volume, auto-hide; format/zoom sliders restored in v0.6.1-beta.1, #44) use an inline slider that only drags from the thumb so list scrolling is unaffected; checkbox-heavy screens group into collapsible sections (long screens start collapsed with an "N ON" count, tap a header to expand). Nested dialogs return to the screen they were opened from (#43); ticking a Context menu item just enables it (no position popup; order via Context menu sorting, whose list refreshes only on reopening General). Settings is its own screen opened on top of what you were doing: from the side menu, Back returns to Home as you left it (no reload); from the Modern / Tap to pause player, gear > App settings pauses the video and Back returns to it. Classic style has no entry point from the player yet. VERIFIED-ON-DEVICE |
-| Theme picker (light/dark) | Unknown | Recent work; verify on device |
+| History | Works | In daily use across many beta releases; no reports of problems (accepted by owner 2026-10-12) |
+| Playlists | Works | In daily use across many beta releases; no reports of problems (accepted by owner 2026-10-12) |
+| Settings screen (portrait) | Works | Mobile-friendly inputs (#26, verified on device): categorical single-choice settings collapse to a value row + bottom-sheet picker; numeric ranges (speed, zoom, video/audio formats, seek interval, volume, auto-hide; format/zoom sliders restored in v0.6.1-beta.1, #44) use an inline slider that only drags from the thumb so list scrolling is unaffected; checkbox-heavy screens group into collapsible sections (long screens start collapsed with an "N ON" count, tap a header to expand). Nested dialogs return to the screen they were opened from (#43); ticking a Context menu item just enables it (no position popup; order via Context menu sorting, whose list refreshes only on reopening General). Settings is its own screen opened on top of what you were doing: from the side menu, Back returns to Home as you left it (no reload); from the Modern / Tap to pause player, gear > App settings pauses the video and Back returns to it. Classic style has a Settings gear next to the title in the portrait panel, and the Shorts "You" sheet opens Settings over the Short. VERIFIED-ON-DEVICE |
+| Theme picker (light/dark) | Works | In daily use across many beta releases; no reports of problems (accepted by owner 2026-10-12) |
 | About screen | Works | |
 
 ## Account
@@ -45,7 +47,7 @@ explicitly re-tested as provisional and confirm against the release checklist be
 |---|---|---|
 | Sign in (OAuth device-code) | Works | |
 | Sign out | Works | |
-| Account switcher | Unknown | Verify if exposed in phone UI |
+| Account switcher | Works | In daily use across many beta releases; no reports of problems (accepted by owner 2026-10-12) |
 | Subscribe / unsubscribe | Works | Channel-page pill; state resolved from first upload's metadata |
 | Notification bell / inbox | Works (uploads) | YouTube inbox is dead; tab lists uploads found by the subscriptions-feed poll |
 | Upload notifications (push) | Works | Subscriptions-feed poll, shipped 31.93-mobile-1.3 |
@@ -66,14 +68,15 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | Player style (Classic / Modern / Tap to pause) | Works | Settings > Player style (#46). **Classic**: upstream SmartTube control rows. **Modern** (default for new installs; upgrades keep Classic): phone-style controls over the video. Portrait has close, CC and settings at the top, big previous / play-pause / next in the middle, and time + fullscreen above a seek bar on the bottom edge. Landscape adds title/channel and a like / dislike / comments / save / share / more row with More videos (up-next sheet). The settings / more sheet lists every other player action from Setup player buttons. The fullscreen button forces landscape/portrait and hands back to auto-rotate once the phone is turned to match. **Tap to pause**: Modern controls, but a tap plays/pauses (controls stay up while paused) and a double tap seeks. VERIFIED-ON-DEVICE |
 | Swipe gestures (landscape player) | Works | Settings > Swipe gestures (#48). With the controls hidden, a vertical swipe on the right half changes media volume and on the left half this window's brightness, with a small level pill. Taps, double-tap seek and Tap to pause are unchanged; not near the screen edges (system gestures), not in Shorts or the portrait strip. On by default in Modern / Tap to pause, off in Classic. VERIFIED-ON-DEVICE |
 | Modern seek bar extras + chapters | Works | Modern / Tap to pause seek bar: dragging shows a preview bubble (storyboard frame per the Seek preview setting, chapter title, time); SponsorBlock colour markers (per your SponsorBlock settings) and chapter marks on the bar. Chapters also lead the up-next list (portrait panel and landscape More videos) as a labelled strip; tap = seek. The time line reads "1:17 / 19:06 • Chapter" for the current chapter. VERIFIED-ON-DEVICE |
+| Portrait description (YouTube parity) | Works | Stats line under the title: views, upload age and first hashtag; expand for exact views, absolute upload date and up to three hashtags. URLs, #hashtags (opens a search) and timestamps (seek) are tappable in the description and in comments; tapping elsewhere still closes the description. YouTube video links in the description get a card (thumbnail, title, channel, age) below the text, max 3. Notification bell next to Subscribe once subscribed (All / Personalised / None). Not built: inline card placement and the Twitter/Facebook chips YouTube shows. VERIFIED-ON-DEVICE |
 | Up-next list (portrait) | Works | Tap a row to play it; long-press opens the same video menu as Home thumbnails (#42, beta.8). VERIFIED-ON-DEVICE |
 | Pop-up (PIP) mode | Works | Shows the playing video, including after visiting a channel from the player then returning (#33 fixed). The phone player skips relaunching Home on PIP entry (Home is already behind the pop-up), avoiding a task-clear race that used to destroy the player. Closing the pop-up window stops playback — the engine is released instead of leaking audio behind the closed window (#35). VERIFIED-ON-DEVICE |
-| Quality menu | Unknown | |
+| Quality menu | Works | In daily use across many beta releases; no reports of problems (accepted by owner 2026-10-12) |
 | Captions | Works | CC button (Modern: top-right, next to settings) opens the Subtitles menu; picking a track (incl. auto-generated / translated) shows subtitles. Once a track is chosen the CC button is an on/off toggle (long-press reopens the menu); the Modern gear sheet also has a Subtitles row that always opens the language menu. Fixed in v0.9.2-beta.1: they used to crash the player with a playback error (#52) because the upstream web-client path gets empty caption files; videos now load via visionOS (MediaServiceCore fork pin, #53). VERIFIED-ON-DEVICE |
 | Playback speed | Works | Opens as a translucent bottom-sheet card over the player (beta.8); video stays visible behind a dim scrim. The video keeps its full size behind the sheet in landscape (#29, fixed v0.6.0-beta.1: upstream's TV "resize video to fit dialog" zoom is turned off once on phones). VERIFIED-ON-DEVICE |
 | SponsorBlock | Works | Upstream feature. Per-channel exclusion via long-press menu (enable in Settings > General > Context menu) and optional player button (Settings > Player > Setup player buttons; landscape only) — verified on device (#40). Also in the up-next long-press menu (#42, beta.8) |
 | Return YouTube Dislike | Works | Upstream feature |
-| DeArrow | Unknown | Upstream feature; verify in phone UI |
+| DeArrow | Works | In daily use across many beta releases; no reports of problems (accepted by owner 2026-10-12) |
 | Casting to Chromecast | Not supported (by design) | Needs Google Play Services (Cast SDK); upstream has none either. Receiver side: Settings > Remote control (#7) |
 
 ## Updates & distribution

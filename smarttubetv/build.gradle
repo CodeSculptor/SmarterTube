@@ -274,6 +274,8 @@ android {
             // 23739 = v0.9.6-beta.1+st32.67 (portrait description parity: upload age/date line, bell, tappable links/
             //         hashtags/timestamps, link cards for YouTube videos, links in comments; Shorts seek bar
             //         above the nav bar #47; upstream SmartTube 32.67 sync).
+            // 23740 = v0.9.7-beta.1+st32.67 (Settings gear for the Classic player style + Shorts You sheet Settings row;
+            //         landscape clips tagged as Shorts play in the regular layout).
             versionCode 23739
             versionName "v0.9.6-beta.1+st32.67"
         }
