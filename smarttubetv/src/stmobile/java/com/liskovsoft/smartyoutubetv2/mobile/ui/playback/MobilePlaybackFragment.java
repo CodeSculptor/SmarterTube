@@ -1215,17 +1215,6 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         // Back button is always-visible in regular portrait; only auto-hide it in Shorts.
         if (mShortsBackBtn != null && mLayoutState == 2) mShortsBackBtn.setVisibility(vis);
         if (mLayoutState == 2) setShortsControlsVisible(visible);
-        // Where the nav bar sits over the video (screens too short for the whole 9:16 strip) it
-        // hides the bottom of the picture: auto-hide it with the rest and bring it back on touch.
-        // INVISIBLE keeps its slot, so nothing re-lays out, and it stops taking touches.
-        if (mShortsNavBar != null && mLayoutState == 2) {
-            mShortsNavBar.setVisibility(visible || !shortsNavBarOverlapsVideo() ? View.VISIBLE : View.INVISIBLE);
-        }
-    }
-
-    private boolean shortsNavBarOverlapsVideo() {
-        View video = getView();
-        return video != null && mShortsNavBar != null && video.getBottom() > mShortsNavBar.getTop();
     }
 
     /**
