@@ -233,7 +233,7 @@ public class MobilePlaybackActivity extends PlaybackActivity {
         }
     }
 
-    private void applyOrientationForCurrentVideo() {
+    void applyOrientationForCurrentVideo() {
         Video video = PlaybackPresenter.instance(this).getVideo();
 
         if (video != null && video.isShorts) {

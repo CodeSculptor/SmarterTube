@@ -264,6 +264,26 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         applyMobileLayout();
     }
 
+    /**
+     * The feed's Shorts badge is only a hint: YouTube also tags landscape clips as Shorts. The
+     * portrait-locked 9:16 Shorts layout crops those and puts the nav bar over the picture, so once
+     * the real frame size is known a landscape "Short" is demoted to a regular video.
+     */
+    @Override
+    protected void onVideoSizeChanged(int width, int height) {
+        super.onVideoSizeChanged(width, height);
+
+        Video video = PlaybackPresenter.instance(getContext()).getVideo();
+        if (video != null && video.isShorts && width > height) {
+            video.isShorts = false;
+            Activity activity = getActivity();
+            if (activity instanceof MobilePlaybackActivity) {
+                ((MobilePlaybackActivity) activity).applyOrientationForCurrentVideo();
+            }
+            applyMobileLayout();
+        }
+    }
+
     @Override
     public void onPIPChanged(boolean isInPIP) {
         super.onPIPChanged(isInPIP);
