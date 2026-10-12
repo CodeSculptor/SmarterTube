@@ -274,8 +274,8 @@ android {
             // 23739 = v0.9.6-beta.1+st32.67 (portrait description parity: upload age/date line, bell, tappable links/
             //         hashtags/timestamps, link cards for YouTube videos, links in comments; Shorts seek bar
             //         above the nav bar #47; upstream SmartTube 32.67 sync).
-            versionCode 23738
-            versionName "v0.9.5-beta.1+st32.64"
+            versionCode 23739
+            versionName "v0.9.6-beta.1+st32.67"
         }
     }
 }
