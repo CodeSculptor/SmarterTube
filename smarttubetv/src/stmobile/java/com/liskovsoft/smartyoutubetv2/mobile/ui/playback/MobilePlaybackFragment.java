@@ -55,6 +55,7 @@ import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.utils.AppDialogUtil;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.base.CutoutGuard;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.base.TextLinks;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.browse.MobileSettingsActivity;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobilePlayerStylePrefs;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.PlaybackFragment;
@@ -202,6 +203,8 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     private MobilePlayerStylePrefs.Style mLastStyle;
     // Phone-style controls for the Modern and Tap to pause styles.
     private ModernPlayerChrome mModernChrome;
+    private View mSettingsBtn;
+    private boolean mResumeAfterSettings;
     // Tap to pause: our own tap detector while the controls are hidden (single tap = play/pause,
     // double tap = seek), replacing upstream's tickle-on-touch-down there.
     private GestureDetector mTapDetector;
@@ -238,9 +241,30 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         mStyle = MobilePlayerStylePrefs.getStyle(requireContext());
         mSwipeEnabled = MobilePlayerStylePrefs.isSwipeGesturesEnabled(requireContext());
         applyMobileLayout();
-        if (mModernChrome != null) {
-            mModernChrome.start();
-            mModernChrome.onHostResumed();
+        if (mModernChrome != null) mModernChrome.start();
+        updateSettingsButton();
+        if (mResumeAfterSettings) {
+            // Back from the Settings screen that openAppSettings() paused us for.
+            mResumeAfterSettings = false;
+            setPlayWhenReady(true);
+        }
+    }
+
+    /**
+     * Pause, open the app's Settings screen over the player, and resume when the user comes back
+     * (onResume). Entry points: the Modern gear sheet, the Classic portrait panel's gear, and the
+     * Shorts "You" sheet.
+     */
+    void openAppSettings() {
+        mResumeAfterSettings = getPlayWhenReady();
+        setPlayWhenReady(false);
+        MobileSettingsActivity.start(requireActivity(), true);
+    }
+
+    /** Classic has no gear sheet, so its portrait panel carries the Settings shortcut. */
+    private void updateSettingsButton() {
+        if (mSettingsBtn != null) {
+            mSettingsBtn.setVisibility(mStyle.isModern() ? View.GONE : View.VISIBLE);
         }
     }
 
@@ -2016,6 +2040,11 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         mPanel = activity.findViewById(R.id.mobile_below_video_panel);
         mTitleView = activity.findViewById(R.id.mobile_video_title);
         mExpandView = activity.findViewById(R.id.mobile_video_expand);
+        mSettingsBtn = activity.findViewById(R.id.mobile_video_settings);
+        if (mSettingsBtn != null) {
+            mSettingsBtn.setOnClickListener(v -> openAppSettings());
+            updateSettingsButton();
+        }
         mDescriptionView = activity.findViewById(R.id.mobile_video_description);
         mInfoView = activity.findViewById(R.id.mobile_video_info);
         mBellBtn = activity.findViewById(R.id.mobile_video_bell_btn);
@@ -2257,8 +2286,10 @@ public class MobilePlaybackFragment extends PlaybackFragment {
                     navigateToSection(MediaGroup.TYPE_HISTORY));
             mShortsProfileSheet.findViewById(R.id.profile_row_playlists).setOnClickListener(v ->
                     navigateToSection(MediaGroup.TYPE_USER_PLAYLISTS));
-            mShortsProfileSheet.findViewById(R.id.profile_row_settings).setOnClickListener(v ->
-                    navigateToSection(MediaGroup.TYPE_SETTINGS));
+            mShortsProfileSheet.findViewById(R.id.profile_row_settings).setOnClickListener(v -> {
+                closeShortsProfileSheet();
+                openAppSettings(); // over the Short, so Back returns to it
+            });
         }
 
         // "Save to playlist" panel and scrim.
