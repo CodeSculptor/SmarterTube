@@ -339,7 +339,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             loadAvatar(video);
         }
 
-        mTitleView.setText(video.getTitle() != null ? video.getTitle() : "");
+        mTitleView.setText(video.getTitleFull() != null ? video.getTitleFull() : "");
         if (mModernChrome != null) mModernChrome.bindVideo(video);
         mDescriptionView.setText(TextLinks.linkify(requireContext(), video.description,
                 ms -> setPositionMs(ms)));
