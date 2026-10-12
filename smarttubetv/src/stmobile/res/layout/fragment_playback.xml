@@ -242,6 +242,14 @@
             android:scrollbars="vertical"
             android:visibility="gone" />
 
+        <!-- Cards for YouTube videos linked from the description (visible while it is expanded). -->
+        <LinearLayout
+            android:id="@+id/mobile_video_link_cards"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone" />
+
         <!--
             Meta block: a 2-row grid. Row 1 = channel name | views; row 2 = subscribers | like/dislike.
             Fixed line heights (26dp / 24dp) on both columns guarantee the rows line up across the

@@ -36,6 +36,33 @@ public final class TextLinks {
     private TextLinks() {
     }
 
+    private static final Pattern YT_VIDEO = Pattern.compile(
+            "https?://(?:www\\.|m\\.)?(?:youtube\\.com/watch\\?(?:[^\\s<>\"]*?&)?v=|youtu\\.be/)([A-Za-z0-9_-]{11})[^\\s<>\"]*");
+
+    /** Distinct YouTube video links in the text as {url, videoId}, at most {@code max}. */
+    public static java.util.List<String[]> youtubeVideoLinks(CharSequence text, int max) {
+        java.util.List<String[]> result = new java.util.ArrayList<>();
+        if (text == null) {
+            return result;
+        }
+        Matcher m = YT_VIDEO.matcher(text);
+        while (result.size() < max && m.find()) {
+            String id = m.group(1);
+            boolean dup = false;
+            for (String[] r : result) {
+                if (r[1].equals(id)) dup = true;
+            }
+            if (!dup) {
+                String url = m.group();
+                while (url.length() > 1 && ".,;:!?)]}'".indexOf(url.charAt(url.length() - 1)) >= 0) {
+                    url = url.substring(0, url.length() - 1);
+                }
+                result.add(new String[]{url, id});
+            }
+        }
+        return result;
+    }
+
     /** Up to {@code max} distinct hashtags from the text, space separated; null if none. */
     public static String hashtags(CharSequence text, int max) {
         if (text == null) {
@@ -133,7 +160,7 @@ public final class TextLinks {
         return total * 1000;
     }
 
-    private static void openUrl(Context context, String url) {
+    public static void openUrl(Context context, String url) {
         try {
             Uri uri = Uri.parse(url);
             String host = uri.getHost() != null ? uri.getHost().toLowerCase() : "";

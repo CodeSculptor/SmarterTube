@@ -88,6 +88,9 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     private TextView mDescriptionView;
     private TextView mInfoView;
     private ImageView mBellBtn;
+    private LinearLayout mLinkCards;
+    private String mLinkCardsKey;
+    private Disposable mLinkCardsAction;
     /** Exact view count + absolute upload date, fetched with the avatar metadata (expanded view). */
     private String mExactViews;
     private String mUploadDate;
@@ -346,6 +349,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         mExpandView.setVisibility(TextUtils.isEmpty(video.description) ? View.GONE : View.VISIBLE);
         refreshInfoLine(video);
         updateBellButton(video);
+        loadLinkCards(video);
 
         mChannelView.setText(video.getAuthor() != null ? video.getAuthor() : "");
         mSubsView.setText(video.subscriberCount != null ? video.subscriberCount : "");
@@ -501,6 +505,9 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         if (mDescriptionView != null) {
             mDescriptionView.setVisibility(expanded ? View.VISIBLE : View.GONE);
             mExpandView.setText(expanded ? "▴" : "▾");
+            if (mLinkCards != null) {
+                mLinkCards.setVisibility(expanded && mLinkCards.getChildCount() > 0 ? View.VISIBLE : View.GONE);
+            }
             refreshInfoLine(PlaybackPresenter.instance(getContext()).getVideo());
         }
     }
@@ -559,6 +566,62 @@ public class MobilePlaybackFragment extends PlaybackFragment {
 
         mInfoView.setText(TextLinks.linkify(requireContext(), sb, null));
         mInfoView.setVisibility(sb.length() > 0 ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * YouTube-app style cards for videos linked from the description: thumbnail, title and
+     * "YouTube - channel - age". Metadata comes from an independent subscription (see loadAvatar);
+     * a link whose lookup fails simply gets no card (the link in the text still works).
+     */
+    private void loadLinkCards(Video video) {
+        if (mLinkCards == null || video == null) {
+            return;
+        }
+        String key = video.videoId + "|" + (video.description != null ? video.description.hashCode() : 0);
+        if (key.equals(mLinkCardsKey)) {
+            return;
+        }
+        mLinkCardsKey = key;
+        RxHelper.disposeActions(mLinkCardsAction);
+        mLinkCards.removeAllViews();
+        mLinkCards.setVisibility(View.GONE);
+
+        MediaItemService itemService = YouTubeServiceManager.instance().getMediaItemService();
+        if (itemService == null) {
+            return;
+        }
+        for (String[] link : TextLinks.youtubeVideoLinks(video.description, 3)) {
+            if (TextUtils.equals(link[1], video.videoId)) {
+                continue; // link to the video being watched
+            }
+            final String url = link[0];
+            final String id = link[1];
+            final String forKey = key;
+            RxHelper.execute(itemService.getMetadataObserve(id, null, -1, null),
+                    (MediaItemMetadata md) -> {
+                        if (!isAdded() || mLinkCards == null || !forKey.equals(mLinkCardsKey)
+                                || md == null || TextUtils.isEmpty(md.getTitle())) {
+                            return;
+                        }
+                        View card = LayoutInflater.from(getContext())
+                                .inflate(R.layout.mobile_link_card, mLinkCards, false);
+                        ((TextView) card.findViewById(R.id.link_card_title)).setText(md.getTitle());
+                        String[] parts = secondTitleParts(md.getSecondTitle());
+                        String age = parts.length >= 3 ? parts[1].trim() : null;
+                        StringBuilder sub = new StringBuilder("YouTube");
+                        if (!TextUtils.isEmpty(md.getAuthor())) sub.append(" \u2022 ").append(md.getAuthor());
+                        if (!TextUtils.isEmpty(age)) sub.append(" \u2022 ").append(age);
+                        ((TextView) card.findViewById(R.id.link_card_sub)).setText(sub);
+                        Glide.with(MobilePlaybackFragment.this)
+                                .load("https://i.ytimg.com/vi/" + id + "/mqdefault.jpg")
+                                .into((ImageView) card.findViewById(R.id.link_card_thumb));
+                        card.setOnClickListener(v -> TextLinks.openUrl(requireContext(), url));
+                        mLinkCards.addView(card);
+                        mLinkCards.setVisibility(mDescriptionView.getVisibility() == View.VISIBLE
+                                ? View.VISIBLE : View.GONE);
+                    },
+                    error -> {});
+        }
     }
 
     private void updateBellButton(Video video) {
@@ -1936,6 +1999,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         mDescriptionView = activity.findViewById(R.id.mobile_video_description);
         mInfoView = activity.findViewById(R.id.mobile_video_info);
         mBellBtn = activity.findViewById(R.id.mobile_video_bell_btn);
+        mLinkCards = activity.findViewById(R.id.mobile_video_link_cards);
         mChannelView = activity.findViewById(R.id.mobile_video_channel);
         mSubsView = activity.findViewById(R.id.mobile_video_subs);
         mViewsView = activity.findViewById(R.id.mobile_video_views);
