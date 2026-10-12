@@ -276,8 +276,8 @@ android {
             //         above the nav bar #47; upstream SmartTube 32.67 sync).
             // 23740 = v0.9.7-beta.1+st32.67 (Settings gear for the Classic player style + Shorts You sheet Settings row;
             //         landscape clips tagged as Shorts play in the regular layout).
-            versionCode 23739
-            versionName "v0.9.6-beta.1+st32.67"
+            versionCode 23740
+            versionName "v0.9.7-beta.1+st32.67"
         }
     }
 }
