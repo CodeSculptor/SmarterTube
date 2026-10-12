@@ -173,6 +173,8 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     private static final int SHORTS_FRAME_POLL_MS = 50;
     private static final int SHORTS_FRAME_TIMEOUT_MS = 2500;
     // Tint applied to the rail like/dislike icon when active (YouTube blue).
+    /** Room kept above the nav bar for the Shorts seek bar (and its thumb). */
+    private static final int SHORTS_SEEK_BAR_CLEARANCE_DP = 14;
     private static final int SHORTS_ACTIVE_TINT = 0xFF3EA6FF;
     // Height kept below a fitted Shorts strip for the info bar (padding + 2-line title + channel).
     private static final int SHORTS_INFO_BAR_RESERVE_DP = 112;
@@ -950,9 +952,28 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             set.connect(R.id.playback_controls_fragment, ConstraintSet.BOTTOM,
                     R.id.mobile_shorts_nav_bar, ConstraintSet.TOP, infoBarReserve);
             set.setDimensionRatio(R.id.playback_controls_fragment, "W,9:16");
+        } else if (layoutState == 2) {
+            // Shorts: the player view fills down to the nav bar (seek bar just above it); the info
+            // bar floats above that bar instead of hanging off the video's bottom edge.
+            set.connect(R.id.playback_controls_fragment, ConstraintSet.BOTTOM,
+                    R.id.mobile_shorts_nav_bar, ConstraintSet.TOP);
+            set.setDimensionRatio(R.id.playback_controls_fragment, null);
         } else if (strip) {
             set.clear(R.id.playback_controls_fragment, ConstraintSet.BOTTOM);
             set.setDimensionRatio(R.id.playback_controls_fragment, ratio);
+        }
+        if (layoutState == 2 && !shortsFit) {
+            int barClearance = (int) (SHORTS_SEEK_BAR_CLEARANCE_DP * getResources().getDisplayMetrics().density);
+            set.clear(R.id.mobile_shorts_info_bar, ConstraintSet.TOP);
+            set.constrainHeight(R.id.mobile_shorts_info_bar, ConstraintSet.WRAP_CONTENT);
+            set.connect(R.id.mobile_shorts_info_bar, ConstraintSet.BOTTOM,
+                    R.id.mobile_shorts_nav_bar, ConstraintSet.TOP, barClearance);
+        } else {
+            set.connect(R.id.mobile_shorts_info_bar, ConstraintSet.TOP,
+                    R.id.playback_controls_fragment, ConstraintSet.BOTTOM);
+            set.constrainHeight(R.id.mobile_shorts_info_bar, 0);
+            set.connect(R.id.mobile_shorts_info_bar, ConstraintSet.BOTTOM,
+                    R.id.mobile_shorts_nav_bar, ConstraintSet.TOP, 0);
         }
         if (strip) {
             set.setVisibility(R.id.mobile_below_video_panel, showPanel ? View.VISIBLE : View.GONE);
@@ -1183,25 +1204,24 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     }
 
     /**
-     * Shorts: sit the seek bar on the bottom edge of the rendered video, not the bottom of the
-     * 9:16 strip. A letterboxed or non-9:16 Short (and any size change, e.g. the next Short in a
-     * different aspect) leaves the video shorter than the strip, so the bar would float in the
-     * black bars. Run on every layout pass, so it follows the video's aspect-ratio updates. Outside
-     * Shorts the bar is left where the Leanback row puts it.
+     * Shorts (phone-width portrait): the player view runs down to the nav bar so the Leanback seek
+     * bar sits right above it, like YouTube Shorts / TikTok, with the title + channel above the bar.
+     * The video itself stays top-aligned in its 9:16 strip: the surface is centred in the taller
+     * view, so lift it by half of the extra height. Run on every layout pass, so it follows size and
+     * aspect-ratio changes. Outside Shorts (and in the tablet fit mode, where the view is already
+     * strip-sized) nothing is shifted.
      */
     private void anchorSeekBarToVideo() {
         View root = getView();
         if (root == null) return;
-        View bar = root.findViewById(R.id.playback_progress);
-        if (bar == null) return;
+        View video = root.findViewById(R.id.surface_root);
+        if (video == null) return;
         float shift = 0f;
-        if (mLayoutState == 2) {
-            View video = root.findViewById(R.id.surface_root);
-            if (video != null && video.getHeight() > 0 && root.getHeight() > 0) {
-                shift = Math.min(0f, video.getBottom() - root.getHeight());
-            }
+        if (mLayoutState == 2 && !mShortsFit && root.getWidth() > 0 && root.getHeight() > 0) {
+            float strip = Math.min(root.getHeight(), root.getWidth() * 16f / 9f);
+            shift = (strip - root.getHeight()) / 2f;
         }
-        if (bar.getTranslationY() != shift) bar.setTranslationY(shift);
+        if (video.getTranslationY() != shift) video.setTranslationY(shift);
     }
 
     /**
