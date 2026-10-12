@@ -210,6 +210,24 @@
                 android:text="▾" />
         </LinearLayout>
 
+        <!--
+            Stats line under the title (YouTube-style): collapsed = "31k views  20 hr ago  #tag",
+            expanded = "33,024 views  11 Oct 2026  #tag". Tap toggles the description; the hashtag
+            is a link.
+        -->
+        <TextView
+            android:id="@+id/mobile_video_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="4dp"
+            android:textColor="#FFAAAAAA"
+            android:textSize="14sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/mobile_video_description"
             android:layout_width="match_parent"
@@ -365,6 +383,19 @@
                     android:text="@string/action_subscribe"
                     android:textColor="@android:color/white"
                     android:textSize="14sp" />
+
+                <ImageView
+                    android:id="@+id/mobile_video_bell_btn"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_mobile_panel_pill"
+                    android:padding="8dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/settings_notifications"
+                    app:tint="@android:color/white"
+                    android:contentDescription="@string/notification_bell"
+                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/mobile_video_share_btn"

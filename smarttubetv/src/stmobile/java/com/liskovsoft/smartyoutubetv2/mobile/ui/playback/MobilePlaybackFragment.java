@@ -9,6 +9,7 @@ import android.os.Build.VERSION_CODES;
 import android.os.Handler;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.text.TextUtils;
+import android.text.style.ClickableSpan;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -34,6 +35,8 @@ import com.bumptech.glide.Glide;
 import com.liskovsoft.mediaserviceinterfaces.MediaItemService;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItemMetadata;
+import com.liskovsoft.mediaserviceinterfaces.data.NotificationState;
+import com.liskovsoft.sharedutils.helpers.MessageHelpers;
 import com.liskovsoft.mediaserviceinterfaces.data.PlaylistInfo;
 import com.liskovsoft.mediaserviceinterfaces.oauth.Account;
 import com.liskovsoft.sharedutils.helpers.Helpers;
@@ -51,6 +54,7 @@ import com.liskovsoft.smartyoutubetv2.common.misc.RemoteControlService;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.utils.AppDialogUtil;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.base.CutoutGuard;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.base.TextLinks;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobilePlayerStylePrefs;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.PlaybackFragment;
@@ -82,6 +86,11 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     private TextView mTitleView;
     private TextView mExpandView;
     private TextView mDescriptionView;
+    private TextView mInfoView;
+    private ImageView mBellBtn;
+    /** Exact view count + absolute upload date, fetched with the avatar metadata (expanded view). */
+    private String mExactViews;
+    private String mUploadDate;
     private TextView mChannelView;
     private TextView mSubsView;
     private TextView mViewsView;
@@ -324,18 +333,25 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         // metadata refreshes of the same video).
         if (!TextUtils.equals(mLastVideoId, video.videoId)) {
             mLastVideoId = video.videoId;
+            mExactViews = null;
+            mUploadDate = null;
             setDescriptionExpanded(false);
             loadAvatar(video);
         }
 
         mTitleView.setText(video.getTitle() != null ? video.getTitle() : "");
         if (mModernChrome != null) mModernChrome.bindVideo(video);
-        mDescriptionView.setText(video.description != null ? video.description : "");
+        mDescriptionView.setText(TextLinks.linkify(requireContext(), video.description,
+                ms -> setPositionMs(ms)));
         mExpandView.setVisibility(TextUtils.isEmpty(video.description) ? View.GONE : View.VISIBLE);
+        refreshInfoLine(video);
+        updateBellButton(video);
 
         mChannelView.setText(video.getAuthor() != null ? video.getAuthor() : "");
         mSubsView.setText(video.subscriberCount != null ? video.subscriberCount : "");
         mViewsView.setText(extractViews(video));
+        // The stats line under the title carries views now (YouTube parity).
+        mViewsView.setVisibility(View.GONE);
         if (mPortraitLikeBtn != null) {
             mPortraitLikeBtn.setText(video.likeCount != null
                     ? Helpers.THUMB_UP + " " + video.likeCount : Helpers.THUMB_UP);
@@ -378,6 +394,11 @@ public class MobilePlaybackFragment extends PlaybackFragment {
                                 video.playlistIndex, video.playlistParams),
                 (MediaItemMetadata metadata) -> {
                     if (!isAdded() || !TextUtils.equals(fetchId, mAvatarVideoId)) return;
+                    if (metadata != null) {
+                        mExactViews = metadata.getViewCount();
+                        mUploadDate = metadata.getPublishedDate();
+                        refreshInfoLine(PlaybackPresenter.instance(getContext()).getVideo());
+                    }
                     String url = metadata != null ? metadata.getAuthorImageUrl() : null;
                     if (url == null || url.isEmpty()) return;
                     if (mPortraitAvatarView != null) {
@@ -425,6 +446,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             mPortraitSubscribeBtn.setText(subscribed ? R.string.subscribed_to_channel : R.string.action_subscribe);
             mPortraitSubscribeBtn.setTextColor(subscribed ? 0xFFAAAAAA : 0xFFFFFFFF);
         }
+        updateBellButton(PlaybackPresenter.instance(getContext()).getVideo());
     }
 
     private void tintPortraitButton(TextView btn, boolean active) {
@@ -479,7 +501,104 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         if (mDescriptionView != null) {
             mDescriptionView.setVisibility(expanded ? View.VISIBLE : View.GONE);
             mExpandView.setText(expanded ? "▴" : "▾");
+            refreshInfoLine(PlaybackPresenter.instance(getContext()).getVideo());
         }
+    }
+
+    private static String[] secondTitleParts(CharSequence secondTitle) {
+        if (secondTitle == null) {
+            return new String[0];
+        }
+        return secondTitle.toString().replace(Video.TERTIARY_TEXT_DELIM + " LIVE", "")
+                .split(Video.TERTIARY_TEXT_DELIM);
+    }
+
+    /**
+     * Stats line under the title. Collapsed: "31k views  20 hr ago  #tag". Expanded: exact view
+     * count + absolute upload date + up to three hashtags, as YouTube shows them. Listing cards
+     * order the second title author, views, age; the metadata one is author, age, views.
+     */
+    private void refreshInfoLine(Video video) {
+        if (mInfoView == null || video == null) {
+            return;
+        }
+
+        boolean expanded = mDescriptionView != null && mDescriptionView.getVisibility() == View.VISIBLE;
+        String views = null;
+        String age = null;
+
+        String[] card = secondTitleParts(video.getSecondTitle());
+        int a = card.length < 4 ? 0 : 1; // leading label (4K, Stream...) shifts the author
+        if (card.length >= a + 3) {
+            views = card[a + 1].trim();
+            age = card[a + 2].trim();
+        } else {
+            String[] meta = secondTitleParts(video.getSecondTitleFull());
+            int m = meta.length < 4 ? 0 : 1;
+            if (meta.length >= m + 3) {
+                age = meta[m + 1].trim();
+                views = meta[m + 2].trim();
+            }
+        }
+        if (views == null || views.isEmpty()) {
+            views = extractViews(video);
+        }
+
+        if (expanded) {
+            if (!TextUtils.isEmpty(mExactViews)) views = mExactViews;
+            if (!TextUtils.isEmpty(mUploadDate)) age = mUploadDate;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (String part : new String[]{views, age, TextLinks.hashtags(video.description, expanded ? 3 : 1)}) {
+            if (!TextUtils.isEmpty(part)) {
+                if (sb.length() > 0) sb.append("   ");
+                sb.append(part);
+            }
+        }
+
+        mInfoView.setText(TextLinks.linkify(requireContext(), sb, null));
+        mInfoView.setVisibility(sb.length() > 0 ? View.VISIBLE : View.GONE);
+    }
+
+    private void updateBellButton(Video video) {
+        if (mBellBtn == null) {
+            return;
+        }
+        boolean show = video != null && video.notificationStates != null
+                && !video.notificationStates.isEmpty()
+                && getButtonState(R.id.action_subscribe) == PlayerUI.BUTTON_ON;
+        mBellBtn.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
+    /** All / Personalised / None picker, the same options the channel page bell offers. */
+    private void showBellDialog() {
+        Video video = PlaybackPresenter.instance(getContext()).getVideo();
+        Activity activity = getActivity();
+        if (video == null || activity == null || video.notificationStates == null
+                || video.notificationStates.isEmpty()) {
+            return;
+        }
+        final List<NotificationState> states = video.notificationStates;
+        String[] titles = new String[states.size()];
+        int checked = -1;
+        for (int i = 0; i < states.size(); i++) {
+            NotificationState s = states.get(i);
+            titles[i] = s.getTitle() != null ? s.getTitle() : "";
+            if (s.isSelected()) checked = i;
+        }
+        final int[] selected = {checked};
+        new android.app.AlertDialog.Builder(activity)
+                .setSingleChoiceItems(titles, checked, (dialog, which) -> selected[0] = which)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    if (selected[0] >= 0 && selected[0] < states.size()) {
+                        MediaServiceManager.instance().setNotificationState(states.get(selected[0]),
+                                e -> MessageHelpers.showMessage(activity,
+                                        "Couldn't update notification preference"));
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     @Override
@@ -1815,6 +1934,8 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         mTitleView = activity.findViewById(R.id.mobile_video_title);
         mExpandView = activity.findViewById(R.id.mobile_video_expand);
         mDescriptionView = activity.findViewById(R.id.mobile_video_description);
+        mInfoView = activity.findViewById(R.id.mobile_video_info);
+        mBellBtn = activity.findViewById(R.id.mobile_video_bell_btn);
         mChannelView = activity.findViewById(R.id.mobile_video_channel);
         mSubsView = activity.findViewById(R.id.mobile_video_subs);
         mViewsView = activity.findViewById(R.id.mobile_video_views);
@@ -1845,12 +1966,14 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         final int touchSlop = android.view.ViewConfiguration.get(activity).getScaledTouchSlop();
         final float[] downXY = new float[2];
         final boolean[] moved = new boolean[1];
+        final ClickableSpan[] downSpan = new ClickableSpan[1];
         mDescriptionView.setOnTouchListener((v, event) -> {
             switch (event.getActionMasked()) {
                 case android.view.MotionEvent.ACTION_DOWN:
                     downXY[0] = event.getX();
                     downXY[1] = event.getY();
                     moved[0] = false;
+                    downSpan[0] = TextLinks.spanAt(mDescriptionView, event);
                     break;
                 case android.view.MotionEvent.ACTION_MOVE:
                     if (Math.abs(event.getX() - downXY[0]) > touchSlop
@@ -1860,7 +1983,12 @@ public class MobilePlaybackFragment extends PlaybackFragment {
                     break;
                 case android.view.MotionEvent.ACTION_UP:
                     if (!moved[0]) {
-                        setDescriptionExpanded(false);
+                        // A tap on a link opens it; a tap anywhere else collapses the box.
+                        if (downSpan[0] != null && downSpan[0] == TextLinks.spanAt(mDescriptionView, event)) {
+                            downSpan[0].onClick(mDescriptionView);
+                        } else {
+                            setDescriptionExpanded(false);
+                        }
                     }
                     break;
                 default:
@@ -1868,6 +1996,23 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             }
             return false; // let the text view keep scrolling
         });
+
+        if (mInfoView != null) {
+            mInfoView.setOnTouchListener((v, event) -> {
+                if (event.getActionMasked() == android.view.MotionEvent.ACTION_UP) {
+                    ClickableSpan span = TextLinks.spanAt(mInfoView, event);
+                    if (span != null) {
+                        span.onClick(mInfoView);
+                    } else {
+                        setDescriptionExpanded(mDescriptionView.getVisibility() != View.VISIBLE);
+                    }
+                }
+                return true;
+            });
+        }
+        if (mBellBtn != null) {
+            mBellBtn.setOnClickListener(v -> showBellDialog());
+        }
 
         mUpNextAdapter = new UpNextRowAdapter(
                 video -> PlaybackPresenter.instance(getContext()).onSuggestionItemClicked(video),

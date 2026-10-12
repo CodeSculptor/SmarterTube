@@ -1,5 +1,6 @@
 package com.liskovsoft.smartyoutubetv2.mobile.ui.dialogs;
 
+import com.liskovsoft.smartyoutubetv2.mobile.ui.base.TextLinks;
 import android.graphics.PorterDuff;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -206,7 +207,27 @@ public class MobileCommentsAdapter extends RecyclerView.Adapter<MobileCommentsAd
         String author = item.getAuthorName() != null ? item.getAuthorName() : "";
         String date = item.getPublishedDate();
         h.authorDate.setText(TextUtils.isEmpty(date) ? author : author + "  ·  " + date);
-        h.message.setText(item.getMessage() != null ? item.getMessage() : "");
+        h.message.setText(TextLinks.linkify(h.itemView.getContext(), item.getMessage(), null));
+        // Links open on tap; any other tap falls through to the row (reply thread).
+        final android.text.style.ClickableSpan[] down = new android.text.style.ClickableSpan[1];
+        h.message.setOnTouchListener((v, ev) -> {
+            if (ev.getActionMasked() == android.view.MotionEvent.ACTION_DOWN) {
+                down[0] = TextLinks.spanAt(h.message, ev);
+                return down[0] != null;
+            }
+            if (down[0] == null) {
+                return false;
+            }
+            if (ev.getActionMasked() == android.view.MotionEvent.ACTION_UP
+                    && down[0] == TextLinks.spanAt(h.message, ev)) {
+                down[0].onClick(h.message);
+            }
+            if (ev.getActionMasked() == android.view.MotionEvent.ACTION_UP
+                    || ev.getActionMasked() == android.view.MotionEvent.ACTION_CANCEL) {
+                down[0] = null;
+            }
+            return true;
+        });
 
         String likeCount = item.getLikeCount();
         h.likeCount.setText(likeCount != null ? likeCount : "");
