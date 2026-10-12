@@ -204,6 +204,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     // Phone-style controls for the Modern and Tap to pause styles.
     private ModernPlayerChrome mModernChrome;
     private View mSettingsBtn;
+    private View mFullscreenBtn;
     private boolean mResumeAfterSettings;
     // Tap to pause: our own tap detector while the controls are hidden (single tap = play/pause,
     // double tap = seek), replacing upstream's tickle-on-touch-down there.
@@ -265,6 +266,9 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     private void updateSettingsButton() {
         if (mSettingsBtn != null) {
             mSettingsBtn.setVisibility(mStyle.isModern() ? View.GONE : View.VISIBLE);
+        }
+        if (mFullscreenBtn != null) {
+            mFullscreenBtn.setVisibility(mStyle.isModern() ? View.GONE : View.VISIBLE);
         }
     }
 
@@ -825,6 +829,12 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             return handleShortsTouchEvent(event);
         }
 
+        // Portrait strip (#62): in the phone-style (Modern / Tap to pause) players a swipe up on
+        // the video goes full-screen, like the YouTube app. Classic has the panel button instead.
+        if (mLayoutState == 1 && mStyle.isModern() && handleStripSwipeUp(event, playerView)) {
+            return true;
+        }
+
         // Landscape swipe gestures (#48): a touch that may become a volume/brightness swipe is held
         // back, then either swiped or replayed through the paths below.
         if (mSwipe != null && !mReplayingTouch) {
@@ -849,6 +859,44 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         }
         onDispatchTouchEvent(event); // overlay tickle + double-tap seek
         return true;
+    }
+
+    private float mStripDownX;
+    private float mStripDownY;
+    private boolean mStripDownInVideo;
+
+    /**
+     * Watches touches on the 16:9 strip without consuming them (taps keep working); a clear
+     * upward swipe that started on the video enters full-screen (#62). Returns true only for the
+     * ACTION_UP that completes such a swipe.
+     */
+    private boolean handleStripSwipeUp(MotionEvent event, View playerView) {
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                mStripDownX = event.getX();
+                mStripDownY = event.getY();
+                mStripDownInVideo = !isInPipMode() && event.getY() <= playerView.getBottom();
+                return false;
+            case MotionEvent.ACTION_UP: {
+                boolean candidate = mStripDownInVideo;
+                mStripDownInVideo = false;
+                if (!candidate) return false;
+                float dy = event.getY() - mStripDownY;
+                float dx = event.getX() - mStripDownX;
+                float minDy = 48 * getResources().getDisplayMetrics().density;
+                if (-dy > minDy && -dy > 2 * Math.abs(dx)
+                        && getActivity() instanceof MobilePlaybackActivity) {
+                    ((MobilePlaybackActivity) getActivity()).toggleFullscreen();
+                    return true;
+                }
+                return false;
+            }
+            case MotionEvent.ACTION_CANCEL:
+                mStripDownInVideo = false;
+                return false;
+            default:
+                return false;
+        }
     }
 
     /**
@@ -2040,6 +2088,14 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         mPanel = activity.findViewById(R.id.mobile_below_video_panel);
         mTitleView = activity.findViewById(R.id.mobile_video_title);
         mExpandView = activity.findViewById(R.id.mobile_video_expand);
+        mFullscreenBtn = activity.findViewById(R.id.mobile_video_fullscreen);
+        if (mFullscreenBtn != null) {
+            mFullscreenBtn.setOnClickListener(v -> {
+                if (getActivity() instanceof MobilePlaybackActivity) {
+                    ((MobilePlaybackActivity) getActivity()).toggleFullscreen();
+                }
+            });
+        }
         mSettingsBtn = activity.findViewById(R.id.mobile_video_settings);
         if (mSettingsBtn != null) {
             mSettingsBtn.setOnClickListener(v -> openAppSettings());

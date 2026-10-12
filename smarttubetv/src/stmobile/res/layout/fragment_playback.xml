@@ -199,6 +199,19 @@
                 android:maxLines="2"
                 android:ellipsize="end" />
 
+            <!-- Full-screen shortcut; Classic style only (Modern has its own button on the video; #62). -->
+            <ImageView
+                android:id="@+id/mobile_video_fullscreen"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:layout_marginStart="4dp"
+                android:src="@drawable/ic_modern_fullscreen"
+                android:tint="#FFCCCCCC"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/mobile_player_fullscreen"
+                android:visibility="gone" />
+
             <!-- App Settings shortcut; shown in the Classic style only (Modern has it in the gear sheet). -->
             <ImageView
                 android:id="@+id/mobile_video_settings"
