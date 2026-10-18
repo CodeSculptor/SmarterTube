@@ -39,6 +39,7 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
     public void onEngineError(int type, int rendererIndex, Throwable error) {
         Log.e(TAG, "Player error occurred: %s. Trying to fix…", type);
 
+        mBufferingDetector.reset();
         runEngineErrorAction(type, rendererIndex, error);
     }
 
@@ -79,7 +80,7 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
             //mVideoLoaderController.restartEngine();
 
             // SABR may hang if the server issues a high backoffTime
-            mVideoLoaderController.restartEngine();
+            mVideoLoaderController.reloadVideo();
         }
     }
 
@@ -172,9 +173,7 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
             return false;
         }
 
-        String reloadMsg = String.format("SABR requested player response reload. Attempt: %s", mSabrErrorFixAttempts);
-        Log.e(TAG, reloadMsg);
-        MessageHelpers.showLongMessage(getContext(), reloadMsg);
+        MessageHelpers.showLongMessage(getContext(), "%s. Attempt: %s", reloadError.getMessage(), mSabrErrorFixAttempts);
 
         YouTubeServiceManager.instance().reloadPlayerResponse(video.videoId, reloadError.reloadPlaybackToken);
         mVideoLoaderController.reloadVideo();
@@ -209,12 +208,10 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
             return false;
         }
 
-        String reloadMsg = String.format("SABR requested back off action. Attempt: %s", mSabrErrorFixAttempts);
-        Log.e(TAG, reloadMsg);
-        MessageHelpers.showLongMessage(getContext(), reloadMsg);
+        MessageHelpers.showLongMessage(getContext(), "%s. Attempt: %s", backoffError.getMessage(), mSabrErrorFixAttempts);
 
         // SABR may hang if the server issues a high backoffTime
-        mVideoLoaderController.restartEngine();
+        mVideoLoaderController.reloadVideo();
 
         return true;
     }
@@ -239,7 +236,7 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
             } else if (getPlayerData().getVideoBufferType() == PlayerData.BUFFER_HIGH || getPlayerData().getVideoBufferType() == PlayerData.BUFFER_HIGHEST) {
                 getPlayerData().setVideoBufferType(PlayerData.BUFFER_MEDIUM);
             } else {
-                lowerVideoQuality(); // NOTE: restart engine is required after lower the quality
+                lowerVideoQuality(); // NOTE: restart engine required
             }
         } else if (Helpers.containsAny(errorContent, "Exception in CronetUrlRequest") && !getPlayerTweaksData().isNetworkErrorFixingDisabled()) {
             if (getVideo() != null && !getVideo().isLive) { // Finished live stream may provoke errors in Cronet
@@ -284,7 +281,7 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
             disableSubtitles();
             restartEngine = false;
         } else if (type == PlayerEventListener.ERROR_TYPE_RENDERER && rendererIndex == PlayerEventListener.RENDERER_INDEX_VIDEO) {
-            getPlayerData().setFormat(FormatItem.VIDEO_FHD_AVC_30);
+            getPlayerData().setTempVideoFormat(FormatItem.VIDEO_FHD_AVC_30);
             if (getPlayerTweaksData().isSWDecoderForced()) {
                 getPlayerTweaksData().setSWDecoderForced(false);
             } else {
@@ -303,7 +300,7 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
                 // IllegalStateException: Buffer too small (5242880 < 7208383)
                 // NOTE: The bug. Avoid calling reloadVideo() after lowering the quality.
                 // This will change current format to 'Disabled'. Do restartEngine() instead.
-                lowerVideoQuality();
+                lowerVideoQuality(); // NOTE: restart engine required
             }
         }
 
@@ -496,7 +493,6 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
 
         if (videoFormats.size() > nextIdx) {
             FormatItem formatItem = videoFormats.get(nextIdx);
-            getPlayer().setFormat(formatItem);
             // This helps to persist the format between engine restart
             getPlayerData().setTempVideoFormat(formatItem);
         }
