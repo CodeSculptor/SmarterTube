@@ -7,6 +7,7 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Build.VERSION;
 import android.os.Bundle;
+import android.os.LocaleList;
 import android.util.DisplayMetrics;
 import android.view.KeyCharacterMap.UnavailableException;
 import android.view.KeyEvent;
@@ -17,7 +18,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
 import com.liskovsoft.sharedutils.helpers.Helpers;
 import com.liskovsoft.sharedutils.helpers.KeyHelpers;
-import com.liskovsoft.sharedutils.locale.LocaleContextWrapper;
 import com.liskovsoft.sharedutils.locale.LocaleUpdater;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.R;
@@ -36,6 +36,7 @@ import com.r0adkll.slidr.model.SlidrPosition;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class MotherActivity extends FragmentActivity {
     private static final String TAG = MotherActivity.class.getSimpleName();
@@ -198,10 +199,52 @@ public class MotherActivity extends FragmentActivity {
 
         if (context != null) {
             // NOTE: Use only cached metrics. Because metrics creation involves using WindowManager, which isn't available at this stage.
-            contextWrapper = LocaleContextWrapper.wrap(context, LocaleUpdater.getSavedLocale(context), sCachedDisplayMetrics);
+            contextWrapper = wrapLocale(context, LocaleUpdater.getSavedLocale(context), sCachedDisplayMetrics);
         }
 
         super.attachBaseContext(contextWrapper);
+    }
+
+    /**
+     * Apply the saved app language (and the custom density) to this activity's resources.
+     * <p>
+     * {@code LocaleContextWrapper.wrap} hands {@code createConfigurationContext} a copy of the whole
+     * current Configuration. The platform treats every field of that copy as an explicit override
+     * and re-applies it on top of each new activity configuration, so the resources keep the
+     * orientation, screen size and window bounds from the moment the activity was created: after a
+     * rotation {@code getResources().getConfiguration().orientation} still reports the old value and
+     * {@code -land} resources never load. (On the phone the player kept its portrait layout, tab bar
+     * included, in landscape as soon as a language was picked in Settings.) Only the fields that are
+     * meant to change go into the override; everything else keeps following the window.
+     */
+    private static Context wrapLocale(Context context, Locale locale, DisplayMetrics customMetrics) {
+        if (locale == null) {
+            return context;
+        }
+
+        Configuration override = createLocaleOverride(context.getResources().getConfiguration(), locale, customMetrics);
+
+        if (VERSION.SDK_INT >= 24) {
+            LocaleList.setDefault(new LocaleList(locale));
+        }
+
+        return context.createConfigurationContext(override);
+    }
+
+    /** Visible for tests. */
+    static Configuration createLocaleOverride(Configuration base, Locale locale, DisplayMetrics customMetrics) {
+        Configuration override = new Configuration();
+        // new Configuration() defaults fontScale to 1, which would replace the user's font size.
+        override.fontScale = base.fontScale;
+        // A parent context may force the night mode (MobileActivity); keep it.
+        override.uiMode = base.uiMode;
+        // Keep the size/long bits; setLocale() below only rewrites the layout direction.
+        override.screenLayout = base.screenLayout;
+        override.setLocale(locale);
+        if (customMetrics != null) {
+            override.densityDpi = (int) (customMetrics.density * 160); // 160 is the baseline DPI
+        }
+        return override;
     }
 
     @Override
