@@ -3,7 +3,7 @@
 Tracked issues for the current beta. Keep this honest and current — it is part of the release
 checklist and what makes a beta release trustworthy.
 
-Current release: `v0.9.8-beta.1+st32.67`  ·  Upstream SmartTube base: `32.67`  ·  Channel: beta
+Current release: `v0.9.9-beta.1+st32.68`  ·  Upstream SmartTube base: `32.68`  ·  Channel: beta
 
 ## Status / classification
 
@@ -130,8 +130,12 @@ Resolved this release:
   keep clear of a cutout band that reaches the outer part of an edge (corner notch, MIUI's
   blacked-out notch area). A centred camera hole or notch keeps the full-bleed layout (verified
   unchanged on a Samsung). The MIUI case is emulator-verified only; awaiting the reporter's
-  confirmation. Separately, the status/navigation bars staying visible over the landscape player
-  on that Redmi (MIUI, Android 11) is still open.
+  confirmation. The status/navigation bars staying visible over the landscape player on that
+  Redmi (MIUI, Android 11), and the first tap on a new Settings screen doing nothing there, got a
+  fix in v0.9.9-beta.1: the bars are hidden again on resume, when focus returns and after
+  rotation. Checked on a Samsung only; awaiting the reporter's confirmation on MIUI.
+- **No way back from full screen in the Classic style** — fixed in v0.9.9-beta.1 ([#47]): an
+  exit-full-screen button at the end of the landscape control row (verified on device).
 - **Double-tap seek highlight on the wrong side in landscape** — fixed ([#46]). The shared
   double-tap view measured taps against stale portrait display metrics.
 - **Back stops the video and leaves** (phone UX). With background audio on (the default), the

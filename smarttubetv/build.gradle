@@ -278,6 +278,8 @@ android {
             //         landscape clips tagged as Shorts play in the regular layout).
             // 23741 = v0.9.8-beta.1+st32.67 (Full screen button in the Classic portrait panel; swipe up on the portrait
             //         video goes full screen in the Modern styles, #62).
+            // 23742 = v0.9.9-beta.1+st32.68 (system bars re-hidden on resume/focus/rotation for MIUI, #47; exit-full-screen
+            //         button in the Classic landscape player; upstream SmartTube 32.68 sync).
             versionCode 23741
             versionName "v0.9.8-beta.1+st32.67"
         }
