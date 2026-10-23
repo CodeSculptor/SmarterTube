@@ -1169,6 +1169,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             mModernChrome.applyOrientation(!portrait);
             mModernChrome.sync();
         }
+        updateExitFullscreenButton();
 
         // Keyed on the 3-value state (not just the boolean) so a regular<->Shorts switch — both of
         // which are "strip" — still re-applies the new dimension ratio.
@@ -1182,6 +1183,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         }
         mLayoutState = layoutState;
         mShortsFit = shortsFit;
+        updateExitFullscreenButton();
         mStripMode = strip;
 
         // Hide auto-hide chrome and dismiss any open sheet immediately on any layout change.
@@ -1293,6 +1295,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         // control row (transport buttons + seek bar + time) is owned by setShortsChrome.
         // Modern styles hide the Leanback row and draw their own controls instead (#46).
         if (mLayoutState != 2) setShortsControlsVisible(!mStyle.isModern());
+        updateExitFullscreenButton();
         // Back button follows the player controls on all non-Shorts pages (Modern has its own).
         if (mShortsBackBtn != null && mLayoutState != 2) {
             mShortsBackBtn.setVisibility(mStyle.isModern() ? View.INVISIBLE : View.VISIBLE);
@@ -1460,6 +1463,33 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             transportRow.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
         }
         applyShortsDocks();
+    }
+
+    /**
+     * Classic style's exit-full-screen button at the end of the landscape control row (#47). The
+     * Classic enter button lives in the portrait panel, which is hidden in landscape, so without
+     * this the only way back was turning the phone (impossible with auto-rotate off). Modern has
+     * its own toggle on the video.
+     */
+    private void updateExitFullscreenButton() {
+        View root = getView();
+        if (root == null) return;
+        View button = root.findViewById(R.id.mobile_exit_fullscreen);
+        if (button == null) return;
+        // Landscape from the window's own size: mLayoutState starts at 0 before the first layout,
+        // and the resources' orientation can lag behind a rotation (see PR #76).
+        View decor = getActivity() != null ? getActivity().getWindow().getDecorView() : null;
+        boolean landscape = decor != null && decor.getWidth() > decor.getHeight();
+        int visibility = landscape && mLayoutState == 0 && !mStyle.isModern() && !isInPipMode()
+                ? View.VISIBLE : View.GONE;
+        if (button.getVisibility() != visibility) button.setVisibility(visibility);
+        if (!button.hasOnClickListeners()) {
+            button.setOnClickListener(v -> {
+                if (getActivity() instanceof MobilePlaybackActivity) {
+                    ((MobilePlaybackActivity) getActivity()).toggleFullscreen();
+                }
+            });
+        }
     }
 
     /**
@@ -2119,6 +2149,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         // rebuilds (#50). Outside Shorts both are handled by the layout/overlay paths already.
         mRoot.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             anchorSeekBarToVideo();
+            updateExitFullscreenButton(); // the control row is inflated lazily and rebound by glue rebuilds
             if (mLayoutState != 2) return;
             applyShortsDocks();
             applyOverlayDecorVisibility(true);
