@@ -15,6 +15,7 @@ import androidx.lifecycle.Lifecycle;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.base.ImmersiveBars;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.PlaybackActivity;
 
@@ -219,6 +220,33 @@ public class MobilePlaybackActivity extends PlaybackActivity {
         return Settings.System.getInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0) == 1;
     }
 
+    /**
+     * Hidden system bars over the player (#47): hide them again when focus comes back (shade or a
+     * dialog closed) and after a rotation, which doesn't recreate this activity. See
+     * {@link ImmersiveBars}. Not a MobileActivity, so this does what MobileActivity does there.
+     */
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            reapplyFullscreen();
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        reapplyFullscreen();
+        // Again once the rotation has been laid out: some ROMs re-show the bars as it settles.
+        getWindow().getDecorView().post(this::reapplyFullscreen);
+    }
+
+    private void reapplyFullscreen() {
+        if (!isInPipMode()) {
+            ImmersiveBars.apply(this);
+        }
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -228,6 +256,7 @@ public class MobilePlaybackActivity extends PlaybackActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        reapplyFullscreen();
         if (mForcedOrientation != ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) {
             watchForMatchingOrientation();
         }

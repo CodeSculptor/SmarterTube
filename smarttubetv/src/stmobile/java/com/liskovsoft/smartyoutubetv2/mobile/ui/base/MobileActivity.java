@@ -97,11 +97,21 @@ public abstract class MobileActivity extends MotherActivity {
     protected void onResume() {
         super.onResume();
         restoreRealDensity();
+        ImmersiveBars.apply(this); // #47: upstream's hide, with the swipe behaviour set first
         // Register in the ViewManager activity stack (the TV LeanbackActivity does the same).
         // Without this the stack only tracks TV/Leanback activities, so the player's
         // startParentView() can't see a phone screen as its caller and falls back to Home.
         if (registersInViewStack()) {
             getViewManager().addTop(this);
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        // #47: the bars can come back while we're covered (shade, dialogs); hide them again.
+        if (hasFocus) {
+            ImmersiveBars.apply(this);
         }
     }
 
