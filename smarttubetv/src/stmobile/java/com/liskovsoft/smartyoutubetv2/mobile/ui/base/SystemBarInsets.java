@@ -1,11 +1,14 @@
 package com.liskovsoft.smartyoutubetv2.mobile.ui.base;
 
 import android.app.Activity;
+import android.os.Build;
 import android.view.View;
 
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.liskovsoft.smartyoutubetv2.common.prefs.GeneralData;
 
 /**
  * Keeps phone screens clear of system bars that are actually showing (#37).
@@ -23,6 +26,12 @@ import androidx.core.view.WindowInsetsCompat;
  * ends of the top bar (a corner notch, or MIUI's blacked-out notch strip) pads too; see
  * {@link CutoutGuard}.
  *
+ * Below Android 11 (#47, a Lenovo K6 Note on Android 7) the bars don't report 0 when hidden:
+ * upstream's legacy Fullscreen flags include SYSTEM_UI_FLAG_LAYOUT_STABLE, which makes the insets
+ * always describe the bars as if they were showing. Padding by them left an empty, nav-bar-sized
+ * strip under every screen. There, Fullscreen mode skips the bar padding (the bars are hidden by
+ * immersive sticky, and a swiped-in bar overlays the content, as above).
+ *
  * Applied to {@code android.R.id.content}, so every layout below it gets the fix without changes.
  * The player is not a {@link MobileActivity} and manages its own full-screen window.
  */
@@ -39,11 +48,14 @@ public final class SystemBarInsets {
         int top = content.getPaddingTop();
         int right = content.getPaddingRight();
         int bottom = content.getPaddingBottom();
+        // Stable (always "showing") bar insets below API 30; see the class comment.
+        boolean stableBarInsets = Build.VERSION.SDK_INT < 30
+                && GeneralData.instance(activity).isFullscreenModeEnabled();
         ViewCompat.setOnApplyWindowInsetsListener(content, (v, insets) -> {
             // Visible bars only: a hidden bar reports 0, so the default Fullscreen mode (bars
             // hidden) keeps its full-bleed layout. No cutout inset for the same reason: with the
             // bars hidden the content deliberately runs up under the camera hole.
-            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets bars = stableBarInsets ? Insets.NONE : insets.getInsets(WindowInsetsCompat.Type.systemBars());
             // ...except a cutout band over the ends of the bars' edges, which hides buttons (#47).
             Insets cutout = CutoutGuard.bands(activity, insets);
             Insets pad = Insets.max(bars, cutout);
