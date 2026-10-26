@@ -115,6 +115,7 @@ final class PinchZoom {
         mTarget.setFill(fill);
         mLabel.setText(fill ? R.string.mobile_zoom_fill : R.string.mobile_zoom_fit);
         mLabel.setVisibility(View.VISIBLE);
+        mLabel.bringToFront(); // above the Leanback overlay, like the swipe indicator
         mHandler.removeCallbacks(mHideLabel);
         mHandler.postDelayed(mHideLabel, LABEL_HIDE_MS);
     }
