@@ -3,7 +3,7 @@
 Tracked issues for the current beta. Keep this honest and current — it is part of the release
 checklist and what makes a beta release trustworthy.
 
-Current release: `v0.9.9-beta.1+st32.68`  ·  Upstream SmartTube base: `32.68`  ·  Channel: beta
+Current release: `v0.9.10-beta.1+st32.68`  ·  Upstream SmartTube base: `32.68`  ·  Channel: beta
 
 ## Status / classification
 
@@ -136,6 +136,16 @@ Resolved this release:
   rotation. Checked on a Samsung only; awaiting the reporter's confirmation on MIUI.
 - **No way back from full screen in the Classic style** — fixed in v0.9.9-beta.1 ([#47]): an
   exit-full-screen button at the end of the landscape control row (verified on device).
+- **Empty nav-bar strip on Android 7–10 in Fullscreen mode** — fixed in v0.9.10-beta.1 ([#47]):
+  hidden bars no longer pad the screen below Android 11 (verified on an API 24 emulator).
+- **Landscape video cropped with the tab bar over it when an app language/country is set** — fixed
+  in v0.9.10-beta.1 ([#82], ojkaas's fix from PR #76; verified on device with a country set).
+- **Media notification had no controls and tapping it did nothing** — fixed in v0.9.10-beta.1
+  ([#84], verified on device; Android 12 and older untested).
+- **Picture-in-picture stopped after a second lock/unlock** — fixed in v0.9.10-beta.1 ([#69],
+  verified on device).
+- **New in v0.9.10-beta.1:** share a video from the current time ([#83]) and smooth pinch to zoom
+  with two-finger pan in the landscape player ([#85]), both verified on device.
 - **Double-tap seek highlight on the wrong side in landscape** — fixed ([#46]). The shared
   double-tap view measured taps against stale portrait display metrics.
 - **Back stops the video and leaves** (phone UX). With background audio on (the default), the
@@ -214,6 +224,11 @@ Resolved this release:
 [#44]: https://github.com/CodeSculptor/SmarterTube/issues/44
 [#46]: https://github.com/CodeSculptor/SmarterTube/issues/46
 [#47]: https://github.com/CodeSculptor/SmarterTube/issues/47
+[#69]: https://github.com/CodeSculptor/SmarterTube/issues/69
+[#82]: https://github.com/CodeSculptor/SmarterTube/issues/82
+[#83]: https://github.com/CodeSculptor/SmarterTube/issues/83
+[#84]: https://github.com/CodeSculptor/SmarterTube/issues/84
+[#85]: https://github.com/CodeSculptor/SmarterTube/issues/85
 [#48]: https://github.com/CodeSculptor/SmarterTube/issues/48
 [#31]: https://github.com/CodeSculptor/SmarterTube/issues/31
 [#32]: https://github.com/CodeSculptor/SmarterTube/issues/32
