@@ -892,6 +892,24 @@
             android:progressTint="@color/brand_accent" />
     </LinearLayout>
 
+    <!-- Pinch to zoom label (#85): "Zoomed to fill" / "Original", shown briefly. Not interactive. -->
+    <TextView
+        android:id="@+id/mobile_zoom_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/bg_modern_pill"
+        android:paddingStart="16dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="8dp"
+        android:textColor="#FFFFFFFF"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="@id/playback_controls_fragment"
+        app:layout_constraintStart_toStartOf="@id/playback_controls_fragment"
+        app:layout_constraintEnd_toEndOf="@id/playback_controls_fragment" />
+
     <!-- Modern player sheet (#46): settings actions / More videos, above everything else. -->
     <include
         layout="@layout/mobile_modern_sheet"

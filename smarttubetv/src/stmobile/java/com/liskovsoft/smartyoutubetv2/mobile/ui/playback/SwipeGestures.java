@@ -118,14 +118,19 @@ final class SwipeGestures {
                 }
                 return true;
             case MotionEvent.ACTION_CANCEL:
-                boolean swiping = mState == SWIPING;
-                reset();
-                if (swiping) {
-                    mHandler.postDelayed(mHideIndicator, INDICATOR_HIDE_MS);
-                }
+                cancel();
                 return true;
             default:
                 return true;
+        }
+    }
+
+    /** Drop a held or swiping gesture without replaying it (a pinch took over). */
+    void cancel() {
+        boolean swiping = mState == SWIPING;
+        reset();
+        if (swiping) {
+            mHandler.postDelayed(mHideIndicator, INDICATOR_HIDE_MS);
         }
     }
 

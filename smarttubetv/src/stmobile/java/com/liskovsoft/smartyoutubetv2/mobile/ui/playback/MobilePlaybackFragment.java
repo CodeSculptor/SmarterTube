@@ -44,6 +44,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.data.VideoGroup;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.SeekBarSegment;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.controllers.SuggestionsController;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerUI;
+import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerConstants;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.BrowsePresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.ChannelPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
@@ -212,6 +213,10 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     // Swipe gestures in the landscape player (#48): volume right, brightness left.
     private SwipeGestures mSwipe;
     private boolean mSwipeEnabled;
+    // Pinch to zoom in the landscape player (#85): fit <-> fill via the player's resize mode.
+    private PinchZoom mPinch;
+    // Set once a pinch changed the resize mode, so leaving the landscape player puts the saved one back.
+    private boolean mPinchZoomed;
     // Set while SwipeGestures replays a held touch through the normal path, so it isn't re-captured.
     private boolean mReplayingTouch;
     // Display-cutout bands that cover the ends of an edge (#47, see CutoutGuard).
@@ -832,6 +837,18 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             return true;
         }
 
+        // Pinch to zoom (#85): watches every touch in the landscape player; at the second finger the
+        // pinch takes the gesture over and whatever the first finger started is cancelled.
+        if (mPinch != null && !mReplayingTouch) {
+            if (mPinch.isActive()) {
+                return mPinch.handle(event);
+            }
+            if (pinchCanWatch() && mPinch.watch(event)) {
+                cancelForPinch(event);
+                return true;
+            }
+        }
+
         // Landscape swipe gestures (#48): a touch that may become a volume/brightness swipe is held
         // back, then either swiped or replayed through the paths below.
         if (mSwipe != null && !mReplayingTouch) {
@@ -914,6 +931,55 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         }
         return down.getX() > edgeX && down.getX() < playerView.getWidth() - edgeX
                 && down.getY() > edgeY && down.getY() < playerView.getHeight() - edgeY;
+    }
+
+    /** Pinch to zoom works in the landscape full-screen player, controls showing or not. */
+    private boolean pinchCanWatch() {
+        return mLayoutState == 0 && !isInPipMode()
+                && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+    }
+
+    /**
+     * A pinch just began: a held swipe is dropped (its DOWN never reached anything else);
+     * otherwise the normal path and the view tree (controls showing: buttons, seek bar), which
+     * have seen the first finger, get a CANCEL so no tap, double-tap seek or button press comes
+     * out of it.
+     */
+    private void cancelForPinch(MotionEvent event) {
+        if (mSwipe != null && mSwipe.isActive()) {
+            mSwipe.cancel();
+            return;
+        }
+        MotionEvent cancel = MotionEvent.obtain(event);
+        cancel.setAction(MotionEvent.ACTION_CANCEL);
+        replayTouch(cancel);
+        requireActivity().getWindow().superDispatchTouchEvent(cancel);
+        cancel.recycle();
+    }
+
+    /** PinchZoom's target: the player's own resize mode (Settings > Player > Video zoom). */
+    private final PinchZoom.Target mPinchTarget = new PinchZoom.Target() {
+        @Override
+        public boolean isFill() {
+            return getResizeMode() == PlayerConstants.RESIZE_MODE_FIT_BOTH;
+        }
+
+        @Override
+        public void setFill(boolean fill) {
+            setResizeMode(fill ? PlayerConstants.RESIZE_MODE_FIT_BOTH : PlayerConstants.RESIZE_MODE_DEFAULT);
+            mPinchZoomed = true;
+        }
+    };
+
+    /** Leaving the landscape player: put the saved Video zoom back if a pinch changed it. */
+    private void resetPinchZoom() {
+        if (mPinch != null) {
+            mPinch.reset();
+        }
+        if (mPinchZoomed) {
+            mPinchZoomed = false;
+            setResizeMode(PlayerData.instance(getContext()).getResizeMode());
+        }
     }
 
     /** SwipeGestures hands back a touch that wasn't a swipe: run it through the normal path. */
@@ -1171,6 +1237,10 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         // Keyed on the 3-value state (not just the boolean) so a regular<->Shorts switch — both of
         // which are "strip" — still re-applies the new dimension ratio.
         int layoutState = !strip ? 0 : (isShorts ? 2 : 1);
+        // A pinch zoom (#85) belongs to the landscape player only; PIP and the strips get the saved mode.
+        if (layoutState != 0 || inPip) {
+            resetPinchZoom();
+        }
         // #30: on a portrait screen wider than ~10:16 (tablets, foldables) a full-width 9:16 strip
         // is taller than the screen and the Short gets cropped. Fit it instead: size the strip from
         // the height above the info bar + nav bar and centre it (pillarbox).
@@ -2259,6 +2329,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         mModernChrome = ModernPlayerChrome.create(this, activity);
         initTapDetector(activity);
         mSwipe = SwipeGestures.create(activity);
+        mPinch = PinchZoom.create(activity, mPinchTarget);
         initCutoutGuard(activity);
 
         return true;
