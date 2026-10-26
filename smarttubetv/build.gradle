@@ -282,8 +282,8 @@ android {
             //         button in the Classic landscape player; upstream SmartTube 32.68 sync).
             // 23743 = v0.9.10-beta.1+st32.68 (landscape crop with an app language set #82, media notification #84, PiP lock/unlock
             //         #69, Android 7-10 nav-bar strip #47; share from current time #83, smooth pinch zoom #85; upstream 32.68).
-            versionCode 23742
-            versionName "v0.9.9-beta.1+st32.68"
+            versionCode 23743
+            versionName "v0.9.10-beta.1+st32.68"
         }
     }
 }
