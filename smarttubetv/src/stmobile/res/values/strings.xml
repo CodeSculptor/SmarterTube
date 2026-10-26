@@ -128,7 +128,6 @@
     <string name="media_notification_next">Next</string>
 
     <!-- Pinch to zoom in the landscape player (#85) -->
-    <string name="mobile_zoom_fill">Zoomed to fill</string>
     <string name="mobile_zoom_fit">Original</string>
 
 </resources>

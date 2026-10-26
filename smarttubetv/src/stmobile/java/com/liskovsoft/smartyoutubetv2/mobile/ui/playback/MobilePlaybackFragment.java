@@ -44,7 +44,6 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.data.VideoGroup;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.SeekBarSegment;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.controllers.SuggestionsController;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerUI;
-import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerConstants;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.BrowsePresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.ChannelPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
@@ -216,7 +215,6 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     // Pinch to zoom in the landscape player (#85): fit <-> fill via the player's resize mode.
     private PinchZoom mPinch;
     // Set once a pinch changed the resize mode, so leaving the landscape player puts the saved one back.
-    private boolean mPinchZoomed;
     // Set while SwipeGestures replays a held touch through the normal path, so it isn't re-captured.
     private boolean mReplayingTouch;
     // Display-cutout bands that cover the ends of an edge (#47, see CutoutGuard).
@@ -970,28 +968,13 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         cancel.recycle();
     }
 
-    /** PinchZoom's target: the player's own resize mode (Settings > Player > Video zoom). */
-    private final PinchZoom.Target mPinchTarget = new PinchZoom.Target() {
-        @Override
-        public boolean isFill() {
-            return getResizeMode() == PlayerConstants.RESIZE_MODE_FIT_BOTH;
-        }
+    /** PinchZoom's target: the video view (the aspect-ratio frame holding the surface). */
+    private final PinchZoom.Target mPinchTarget = () -> getView() != null ? getView().findViewById(R.id.surface_root) : null;
 
-        @Override
-        public void setFill(boolean fill) {
-            setResizeMode(fill ? PlayerConstants.RESIZE_MODE_FIT_BOTH : PlayerConstants.RESIZE_MODE_DEFAULT);
-            mPinchZoomed = true;
-        }
-    };
-
-    /** Leaving the landscape player: put the saved Video zoom back if a pinch changed it. */
+    /** Leaving the landscape player: back to the whole picture. */
     private void resetPinchZoom() {
         if (mPinch != null) {
-            mPinch.reset();
-        }
-        if (mPinchZoomed) {
-            mPinchZoomed = false;
-            setResizeMode(PlayerData.instance(getContext()).getResizeMode());
+            mPinch.reset(false);
         }
     }
 
@@ -1250,7 +1233,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         // Keyed on the 3-value state (not just the boolean) so a regular<->Shorts switch — both of
         // which are "strip" — still re-applies the new dimension ratio.
         int layoutState = !strip ? 0 : (isShorts ? 2 : 1);
-        // A pinch zoom (#85) belongs to the landscape player only; PIP and the strips get the saved mode.
+        // A pinch zoom (#85) belongs to the landscape player only; PIP and the strips show the whole picture.
         if (layoutState != 0 || inPip) {
             resetPinchZoom();
         }
@@ -1600,6 +1583,8 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         if (root == null) return;
         View video = root.findViewById(R.id.surface_root);
         if (video == null) return;
+        // A pinch zoom (#85) owns the video's transform while it's zoomed in.
+        if (mPinch != null && mPinch.isZoomed()) return;
         float shift = 0f;
         if (mLayoutState == 2 && !mShortsFit && root.getWidth() > 0 && root.getHeight() > 0) {
             float strip = Math.min(root.getHeight(), root.getWidth() * 16f / 9f);
