@@ -120,4 +120,10 @@
     <string name="mobile_channel_search_close">Close search</string>
     <string name="mobile_channel_search_tab">Search: %1$s</string>
 
+    <!-- Media notification transport actions (accessibility labels) -->
+    <string name="media_notification_previous">Previous</string>
+    <string name="media_notification_play">Play</string>
+    <string name="media_notification_pause">Pause</string>
+    <string name="media_notification_next">Next</string>
+
 </resources>

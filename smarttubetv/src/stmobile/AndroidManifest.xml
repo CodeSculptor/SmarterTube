@@ -176,6 +176,12 @@
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.SmarterTube.Mobile" />
 
+        <!-- Media notification for the player's MediaSession (shade, lockscreen, media
+             carousel); also keeps background audio alive. -->
+        <service
+            android:name="com.liskovsoft.smartyoutubetv2.mobile.notifications.MediaNotificationService"
+            android:exported="false" />
+
     </application>
 
 </manifest>

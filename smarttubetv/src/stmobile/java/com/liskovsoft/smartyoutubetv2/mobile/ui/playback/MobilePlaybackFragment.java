@@ -2,7 +2,6 @@ package com.liskovsoft.smartyoutubetv2.mobile.ui.playback;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
@@ -28,7 +27,6 @@ import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 
 import com.bumptech.glide.Glide;
@@ -50,7 +48,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.BrowsePresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.ChannelPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
-import com.liskovsoft.smartyoutubetv2.common.misc.RemoteControlService;
+import com.liskovsoft.smartyoutubetv2.mobile.notifications.MediaNotificationService;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.utils.AppDialogUtil;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.base.CutoutGuard;
@@ -277,12 +275,13 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         mSessionToken = session != null ? session.getSessionToken() : null;
         Context ctx = getContext();
         if (ctx == null) return;
-        Intent intent = new Intent(ctx, RemoteControlService.class);
-        if (mSessionToken != null) {
-            intent.putExtra(RemoteControlService.EXTRA_SESSION_TOKEN, mSessionToken);
-            ContextCompat.startForegroundService(ctx, intent);
+        if (session != null) {
+            // Tapping the notification (or the lockscreen / carousel player) reopens the player.
+            session.setSessionActivity(MediaNotificationService.createActivityIntent(ctx));
+            MediaNotificationService.start(ctx, mSessionToken);
         } else {
-            ctx.startService(intent); // revert to plain notification; service stays for remote control
+            // Session released: drop the notification rather than leave a dead, control-less card.
+            MediaNotificationService.stop(ctx);
         }
     }
 
@@ -343,14 +342,12 @@ public class MobilePlaybackFragment extends PlaybackFragment {
 
         // Keep the lockscreen notification header in sync with the current video.
         // The MediaSession persists across video changes, so onMediaSessionCreated isn't
-        // re-fired — re-send the intent here so RemoteControlService rebuilds from the
+        // re-fired — re-send it here so MediaNotificationService rebuilds from the
         // new PlaybackPresenter.getVideo() value.
         if (mSessionToken != null && video != null) {
             Context ctx = getContext();
             if (ctx != null) {
-                Intent intent = new Intent(ctx, RemoteControlService.class);
-                intent.putExtra(RemoteControlService.EXTRA_SESSION_TOKEN, mSessionToken);
-                ContextCompat.startForegroundService(ctx, intent);
+                MediaNotificationService.start(ctx, mSessionToken);
             }
         }
 
