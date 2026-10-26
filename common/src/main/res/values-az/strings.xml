@@ -25,7 +25,7 @@
     <string name="subtitles_disabled">Subtitrlər söndürülüb</string>
     <string name="auto_frame_rate">Avtomatik kadr tezliyi</string>
     <string name="frame_rate_correction">FPS-i düzəlt:\n%s</string>
-    <string name="category_background_playback">Arxa fonda oynatma</string>
+    <string name="category_background_playback">Fonda oynatma</string>
     <string name="not_implemented">Tətbiq olunmayıb</string>
     <string name="not_supported_by_device">Cihaz bu xüsusiyyəti dəstəkləmir</string>
     <string name="option_background_playback_off">Söndürülüb</string>
@@ -60,7 +60,8 @@
     <string name="dialog_account_none">Heç biri</string>
     <string name="dialog_remove_account">Çıxış et</string>
     <string name="dialog_add_account">Daxil ol</string>
-    <string name="default_lang">Varsayılan</string>
+    <string name="default_option">İlkin</string>
+    <string name="default_lang">İlkin</string>
     <string name="original_lang">Orijinal</string>
     <string name="dialog_select_language">Dil</string>
     <string name="subtitle_default">İlkin</string>
@@ -358,7 +359,7 @@
     <string name="update_error">Yeniləmə xətası</string>
     <string name="hide_shorts_from_search">Axtarış nəticələrindən Shortsları gizlət</string>
     <string name="hide_shorts_from_history">Tarixçədən Shortsları gizlət</string>
-    <string name="hide_shorts_from_trending">Treendlərdən Shortsları gizlət</string>
+    <string name="hide_shorts_from_trending">Trendlərdən Shortsları gizlət</string>
     <string name="disable_screensaver">Ekran qoruyucusunu söndür</string>
     <string name="description_not_found">Təsvir tapılmadı</string>
     <string name="proxy_port_hint">Proksi portu</string>
@@ -651,7 +652,7 @@
     <string name="remote_control_permission">Arxa fonda uzaqdan idarəetmə, Üzərində Göstərmə icazəsi tələb edir</string>
     <string name="login_from_browser">Bələdçidən daxil ol</string>
     <string name="disable_remote_history">Uzaqdan idarəetmədən istifadə edərkən tarixçəni söndür</string>
-    <string name="keyboard_fix">OK düyməsinin klavaturanı açmasının qarşısını al (G20s və digərləri)</string>
+    <string name="keyboard_fix">OK düyməsinin klaviaturanı açmasının qarşısını al (G20s və digərləri)</string>
     <string name="nothing_found">Heç nə tapılmadı</string>
     <string name="auto_frame_rate_desc">Bu parametr kameranın sürətli hərəkət etdiyi səhnələrdə titrəməni aradan qaldırır, məsələn, idman yayımları</string>
     <string name="channel_filter_hint">Kanalları filtrlə</string>
@@ -678,6 +679,7 @@
     <string name="fullscreen_mode">Tam ekran rejimi (sistem panelləri olmadan)</string>
     <string name="player_only_mode">Video tətbiqdən kənarda açılarsa yalnız oynadıcını göstər</string>
     <string name="pinned_channel_rows">Bərkidilmiş kanalları sətrlər şəklində göstər</string>
+    <string name="preferred_dns">Üstünlük Verilən DNS</string>
     <string name="prefer_google_dns">Google DNS-ə üstünlük ver</string>
     <string name="prefer_ipv4">IPv4 DNS-ə üstünlük ver</string>
     <string name="prefer_ipv4_desc">Tətbiqin ümumiyyətlə işləmədiyi halları düzəldə bilər.\nQeyd. Donmalara və qəzalara səbəb ola bilər (xüsusilə Android 8 cihazlarında və ya Dune HD-də)</string>
@@ -748,6 +750,8 @@
     <string name="enable_conscrypt_desc">Bəzi cihazlarda HTTPS, TLS və VPN uyğunluğunu yaxşılaşdırır, lakin bəzən oynatma problemlərinə və ya daha zəif şəbəkə performansına səbəb ola bilər</string>
     <string name="network_settings">Şəbəkə tənzimləmələri</string>
     <string name="comments_disabled">Bu video üçün şərhlər söndürülüb</string>
+    <string name="prefer_sabr_live">SABR canlı yayımları</string>
+    <string name="prefer_sabr_live_desc">Təcrübi SABR canlı yayımları. Yalnız adi canlı yayımlarla bağlı probleminiz olduqda aktivləşdirin.</string>
     <plurals name="hours">
         <item quantity="one">%s saat</item>
         <item quantity="other">%s saat</item>

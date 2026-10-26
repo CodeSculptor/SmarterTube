@@ -57,7 +57,7 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
             mVideoLoaderController.reloadVideo();
         } else if (isOfflineVideo() && !mBufferingDetector.isPlayable()) {
             int requiredEngine = PlayerTweaksData.PLAYER_DATA_SOURCE_OKHTTP;
-            int customDns = PlayerTweaksData.DNS_TYPE_IPV4;
+            int customDns = PlayerTweaksData.DNS_TYPE_GOOGLE;
             boolean isCustomEngineEnabled = getPlayerTweaksData().getPlayerDataSource() == requiredEngine;
             boolean isCustomDnsEnabled = getPlayerTweaksData().getPreferredDnsType() == customDns;
             boolean isCustomDnsActive = isCustomEngineEnabled && isCustomDnsEnabled;
