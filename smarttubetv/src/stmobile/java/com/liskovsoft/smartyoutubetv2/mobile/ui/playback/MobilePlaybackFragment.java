@@ -236,6 +236,13 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     @Override
     public void onResume() {
         super.onResume();
+        // PiP across lock/unlock (#69): the shared onResume clears the engine block, but unlocking
+        // the phone resumes this fragment while the PiP window is still up, so the next lock's
+        // onStop released the player and the video stopped. Keep the block while in PiP;
+        // onPIPChanged drops it when the window expands back to the app.
+        if (isInPIPMode()) {
+            blockEngine(true);
+        }
         // Returning from another screen (e.g. the channel page opened from a Short) can leave the
         // Leanback overlay re-shown and the chrome stale. Invalidate the cached layout state so
         // applyMobileLayout does a full re-apply (ratio + control/decor visibility + chrome)
@@ -333,6 +340,12 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     @Override
     public void onPIPChanged(boolean isInPIP) {
         super.onPIPChanged(isInPIP);
+        // Expanded back to the app (at least STARTED; a dismissed window arrives while only
+        // CREATED and MobilePlaybackActivity finishes the player): drop the PiP block (#69).
+        if (!isInPIP && getActivity() != null && getActivity().getLifecycle().getCurrentState()
+                .isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) {
+            blockEngine(false);
+        }
         applyMobileLayout();
     }
 
