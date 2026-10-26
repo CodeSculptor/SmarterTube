@@ -916,7 +916,7 @@ public final class Video {
 
     public long getLiveDurationMs() {
         if (startTimeMs == 0) {
-            return 0;
+            return -1;
         }
 
         // Disable updates if stream ended while watching
@@ -925,9 +925,9 @@ public final class Video {
             return durationMs > 0 ? durationMs : liveDurationMs;
         }
 
-        // Is stream real length may exceeds calculated length???
+        // Is stream real length may exceed calculated length?
         liveDurationMs = System.currentTimeMillis() - startTimeMs;
-        return liveDurationMs > 0 ? liveDurationMs : 0;
+        return liveDurationMs > 0 ? liveDurationMs : -1;
     }
 
     public long getDurationMs() {

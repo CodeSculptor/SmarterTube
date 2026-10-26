@@ -151,7 +151,13 @@ public class ExoPlayerController implements Player.EventListener, LiveStateProvi
      */
     @Override
     public long getLiveDurationMs() {
-        return mSabrLiveManifest != null ? mSabrLiveManifest.getLiveEdgeMs() : -1;
+        long liveEdgeMs = mSabrLiveManifest != null ? mSabrLiveManifest.getLiveEdgeMs() : -1;
+        // Skip the fallback duration because SABR uses absolute values for clipped streams
+        if (mSabrLiveManifest != null && !getVideo().isFullLive()) {
+            return liveEdgeMs;
+        }
+        // NOTE: liveEdgeMs could be -1 during initial video loading. Use fallback duration.
+        return liveEdgeMs != -1 ? liveEdgeMs : getVideo().getLiveDurationMs();
     }
 
     @Override
@@ -197,9 +203,12 @@ public class ExoPlayerController implements Player.EventListener, LiveStateProvi
             return;
         }
 
-        // Url list videos at load stage has undefined (-1) length. So, we need to remove length check.
-        if (mPlayer != null && positionMs >= 0 && positionMs <= getDurationMs()) {
+        // NOTE: Url list videos at load stage has undefined (-1) duration
+        // NOTE: Avoid to check live streams duration here as ones may have undefined (-1) duration on loading stage.
+        if (mPlayer != null && positionMs >= 0) {
             mPlayer.seekTo(positionMs);
+            // When we are dealing with SABR live that doesn't exceed 24 hours in length, we can set the duration right here
+            mSabrLiveStartPending = false;
         }
     }
 
@@ -209,7 +218,18 @@ public class ExoPlayerController implements Player.EventListener, LiveStateProvi
         }
 
         long duration = mPlayer.getDuration();
-        return duration != C.TIME_UNSET ? duration : -1;
+
+        if (duration == C.TIME_UNSET) {
+            duration = -1;
+        }
+
+        if (duration != -1 && duration <= Video.MAX_LIVE_DURATION_MS) {
+            return duration;
+        }
+
+        long liveDurationMs = getLiveDurationMs();
+
+        return liveDurationMs != -1 ? liveDurationMs : duration;
     }
 
     public void setPlayWhenReady(boolean play) {
