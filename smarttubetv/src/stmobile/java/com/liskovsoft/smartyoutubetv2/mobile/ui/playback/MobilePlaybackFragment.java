@@ -2247,7 +2247,10 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         // the matching button is enabled in the user's "Setup player buttons" list.
         mPortraitSubscribeBtn = activity.findViewById(R.id.mobile_video_subscribe_btn);
         bindPanelAction(activity, R.id.mobile_video_subscribe_btn, R.id.action_subscribe);
-        bindPanelAction(activity, R.id.mobile_video_share_btn, R.id.action_share);
+        View shareBtn = activity.findViewById(R.id.mobile_video_share_btn);
+        if (shareBtn != null) {
+            shareBtn.setOnClickListener(v -> MobileShareDialog.show(activity)); // "start at" option (#83)
+        }
         bindPanelAction(activity, R.id.mobile_video_save_btn, R.id.action_playlist_add);
         bindPanelAction(activity, R.id.mobile_video_queue_btn, R.id.action_playback_queue);
         bindPanelAction(activity, R.id.mobile_video_comments_card, R.id.action_chat);

@@ -176,7 +176,7 @@ final class ModernPlayerChrome {
         mDislike.setOnClickListener(v -> clickAction(R.id.action_thumbs_down));
         mRoot.findViewById(R.id.modern_comments).setOnClickListener(v -> clickAction(R.id.action_chat));
         mRoot.findViewById(R.id.modern_save).setOnClickListener(v -> clickAction(R.id.action_playlist_add));
-        mRoot.findViewById(R.id.modern_share).setOnClickListener(v -> clickAction(R.id.action_share));
+        mRoot.findViewById(R.id.modern_share).setOnClickListener(v -> MobileShareDialog.show(mActivity)); // "start at" option (#83)
         mRoot.findViewById(R.id.modern_more_videos).setOnClickListener(v -> openUpNextSheet());
 
         mSeek.setMax(SEEK_MAX);
