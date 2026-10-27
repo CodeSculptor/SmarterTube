@@ -5,6 +5,7 @@ import android.os.Build;
 import android.view.Window;
 import android.view.WindowManager;
 
+import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -34,8 +35,7 @@ public final class ImmersiveBars {
     }
 
     public static void apply(Activity activity) {
-        if (activity == null || activity.isFinishing()
-                || !GeneralData.instance(activity).isFullscreenModeEnabled()) {
+        if (!isEnabled(activity)) {
             return;
         }
 
@@ -57,5 +57,53 @@ public final class ImmersiveBars {
             attrs.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
             window.setAttributes(attrs);
         }
+    }
+
+    /**
+     * Like {@link #apply}, for when the system has shown the bars again by itself (#47: on a Redmi
+     * with MIUI and a Lenovo the status bar came back after the player rotated from portrait).
+     *
+     * Android skips a hide that doesn't change what the app asked for, and the app still "asks"
+     * for hidden bars, so a plain re-hide does nothing there. On API 30+ the bars that really show
+     * are asked for and then hidden again, which is a new request. Below API 30 the system clears
+     * our flags when it shows the bars, so {@link #apply} already sends a change.
+     */
+    public static void reassert(Activity activity) {
+        if (!isEnabled(activity)) {
+            return;
+        }
+
+        apply(activity);
+
+        if (Build.VERSION.SDK_INT < 30) {
+            return;
+        }
+
+        Window window = activity.getWindow();
+        WindowInsetsCompat insets = ViewCompat.getRootWindowInsets(window.getDecorView());
+        if (insets == null) {
+            return;
+        }
+
+        // Bars peeking after a swipe don't count as visible here, so this doesn't fight a swipe.
+        int showing = 0;
+        if (insets.isVisible(WindowInsetsCompat.Type.statusBars())) {
+            showing |= WindowInsetsCompat.Type.statusBars();
+        }
+        if (insets.isVisible(WindowInsetsCompat.Type.navigationBars())) {
+            showing |= WindowInsetsCompat.Type.navigationBars();
+        }
+        if (showing == 0) {
+            return;
+        }
+
+        WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, window.getDecorView());
+        controller.show(showing);
+        controller.hide(showing);
+    }
+
+    private static boolean isEnabled(Activity activity) {
+        return activity != null && !activity.isFinishing()
+                && GeneralData.instance(activity).isFullscreenModeEnabled();
     }
 }

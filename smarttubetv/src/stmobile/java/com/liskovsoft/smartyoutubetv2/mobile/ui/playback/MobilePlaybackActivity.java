@@ -8,6 +8,7 @@ import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.OrientationEventListener;
+import android.view.View;
 
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
@@ -38,6 +39,11 @@ public class MobilePlaybackActivity extends PlaybackActivity {
     // back to the device once the phone is physically turned to match.
     private int mForcedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
     private OrientationEventListener mOrientationWatch;
+    // Hidden system bars (#47): how long a rotation takes to settle, and how long to wait before
+    // hiding bars the system has shown again (so a ROM that keeps showing them isn't a tight loop).
+    private static final long ROTATION_SETTLE_MS = 600;
+    private static final long REHIDE_DELAY_MS = 300;
+    private final Runnable mReassertFullscreen = this::reassertFullscreen;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -50,6 +56,7 @@ public class MobilePlaybackActivity extends PlaybackActivity {
         }
 
         applyOrientationForCurrentVideo();
+        watchSystemBars();
     }
 
     @Override
@@ -237,13 +244,38 @@ public class MobilePlaybackActivity extends PlaybackActivity {
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         reapplyFullscreen();
-        // Again once the rotation has been laid out: some ROMs re-show the bars as it settles.
-        getWindow().getDecorView().post(this::reapplyFullscreen);
+        // Again once the rotation has been laid out, and once it has settled: some ROMs (MIUI, a
+        // Lenovo) show the status bar again as a rotation from portrait finishes.
+        View decor = getWindow().getDecorView();
+        decor.removeCallbacks(mReassertFullscreen);
+        decor.post(mReassertFullscreen);
+        decor.postDelayed(mReassertFullscreen, ROTATION_SETTLE_MS);
+    }
+
+    /**
+     * Hide the bars again whenever the system reports them showing while the player has focus
+     * (#47). Focus is lost while the notification shade or another screen is open, so those are
+     * left alone. Bars peeking after a swipe aren't reported, so the swipe still works.
+     */
+    private void watchSystemBars() {
+        View decor = getWindow().getDecorView();
+        decor.setOnSystemUiVisibilityChangeListener(visibility -> {
+            if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0 && hasWindowFocus()) {
+                decor.removeCallbacks(mReassertFullscreen);
+                decor.postDelayed(mReassertFullscreen, REHIDE_DELAY_MS);
+            }
+        });
     }
 
     private void reapplyFullscreen() {
         if (!isInPipMode()) {
             ImmersiveBars.apply(this);
+        }
+    }
+
+    private void reassertFullscreen() {
+        if (!isInPipMode()) {
+            ImmersiveBars.reassert(this);
         }
     }
 
