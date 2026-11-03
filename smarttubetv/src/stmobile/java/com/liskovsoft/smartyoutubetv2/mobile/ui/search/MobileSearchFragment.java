@@ -217,6 +217,11 @@ public class MobileSearchFragment extends Fragment implements SearchView {
     @Override
     public void setTagsProvider(MediaServiceSearchTagProvider provider) {
         mTagsProvider = provider;
+        // Empty box on a fresh screen: offer recent searches (long-press one to remove it).
+        if (mSearchInput != null && mSearchInput.getText().length() == 0 && !mSearchSubmitted) {
+            mWantSuggestions = true;
+            loadSuggestions("");
+        }
     }
 
     @Override
@@ -383,11 +388,9 @@ public class MobileSearchFragment extends Fragment implements SearchView {
                 return;
             }
             if (s.length() == 0) {
-                mWantSuggestions = false;
-                mSuggestionsList.setVisibility(View.GONE);
-                if (mTagsAdapter != null) {
-                    mTagsAdapter.clear();
-                }
+                // Cleared box: show recent searches again (empty when history is disabled).
+                mWantSuggestions = true;
+                loadSuggestions("");
                 return;
             }
             mWantSuggestions = true;
