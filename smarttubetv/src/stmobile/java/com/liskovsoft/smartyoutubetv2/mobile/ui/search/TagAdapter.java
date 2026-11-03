@@ -21,10 +21,12 @@ class TagAdapter extends RecyclerView.Adapter<TagAdapter.ViewHolder> {
     }
 
     private final OnTagAction mClick;
+    private final OnTagAction mLongClick;
     private final List<Tag> mTags = new ArrayList<>();
 
-    TagAdapter(OnTagAction click) {
+    TagAdapter(OnTagAction click, OnTagAction longClick) {
         mClick = click;
+        mLongClick = longClick;
     }
 
     void setTags(List<Tag> tags) {
@@ -67,6 +69,13 @@ class TagAdapter extends RecyclerView.Adapter<TagAdapter.ViewHolder> {
             if (mClick != null) {
                 mClick.onTag(tag);
             }
+        });
+        holder.itemView.setOnLongClickListener(v -> {
+            if (mLongClick == null) {
+                return false;
+            }
+            mLongClick.onTag(tag);
+            return true;
         });
     }
 

@@ -122,7 +122,7 @@ public class MobileSearchFragment extends Fragment implements SearchView {
             }
         });
 
-        mTagsAdapter = new TagAdapter(this::onTagPicked);
+        mTagsAdapter = new TagAdapter(this::onTagPicked, this::onTagLongPressed);
         mSuggestionsList.setLayoutManager(new LinearLayoutManager(getContext()));
         mSuggestionsList.setAdapter(mTagsAdapter);
 
@@ -336,6 +336,13 @@ public class MobileSearchFragment extends Fragment implements SearchView {
         mSearchInput.setSelection(tag.tag.length());
         mSuppressWatcher = false;
         submitSearch(tag.tag);
+    }
+
+    // Same dialog as upstream: remove this entry from search history / clear all history.
+    private void onTagLongPressed(Tag tag) {
+        if (tag != null && mPresenter != null) {
+            mPresenter.onTagLongClicked(tag);
+        }
     }
 
     private void rebuildResults() {
