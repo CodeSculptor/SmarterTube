@@ -43,6 +43,18 @@
             android:importantForAutofill="no" />
 
         <TextView
+            android:id="@+id/btn_filter"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:gravity="center"
+            android:text="⚙"
+            android:contentDescription="@string/mobile_search_filters"
+            android:textColor="@color/mobile_text_primary"
+            android:textSize="22sp"
+            android:visibility="gone"
+            android:background="?android:attr/selectableItemBackground" />
+
+        <TextView
             android:id="@+id/btn_voice"
             android:layout_width="56dp"
             android:layout_height="56dp"

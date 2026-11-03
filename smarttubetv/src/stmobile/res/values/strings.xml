@@ -13,6 +13,7 @@
     <string name="mobile_search_hint">Search YouTube</string>
     <string name="mobile_account_hint">Switch account</string>
     <string name="mobile_search_no_results">No results found.</string>
+    <string name="mobile_search_filters">Search filters</string>
     <string name="mobile_search_voice">Voice search</string>
     <string name="mobile_search_voice_prompt">Speak to search</string>
     <string name="mobile_search_voice_unavailable">Voice search isn\'t available on this device.</string>

@@ -63,6 +63,7 @@ public class MobileSearchFragment extends Fragment implements SearchView {
     private RecyclerView mSuggestionsList;
     private ProgressBar mProgressBar;
     private TextView mEmptyMessage;
+    private View mFilterButton;
     private VideoCardAdapter mResultsAdapter;
     private TagAdapter mTagsAdapter;
     private MediaServiceSearchTagProvider mTagsProvider;
@@ -99,6 +100,12 @@ public class MobileSearchFragment extends Fragment implements SearchView {
             }
         });
         view.findViewById(R.id.btn_clear).setOnClickListener(v -> mSearchInput.setText(""));
+        mFilterButton = view.findViewById(R.id.btn_filter);
+        mFilterButton.setOnClickListener(v -> {
+            if (mPresenter != null) {
+                mPresenter.onSearchSettingsClicked();
+            }
+        });
         view.findViewById(R.id.btn_voice).setOnClickListener(v -> startVoiceRecognition());
 
         int span = getResources().getInteger(R.integer.mobile_grid_span);
@@ -323,8 +330,18 @@ public class MobileSearchFragment extends Fragment implements SearchView {
         hideKeyboard();
         mSearchInput.clearFocus();
         mSearchSubmitted = true;
+        updateFilterButton();
         mResultsList.scrollToPosition(0);
         mPresenter.onSearch(query);
+    }
+
+    // Filters (type/duration/date/sort) apply to submitted searches, so only offer them once
+    // results exist for a non-empty query.
+    private void updateFilterButton() {
+        if (mFilterButton != null) {
+            mFilterButton.setVisibility(
+                    mSearchSubmitted && !TextUtils.isEmpty(getSearchText()) ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void onTagPicked(Tag tag) {
@@ -375,6 +392,7 @@ public class MobileSearchFragment extends Fragment implements SearchView {
             if (mSuppressWatcher) {
                 return;
             }
+            updateFilterButton();
             if (s.length() == 0) {
                 mWantSuggestions = false;
                 mSuggestionsList.setVisibility(View.GONE);
