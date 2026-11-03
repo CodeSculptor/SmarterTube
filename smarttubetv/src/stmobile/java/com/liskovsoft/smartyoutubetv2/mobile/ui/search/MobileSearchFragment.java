@@ -129,7 +129,7 @@ public class MobileSearchFragment extends Fragment implements SearchView {
             }
         });
 
-        mTagsAdapter = new TagAdapter(this::onTagPicked);
+        mTagsAdapter = new TagAdapter(this::onTagPicked, this::onTagLongPressed);
         mSuggestionsList.setLayoutManager(new LinearLayoutManager(getContext()));
         mSuggestionsList.setAdapter(mTagsAdapter);
 
@@ -224,6 +224,11 @@ public class MobileSearchFragment extends Fragment implements SearchView {
     @Override
     public void setTagsProvider(MediaServiceSearchTagProvider provider) {
         mTagsProvider = provider;
+        // Empty box on a fresh screen: offer recent searches (long-press one to remove it).
+        if (mSearchInput != null && mSearchInput.getText().length() == 0 && !mSearchSubmitted) {
+            mWantSuggestions = true;
+            loadSuggestions("");
+        }
     }
 
     @Override
@@ -355,6 +360,13 @@ public class MobileSearchFragment extends Fragment implements SearchView {
         submitSearch(tag.tag);
     }
 
+    // Same dialog as upstream: remove this entry from search history / clear all history.
+    private void onTagLongPressed(Tag tag) {
+        if (tag != null && mPresenter != null) {
+            mPresenter.onTagLongClicked(tag);
+        }
+    }
+
     private void rebuildResults() {
         List<Video> flat = new ArrayList<>();
         for (List<Video> videos : mGroups.values()) {
@@ -394,11 +406,9 @@ public class MobileSearchFragment extends Fragment implements SearchView {
             }
             updateFilterButton();
             if (s.length() == 0) {
-                mWantSuggestions = false;
-                mSuggestionsList.setVisibility(View.GONE);
-                if (mTagsAdapter != null) {
-                    mTagsAdapter.clear();
-                }
+                // Cleared box: show recent searches again (empty when history is disabled).
+                mWantSuggestions = true;
+                loadSuggestions("");
                 return;
             }
             mWantSuggestions = true;
