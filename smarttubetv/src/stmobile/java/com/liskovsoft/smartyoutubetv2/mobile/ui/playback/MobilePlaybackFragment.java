@@ -335,6 +335,19 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         }
     }
 
+    /**
+     * The forced aspect ratio is sticky: VideoLoaderController only refreshes it for DASH formats,
+     * so a Short that arrives after a landscape video (or one that loads without DASH formats)
+     * kept the previous 16:9 and was stretched into a wide strip in the middle of the Shorts
+     * layout. A Short always follows its own frame size (ratio 0 = use the decoded size), whatever
+     * the user's global aspect-ratio setting says.
+     */
+    @Override
+    public void setAspectRatio(float ratio) {
+        Video video = PlaybackPresenter.instance(getContext()).getVideo();
+        super.setAspectRatio(video != null && video.isShorts ? PlayerData.ASPECT_RATIO_DEFAULT : ratio);
+    }
+
     @Override
     public void onPIPChanged(boolean isInPIP) {
         super.onPIPChanged(isInPIP);
@@ -350,6 +363,13 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     @Override
     public void setVideo(Video video) {
         super.setVideo(video);
+
+        // Drop the aspect ratio left over from the previous video (see setAspectRatio): a Short
+        // follows its own frame size, a regular video goes back to the user's setting.
+        if (video != null && getView() != null) {
+            super.setAspectRatio(video.isShorts ? PlayerData.ASPECT_RATIO_DEFAULT
+                    : PlayerData.instance(getContext()).getAspectRatio());
+        }
 
         if (initPanelViews()) {
             bindHeader(video);
