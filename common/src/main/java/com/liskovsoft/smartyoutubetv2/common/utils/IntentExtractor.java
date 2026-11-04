@@ -347,6 +347,15 @@ public class IntentExtractor {
                 || "true".equals(intent.getStringExtra(ADD_TO_QUEUE_INTENT)));
     }
 
+    /**
+     * A youtube.com/shorts/ID link: the id alone doesn't say it is a Short, only the path does.
+     */
+    public static boolean isShortsLink(Intent intent) {
+        Uri uri = isEmptyIntent(intent) ? null : extractUri(intent);
+        String path = uri != null ? uri.getPath() : null;
+        return path != null && path.startsWith("/shorts/");
+    }
+
     public static boolean isIncognitoIntent(Intent intent) {
         return intent != null && intent.getBooleanExtra(INCOGNITO_INTENT, false);
     }

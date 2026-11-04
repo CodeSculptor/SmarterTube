@@ -98,11 +98,16 @@ public class PlaybackPresenter extends BasePresenter<PlaybackView> implements Pl
      * Opens video item from splash view
      */
     public void openVideo(String videoId, boolean finishOnEnded, long timeMs, boolean incognito) {
+        openVideo(videoId, finishOnEnded, timeMs, incognito, false);
+    }
+
+    public void openVideo(String videoId, boolean finishOnEnded, long timeMs, boolean incognito, boolean isShorts) {
         if (videoId == null) {
             return;
         }
 
         Video video = Video.from(videoId);
+        video.isShorts = isShorts;
         video.finishOnEnded = finishOnEnded;
         video.pendingPosMs = timeMs;
         video.incognito = incognito;

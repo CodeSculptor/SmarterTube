@@ -502,7 +502,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
 
     private void bindShortsChrome(Video video) {
         if (mShortsTitleView != null) {
-            mShortsTitleView.setText(video.getTitle() != null ? video.getTitle() : "");
+            mShortsTitleView.setText(video.getTitleFull() != null ? video.getTitleFull() : "");
         }
         if (mShortsChannelView != null) {
             mShortsChannelView.setText(video.getAuthor() != null ? video.getAuthor() : "");

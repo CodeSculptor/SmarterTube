@@ -271,7 +271,7 @@ public class SplashPresenter extends BasePresenter<SplashView> {
 
                 boolean finishOnEnded = IntentExtractor.hasFinishOnEndedFlag(intent);
                 boolean incognito = IntentExtractor.isIncognitoIntent(intent);
-                playbackPresenter.openVideo(videoId, finishOnEnded, timeMs, incognito);
+                playbackPresenter.openVideo(videoId, finishOnEnded, timeMs, incognito, IntentExtractor.isShortsLink(intent));
 
                 enablePlayerOnlyModeIfNeeded(intent);
 
