@@ -284,8 +284,8 @@ android {
             //         #69, Android 7-10 nav-bar strip #47; share from current time #83, smooth pinch zoom #85; upstream 32.68).
             // 23744 = v0.9.11-beta.1+st32.69 (search: filter button #92, recent searches on an empty box with long-press remove/clear; upstream 32.69).
             // 23745 = v0.9.12-beta.1+st32.71 (/shorts/ links open in the Shorts layout, Shorts follow their own frame size; upstream 32.70 + 32.71: add-to-queue intent, remote watched progress, Keep up with live, SABR/PoToken fixes).
-            versionCode 23744
-            versionName "v0.9.11-beta.1+st32.69"
+            versionCode 23745
+            versionName "v0.9.12-beta.1+st32.71"
         }
     }
 }
