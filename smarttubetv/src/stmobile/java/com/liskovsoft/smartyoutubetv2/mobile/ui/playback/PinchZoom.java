@@ -105,7 +105,9 @@ final class PinchZoom {
             }
         });
         // No quick-scale (double tap and drag): double tap already seeks.
-        mDetector.setQuickScaleEnabled(false);
+        if (Build.VERSION.SDK_INT >= 19) {
+            mDetector.setQuickScaleEnabled(false);
+        }
     }
 
     /** Whether a pinch owns the current touch sequence. */

@@ -208,7 +208,7 @@
                 android:layout_marginStart="4dp"
                 android:src="@drawable/ic_modern_fullscreen"
                 android:tint="#FFCCCCCC"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:background="@drawable/bg_borderless_feedback"
                 android:contentDescription="@string/mobile_player_fullscreen"
                 android:visibility="gone" />
 
@@ -221,7 +221,7 @@
                 android:layout_marginStart="4dp"
                 android:src="@drawable/ic_modern_settings"
                 android:tint="#FFCCCCCC"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:background="@drawable/bg_borderless_feedback"
                 android:contentDescription="@string/header_settings"
                 android:visibility="gone" />
 
@@ -371,7 +371,7 @@
                         android:paddingEnd="14dp"
                         android:textSize="17sp"
                         android:textColor="#FFAAAAAA"
-                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:background="@drawable/bg_borderless_feedback"
                         android:contentDescription="Like" />
 
                     <TextView
@@ -384,7 +384,7 @@
                         android:paddingEnd="4dp"
                         android:textSize="17sp"
                         android:textColor="#FFAAAAAA"
-                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:background="@drawable/bg_borderless_feedback"
                         android:contentDescription="Dislike" />
                 </LinearLayout>
             </LinearLayout>

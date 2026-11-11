@@ -1680,7 +1680,9 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         heart.setScaleX(0.4f);
         heart.setScaleY(0.4f);
         heart.setAlpha(1f);
-        heart.setElevation(64f);
+        if (VERSION.SDK_INT >= 21) {
+            heart.setElevation(64f);
+        }
         mRoot.addView(heart);
         heart.animate().scaleX(1.2f).scaleY(1.2f).setDuration(220)
                 .withEndAction(() -> heart.animate().alpha(0f).scaleX(1.4f).scaleY(1.4f)

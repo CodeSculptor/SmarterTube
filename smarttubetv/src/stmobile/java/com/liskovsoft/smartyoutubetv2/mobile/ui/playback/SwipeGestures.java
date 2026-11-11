@@ -3,6 +3,7 @@ package com.liskovsoft.smartyoutubetv2.mobile.ui.playback;
 import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
@@ -169,7 +170,7 @@ final class SwipeGestures {
     private void applyLevel(float level) {
         level = Math.max(0f, Math.min(1f, level));
         if (mVolume) {
-            if (mAudio != null && !mAudio.isVolumeFixed()) {
+            if (mAudio != null && !(Build.VERSION.SDK_INT >= 21 && mAudio.isVolumeFixed())) {
                 int max = mAudio.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
                 int index = Math.round(level * max);
                 if (index != mAudio.getStreamVolume(AudioManager.STREAM_MUSIC)) {
