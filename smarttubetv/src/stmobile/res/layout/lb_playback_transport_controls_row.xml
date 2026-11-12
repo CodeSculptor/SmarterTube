@@ -154,7 +154,7 @@
                 android:padding="8dp"
                 android:src="@drawable/ic_modern_fullscreen_exit"
                 android:tint="#FFFFFFFF"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:background="@drawable/bg_borderless_feedback"
                 android:clickable="true"
                 android:focusable="false"
                 android:contentDescription="@string/mobile_player_exit_fullscreen"

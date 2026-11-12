@@ -29,7 +29,7 @@
             android:padding="8dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_shorts_like"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:background="@drawable/bg_borderless_feedback"
             android:clickable="true"
             android:focusable="true" />
 
@@ -62,7 +62,7 @@
             android:padding="8dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_shorts_dislike"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:background="@drawable/bg_borderless_feedback"
             android:clickable="true"
             android:focusable="true" />
     </LinearLayout>
@@ -82,7 +82,7 @@
             android:padding="8dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_shorts_comments"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:background="@drawable/bg_borderless_feedback"
             android:clickable="true"
             android:focusable="true" />
 
@@ -115,7 +115,7 @@
             android:padding="8dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_shorts_channel"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:background="@drawable/bg_borderless_feedback"
             android:clickable="true"
             android:focusable="true" />
     </LinearLayout>

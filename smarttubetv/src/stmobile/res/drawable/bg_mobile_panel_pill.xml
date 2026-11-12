@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Pill behind the portrait player's action buttons and Comments card (under the video). -->
-<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="#40FFFFFF">
-    <item>
-        <shape android:shape="rectangle">
-            <corners android:radius="18dp" />
-            <solid android:color="#22FFFFFF" />
-        </shape>
+<!-- Pre-Lollipop fallback for the drawable-v21 ripple of the same name (#105): no ripple below API 21. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+<layer-list><item><shape android:shape="rectangle"><corners android:radius="18dp" /><solid android:color="#22FFFFFF" /></shape></item><item><shape android:shape="rectangle"><corners android:radius="18dp" /><solid android:color="#40FFFFFF" /></shape></item></layer-list>
     </item>
-</ripple>
+    <item>
+<shape android:shape="rectangle"><corners android:radius="18dp" /><solid android:color="#22FFFFFF" /></shape>
+    </item>
+</selector>

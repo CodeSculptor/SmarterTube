@@ -18,6 +18,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
+import androidx.core.widget.ImageViewCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -212,7 +213,7 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
 
         if (current != null && current.getAvatarImageUrl() != null) {
             // A real photo: drop the placeholder's monochrome tint so it shows in full colour.
-            mAccountView.setImageTintList(null);
+            ImageViewCompat.setImageTintList(mAccountView, null);
             Glide.with(this)
                     .load(current.getAvatarImageUrl())
                     .placeholder(R.drawable.browse_title_account)
@@ -221,7 +222,7 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
         } else {
             Glide.with(this).clear(mAccountView);
             // Re-apply the toolbar tint so the placeholder matches the other toolbar icons.
-            mAccountView.setImageTintList(ColorStateList.valueOf(
+            ImageViewCompat.setImageTintList(mAccountView, ColorStateList.valueOf(
                     ContextCompat.getColor(mAccountView.getContext(), R.color.mobile_text_primary)));
             mAccountView.setImageResource(R.drawable.browse_title_account);
         }

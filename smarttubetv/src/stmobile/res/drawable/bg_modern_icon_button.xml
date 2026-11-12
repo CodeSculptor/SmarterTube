@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Borderless circular touch feedback for the modern player's icon buttons (#46). -->
-<ripple xmlns:android="http://schemas.android.com/apk/res/android"
-    android:color="#40FFFFFF"
-    android:radius="24dp" />
+<!-- Pre-Lollipop fallback for the drawable-v21 ripple of the same name (#105): no ripple below API 21. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+<shape android:shape="oval"><solid android:color="#40FFFFFF" /></shape>
+    </item>
+    <item>
+<shape android:shape="oval"><solid android:color="#00000000" /></shape>
+    </item>
+</selector>
