@@ -285,6 +285,7 @@ android {
             // 23744 = v0.9.11-beta.1+st32.69 (search: filter button #92, recent searches on an empty box with long-press remove/clear; upstream 32.69).
             // 23745 = v0.9.12-beta.1+st32.71 (/shorts/ links open in the Shorts layout, Shorts follow their own frame size; upstream 32.70 + 32.71: add-to-queue intent, remote watched progress, Keep up with live, SABR/PoToken fixes).
             // 23746 = v0.9.13-beta.1+st32.74 (upstream 32.72-32.74: SABR error-fix backoff, per-video restricted-video loading, uplayable-video error message kept, Android 8.0 orientation crash fix, empty continuation-only groups, dialog checkbox alignment, new translations).
+            // 23747 = v0.9.14-beta.1+st32.74 (Android 4.4 KitKat no longer crashes: tint/ripple API guards, #105).
             versionCode 23746
             versionName "v0.9.13-beta.1+st32.74"
         }
