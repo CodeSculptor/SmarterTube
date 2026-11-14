@@ -294,8 +294,8 @@ android {
             // 23747 = v0.9.14-beta.1+st32.74 (Android 4.4 KitKat no longer crashes: tint/ripple API guards, #105).
             // 23748 = v0.9.15-beta.1+st32.75 (upstream 32.75: skip-chapters option, SABR PoToken error propagation, web proxy test fix; Modern seek bar renders on Android 4.4, #106).
             // 23749 = v0.9.16-beta.1+st32.75 (reproducible release builds; opt-in stats gain an install-source label: F-Droid / Obtainium / downloaded APK).
-            versionCode 23748
-            versionName "v0.9.15-beta.1+st32.75"
+            versionCode 23749
+            versionName "v0.9.16-beta.1+st32.75"
             // Reproducible builds: override defaultConfig's System.currentTimeMillis() stamp.
             buildConfigField "long", "TIMESTAMP", "0L"
         }
