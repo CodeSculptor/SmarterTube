@@ -3,6 +3,7 @@ package com.liskovsoft.smartyoutubetv2.mobile.ui.playback;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.widget.SeekBar;
@@ -25,8 +26,11 @@ public class ModernSeekBar extends SeekBar {
 
     private final List<Mark> mMarks = new ArrayList<>();
     private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final RectF mRect = new RectF();
+    private static final int TRACK_COLOR = 0x99FFFFFF;
     private final float mMinMarkPx;
     private final float mMarkHeightPx;
+    private final int mProgressColor;
 
     private static final class Mark {
         final float start;
@@ -53,6 +57,7 @@ public class ModernSeekBar extends SeekBar {
         float density = context.getResources().getDisplayMetrics().density;
         mMinMarkPx = MIN_MARK_DP * density;
         mMarkHeightPx = 3 * density; // the track height (layout's min/maxHeight)
+        mProgressColor = context.getResources().getColor(com.liskovsoft.smartyoutubetv2.tv.R.color.brand_accent);
     }
 
     public void addSegments(List<SeekBarSegment> segments) {
@@ -75,16 +80,31 @@ public class ModernSeekBar extends SeekBar {
 
     @Override
     protected synchronized void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
+        super.onDraw(canvas); // the (transparent) progress drawable and the thumb
+
+        // The track is drawn here, not by an XML progress drawable or tints: those are
+        // unreliable below API 21 (#106). Thumb centre runs from the left to the right end of
+        // the padded area (thumbOffset = half the thumb width, see the layout).
+        float left = getPaddingLeft();
+        float trackWidth = getWidth() - getPaddingLeft() - getPaddingRight();
+        float top = getPaddingTop() + (getHeight() - getPaddingTop() - getPaddingBottom() - mMarkHeightPx) / 2f;
+        float bottom = top + mMarkHeightPx;
+        int max = Math.max(getMax(), 1);
+        float progressX = left + trackWidth * Math.min(Math.max(getProgress(), 0), max) / max;
+        float radius = mMarkHeightPx / 2f;
+        mPaint.setColor(TRACK_COLOR);
+        mRect.set(left, top, left + trackWidth, bottom);
+        canvas.drawRoundRect(mRect, radius, radius, mPaint);
+        mPaint.setColor(mProgressColor);
+        mRect.set(left, top, progressX, bottom);
+        canvas.drawRoundRect(mRect, radius, radius, mPaint);
 
         if (mMarks.isEmpty()) {
+            drawThumb(canvas);
             return;
         }
 
         // Marks sit on the track, under the thumb (redrawn on top below).
-        float left = getPaddingLeft();
-        float trackWidth = getWidth() - getPaddingLeft() - getPaddingRight();
-        float top = getPaddingTop() + (getHeight() - getPaddingTop() - getPaddingBottom() - mMarkHeightPx) / 2f;
         for (Mark mark : mMarks) {
             float startX = left + mark.start * trackWidth;
             float endX = Math.max(left + mark.end * trackWidth, startX + mMinMarkPx);
@@ -92,6 +112,10 @@ public class ModernSeekBar extends SeekBar {
             canvas.drawRect(startX, top, endX, top + mMarkHeightPx, mPaint);
         }
 
+        drawThumb(canvas);
+    }
+
+    private void drawThumb(Canvas canvas) {
         Drawable thumb = getThumb();
         if (thumb != null) {
             // Same transform AbsSeekBar.drawThumb uses.

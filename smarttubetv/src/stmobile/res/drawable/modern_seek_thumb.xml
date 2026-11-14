@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modern seek bar thumb; explicit colour instead of the API 21+ thumbTint (#106). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <solid android:color="@color/brand_accent" />
+    <size android:width="14dp" android:height="14dp" />
+</shape>
