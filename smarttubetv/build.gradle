@@ -163,6 +163,12 @@ android {
         // exclude "lib/armeabi/**"
     }
 
+    // Reproducible builds: no Google-signed dependency metadata block in the APK.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     lintOptions {
         abortOnError true
         //checkReleaseBuilds false // fix for ClassNotFoundException: com.android.tools.lint.client.api.Vendor
@@ -289,6 +295,8 @@ android {
             // 23748 = v0.9.15-beta.1+st32.75 (upstream 32.75: skip-chapters option, SABR PoToken error propagation, web proxy test fix; Modern seek bar renders on Android 4.4, #106).
             versionCode 23748
             versionName "v0.9.15-beta.1+st32.75"
+            // Reproducible builds: override defaultConfig's System.currentTimeMillis() stamp.
+            buildConfigField "long", "TIMESTAMP", "0L"
         }
     }
 }
