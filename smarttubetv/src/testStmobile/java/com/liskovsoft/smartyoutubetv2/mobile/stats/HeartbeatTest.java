@@ -97,4 +97,10 @@ public class HeartbeatTest {
         String json = Heartbeat.due(NEVER, utc(2026, 9, 25, 12)).toJson("v0.5.0-beta.7+st32.56", 34);
         assertEquals("{\"v\":\"v0.5.0-beta.7+st32.56\",\"sdk\":34,\"new_week\":true,\"new_month\":true,\"first\":true}", json);
     }
+
+    @Test
+    public void jsonPayloadCanCarryInstallSourceBucket() {
+        String json = Heartbeat.due(NEVER, utc(2026, 9, 25, 12)).toJson("v1", 34, "fdroid");
+        assertEquals("{\"v\":\"v1\",\"sdk\":34,\"new_week\":true,\"new_month\":true,\"first\":true,\"src\":\"fdroid\"}", json);
+    }
 }

@@ -9,6 +9,7 @@ usage heartbeat and crash reports. The app side lives in
 | Table | Contents |
 |---|---|
 | `pings` | Per UTC day × app version × Android SDK: counters only (`pings`, `new_week`, `new_month`, `first`). |
+| `pings_src` | The same counters per UTC day × install source (`fdroid`, `obtainium`, `play`, `sideload`, `self`, `other`). Sent by v0.9.16+; older versions omit it. |
 | `crashes` | Crash groups: hash of a message-free stack trace, app version, count, first/last day, SDK, phone model, trace. |
 
 No install id exists anywhere. Client IPs and headers are never read, and Worker logging is off
@@ -46,7 +47,7 @@ the feature is dormant: no prompt, no Settings row, no network.
 
 | Route | Access | Purpose |
 |---|---|---|
-| `POST /ping` | app | `{v, sdk, new_week, new_month, first}` |
+| `POST /ping` | app | `{v, sdk, new_week, new_month, first, src?}` |
 | `POST /crash` | app | `{v, sdk, device, trace}` |
 | `GET /` | public | readable dashboard page ([`src/page.html`](src/page.html)) that renders `/stats` |
 | `GET /stats?days=90` | public | daily / weekly / monthly actives, version and Android breakdown (JSON). `days` snaps to 7 / 30 / 90 / 365 / 730, and each result is cached for 5 minutes (`stats_cache` table + in memory), so repeated views read one row instead of re-scanning `pings` |

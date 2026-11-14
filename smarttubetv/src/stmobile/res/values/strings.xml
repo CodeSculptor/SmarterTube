@@ -108,7 +108,7 @@
     <string name="mobile_stats_endpoint" translatable="false">https://smartertube-stats.codesculptor.workers.dev</string>
     <string name="mobile_stats_title">Anonymous stats</string>
     <string name="mobile_stats_prompt_title">Help improve SmarterTube?</string>
-    <string name="mobile_stats_details">SmarterTube can send the developer:\n\n• an anonymous \"app was used today\" count, at most once a day\n• crash reports (code locations only)\n\nEach includes just the app version and Android version (crash reports also include the phone model).\n\nNever sent: your account, videos, channels, searches or any ID that could identify you.\n\nYou can change this any time in Settings → Anonymous stats.</string>
+    <string name="mobile_stats_details">SmarterTube can send the developer:\n\n• an anonymous \"app was used today\" count, at most once a day\n• crash reports (code locations only)\n\nEach includes just the app version and Android version, plus a coarse label for how you installed the app (for example F-Droid, Obtainium or a downloaded APK). Crash reports also include the phone model.\n\nNever sent: your account, videos, channels, searches or any ID that could identify you.\n\nYou can change this any time in Settings → Anonymous stats.</string>
     <string name="mobile_stats_prompt_yes">Sure</string>
     <string name="mobile_stats_prompt_no">No thanks</string>
     <string name="mobile_stats_whats_sent">What\'s sent?</string>

@@ -7,7 +7,7 @@
 //   * crash reports are message-free stack traces, grouped by a hash of the trace.
 //
 // Routes:
-//   POST /ping    {v, sdk, new_week, new_month, first}   -> bumps today's counters
+//   POST /ping    {v, sdk, new_week, new_month, first, src?} -> bumps today's counters
 //   POST /crash   {v, sdk, device, trace}                -> upserts a crash group
 //   GET  /        public dashboard page (renders /stats)
 //   GET  /stats   public aggregate counts (JSON; ?days=7|30|90|365|730, default 90; cached)
@@ -15,6 +15,7 @@
 
 import PAGE_HTML from "./page.html";
 
+const SOURCES = ["fdroid", "obtainium", "play", "sideload", "self", "other"];
 const MAX_BODY = 64 * 1024;
 const MAX_TRACE = 32 * 1024;
 const VERSION_RE = /^[0-9A-Za-z.+\-]{1,40}$/;
@@ -78,6 +79,17 @@ async function ping(request, env) {
        new_month = new_month + excluded.new_month,
        first = first + excluded.first`
   ).bind(today(), v, s, w, m, f).run();
+  if (SOURCES.includes(b.src)) {
+    await env.DB.prepare(
+      `INSERT INTO pings_src (day, src, pings, new_week, new_month, first)
+       VALUES (?1, ?2, 1, ?3, ?4, ?5)
+       ON CONFLICT (day, src) DO UPDATE SET
+         pings = pings + 1,
+         new_week = new_week + excluded.new_week,
+         new_month = new_month + excluded.new_month,
+         first = first + excluded.first`
+    ).bind(today(), b.src, w, m, f).run();
+  }
   return new Response(null, { status: 204 });
 }
 
@@ -148,10 +160,13 @@ async function computeStats(env, days) {
   const android = await env.DB.prepare(
     `SELECT sdk, SUM(pings) AS pings FROM pings WHERE day >= ?1 GROUP BY sdk ORDER BY sdk`
   ).bind(since).all();
+  const sources = await env.DB.prepare(
+    `SELECT src, SUM(pings) AS pings, SUM(first) AS new_installs FROM pings_src WHERE day >= ?1 GROUP BY src ORDER BY pings DESC`
+  ).bind(since).all();
   return {
     since, days, generated: new Date().toISOString(),
     daily: daily.results, weekly: weekly.results, monthly: monthly.results,
-    versions: versions.results, android_sdk: android.results,
+    versions: versions.results, android_sdk: android.results, sources: sources.results,
   };
 }
 

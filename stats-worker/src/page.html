@@ -160,6 +160,11 @@
     </section>
   </div>
 
+  <section class="card">
+    <h2>Where people installed from</h2>
+    <table id="sources"></table>
+  </section>
+
   <section class="card note">
     <h2>How to read this</h2>
     <ul>
@@ -232,6 +237,8 @@
     $("daily-table").innerHTML = '<tr><th>Day (UTC)</th><th class="num">Active</th></tr>' +
       series.slice().reverse().map((p) => `<tr><td>${longDate(p.day)}</td><td class="num">${fmt.format(p.value)}</td></tr>`).join("");
     shareTable($("versions"), "Version", s.versions.map((r) => ({ label: r.version, value: r.pings })));
+    const SRC = { fdroid: "F-Droid", obtainium: "Obtainium", play: "Play Store", sideload: "Downloaded APK (GitHub, browser)", self: "In-app update (origin unknown)", other: "Other" };
+    shareTable($("sources"), "Source", (s.sources || []).map((r) => ({ label: SRC[r.src] || r.src, value: r.pings })));
     shareTable($("android"), "Android", s.android_sdk.map((r) => ({ label: ANDROID[r.sdk] ? `Android ${ANDROID[r.sdk]} (API ${r.sdk})` : `API ${r.sdk}`, value: r.pings })));
   }
 

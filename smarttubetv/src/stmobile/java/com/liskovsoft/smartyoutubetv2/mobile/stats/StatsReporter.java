@@ -1,6 +1,7 @@
 package com.liskovsoft.smartyoutubetv2.mobile.stats;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.text.TextUtils;
 
@@ -133,7 +134,7 @@ public final class StatsReporter {
         final String url = endpoint(app);
         sExecutor.execute(() -> {
             try {
-                if (post(url + "/ping", ping.toJson(BuildConfig.VERSION_NAME, Build.VERSION.SDK_INT))) {
+                if (post(url + "/ping", ping.toJson(BuildConfig.VERSION_NAME, Build.VERSION.SDK_INT, installSource(app)))) {
                     // Only mark the day as sent once the server has it, so a failed send retries later.
                     StatsPrefs.saveHeartbeatState(app, ping.nextState);
                 }
@@ -143,6 +144,22 @@ public final class StatsReporter {
                 }
             }
         });
+    }
+
+    /** Coarse bucket for how the app was installed (see {@link InstallSource}); never the raw package. */
+    private static String installSource(Context context) {
+        String installer;
+        try {
+            PackageManager pm = context.getPackageManager();
+            if (Build.VERSION.SDK_INT >= 30) {
+                installer = pm.getInstallSourceInfo(context.getPackageName()).getInstallingPackageName();
+            } else {
+                installer = pm.getInstallerPackageName(context.getPackageName());
+            }
+        } catch (Exception e) {
+            return InstallSource.OTHER;
+        }
+        return InstallSource.bucket(installer, context.getPackageName());
     }
 
     private static boolean post(String url, String json) {

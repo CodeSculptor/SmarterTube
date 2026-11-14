@@ -34,3 +34,15 @@ CREATE TABLE IF NOT EXISTS stats_cache (
   body TEXT    NOT NULL,
   at   INTEGER NOT NULL
 );
+
+-- Install source breakdown (F-Droid, Obtainium, sideload, ...): the same daily counters as `pings`,
+-- keyed by a fixed allow-listed bucket. Sent by app versions from v0.9.16 on; older versions omit it.
+CREATE TABLE IF NOT EXISTS pings_src (
+  day       TEXT    NOT NULL,
+  src       TEXT    NOT NULL,
+  pings     INTEGER NOT NULL DEFAULT 0,
+  new_week  INTEGER NOT NULL DEFAULT 0,
+  new_month INTEGER NOT NULL DEFAULT 0,
+  first     INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (day, src)
+);

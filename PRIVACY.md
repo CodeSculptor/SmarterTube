@@ -21,7 +21,7 @@ If you opt in, the app sends the following to the developer's own server (a Clou
 
 | What | When | Contents |
 |---|---|---|
-| Usage count | At most once a day, when you use the app | App version, Android version, and whether this is your first count of the week / month / ever |
+| Usage count | At most once a day, when you use the app | App version, Android version, how the app was installed (a coarse label such as F-Droid, Obtainium, downloaded APK, in-app update or other, never the installer's package name), and whether this is your first count of the week / month / ever |
 | Crash report | Next time you open the app after a crash | App version, Android version, phone make and model, and the stack trace (code locations only; error messages are removed because they can contain video or search details) |
 
 If you said no and the app crashes, the crash details are kept on your device only, and the next time you open the app it asks whether to send that one report. Nothing is sent unless you tap **Send**; tapping **Don't send** deletes it.

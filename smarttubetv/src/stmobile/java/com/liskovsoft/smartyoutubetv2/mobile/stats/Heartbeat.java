@@ -48,11 +48,17 @@ public final class Heartbeat {
         }
 
         public String toJson(String appVersion, int sdkInt) {
+            return toJson(appVersion, sdkInt, null);
+        }
+
+        /** {@code installSource} is an {@link InstallSource} bucket, or null to omit it. */
+        public String toJson(String appVersion, int sdkInt, String installSource) {
             return "{\"v\":\"" + Json.escape(appVersion) + "\""
                     + ",\"sdk\":" + sdkInt
                     + ",\"new_week\":" + newWeek
                     + ",\"new_month\":" + newMonth
                     + ",\"first\":" + first
+                    + (installSource != null ? ",\"src\":\"" + Json.escape(installSource) + "\"" : "")
                     + "}";
         }
     }
