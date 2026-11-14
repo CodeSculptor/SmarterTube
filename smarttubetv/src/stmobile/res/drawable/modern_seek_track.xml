@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Intentionally empty: ModernSeekBar draws the 3dp track itself (see its onDraw). Every way of
+    sizing a layer-list track in XML (item height/gravity: API 23+; item top/bottom: dropped by
+    ProgressBar.tileify() below API 21) and of tinting it (progressTint: API 21+) misbehaved on
+    Android 4.4, giving a stock Holo blue bar and a clipped thumb (#106).
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@android:color/transparent" />
+</shape>

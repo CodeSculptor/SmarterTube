@@ -156,10 +156,10 @@
             android:minHeight="3dp"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
-            android:progressBackgroundTint="#99FFFFFF"
-            android:progressTint="@color/brand_accent"
+            android:progressDrawable="@drawable/modern_seek_track"
+            android:thumb="@drawable/modern_seek_thumb"
             android:splitTrack="false"
-            android:thumbTint="@color/brand_accent" />
+            android:thumbOffset="7dp" />
 
         <LinearLayout
             android:id="@+id/modern_actions"
