@@ -147,7 +147,7 @@ public final class LaunchUpdateNotices {
                 .setNegativeButton(R.string.mobile_update_later, null);
         if (result.assetUrl != null) {
             // Two buttons only: a third stacks them vertically on phones. About links the releases page.
-            builder.setPositiveButton(R.string.mobile_about_download, (d, w) -> openUrl(activity, result.assetUrl));
+            builder.setPositiveButton(R.string.mobile_about_download, (d, w) -> ApkDownloader.download(activity, result.assetUrl));
         } else {
             builder.setPositiveButton(R.string.mobile_about_open_releases, (d, w) -> openUrl(activity, releaseUrl));
         }

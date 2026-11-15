@@ -10,6 +10,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.liskovsoft.smartyoutubetv2.mobile.ui.base.SystemBarInsets;
+import com.liskovsoft.smartyoutubetv2.mobile.update.ApkDownloader;
 import com.liskovsoft.smartyoutubetv2.mobile.update.MobileUpdateChecker;
 import com.liskovsoft.smartyoutubetv2.tv.BuildConfig;
 import com.liskovsoft.smartyoutubetv2.tv.R;
@@ -78,7 +79,7 @@ public class MobileAboutActivity extends AppCompatActivity {
         switch (result.status) {
             case UPDATE_AVAILABLE:
                 builder.setMessage(getString(R.string.mobile_about_update_available, result.latestTag))
-                        .setPositiveButton(R.string.mobile_about_download, (d, w) -> openUrl(result.assetUrl))
+                        .setPositiveButton(R.string.mobile_about_download, (d, w) -> ApkDownloader.download(this, result.assetUrl))
                         .setNeutralButton(R.string.mobile_about_open_releases,
                                 (d, w) -> openUrl(releaseOrFallback(result.releaseUrl)))
                         .setNegativeButton(android.R.string.cancel, null);
