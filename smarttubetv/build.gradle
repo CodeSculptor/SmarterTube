@@ -296,8 +296,8 @@ android {
             // 23749 = v0.9.16-beta.1+st32.75 (reproducible release builds; opt-in stats gain an install-source label: F-Droid / Obtainium / downloaded APK).
             // 23750 = v0.9.17-beta.1+st32.77 (in-app updater downloads the APK with DownloadManager instead of a browser tab; upstream 32.76-32.77: skip chapters with UP, backup schedule fixes, SABR error fixes, translations).
             // 23751 = v0.9.18-beta.1+st32.80 (upstream 32.78-32.80: format-cache invalidation before video reload in the error fixer, onNewVideo null check, MediaServiceCore/SharedModules updates).
-            versionCode 23750
-            versionName "v0.9.17-beta.1+st32.77"
+            versionCode 23751
+            versionName "v0.9.18-beta.1+st32.80"
             // Reproducible builds: override defaultConfig's System.currentTimeMillis() stamp.
             buildConfigField "long", "TIMESTAMP", "0L"
         }
