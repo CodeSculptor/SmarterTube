@@ -102,3 +102,5 @@ Each upstream version bump (`31.70` → `31.71`) is a fork release boundary. Con
 - Bump in the `stmobile` flavor block of `smarttubetv/build.gradle` only — never in `defaultConfig` (that's upstream's).
 
 After a clean merge and bump: `assembleStmobileRelease`, tag, then `gh release create` with the 4 ABI APKs. Use `--prerelease` **only** for alpha/beta builds; drop it for stable `1.x` releases.
+
+**Re-pinned 2026-11-19 (search filter combinations).** `MediaServiceCore` is again pinned to the CodeSculptor fork, branch `search-filter-encoder` (upstream plus one commit: `SearchFilterHelper` builds the protobuf search params instead of a partial lookup table, so every combination of upload date, duration, type, features and sort works; unit-tested). Upstream MediaServiceCore bumps now conflict only if they touch `search/SearchFilterHelper.java`; otherwise merge them into the fork branch (`git fetch origin; git merge origin/master` in `MediaServiceCore`, push to the fork, bump the pointer). Offer the commit upstream to yuliskov; once it lands, drop the pin (`.gitmodules` url back to `yuliskov/MediaServiceCore`, no `branch`).
