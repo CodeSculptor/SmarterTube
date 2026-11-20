@@ -1479,7 +1479,8 @@ public class MobilePlaybackFragment extends PlaybackFragment {
      * only the Modern controls need to keep off the band (ModernPlayerChrome).
      */
     private void applyCutoutPadding() {
-        if (mRoot == null) return;
+        // Posted from the insets listener: can run after the fragment has been detached (#111).
+        if (mRoot == null || !isAdded()) return;
         boolean portrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
         int top = 0;
         if (portrait && mCutoutBands.top > 0) {
