@@ -1,5 +1,6 @@
 package com.liskovsoft.smartyoutubetv2.mobile.ui.browse;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
+import com.liskovsoft.smartyoutubetv2.common.app.presenters.ChannelPresenter;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobileCardAvatarPrefs;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 
 import java.util.ArrayList;
@@ -233,6 +236,8 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
                 .load(video.getCardImageUrl())
                 .into(holder.thumb);
 
+        bindAvatar(holder, video);
+
         holder.itemView.setOnClickListener(v -> {
             if (mClick != null) {
                 mClick.onVideo(video);
@@ -244,6 +249,61 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
             }
             return true;
         });
+    }
+
+    /**
+     * Channel avatar beside the title on standard cards. The avatar is not in the feed payload, so
+     * {@link ChannelAvatarLoader} resolves it per channel; until then (or on failure / when the
+     * setting is off) the slot stays GONE and the card looks as before. Tapping it opens the channel.
+     */
+    private void bindAvatar(ViewHolder holder, Video video) {
+        if (holder.avatar == null) {
+            return;
+        }
+        ChannelAvatarLoader loader = ChannelAvatarLoader.instance();
+        if (holder.avatarCallback != null) {
+            loader.cancel(holder.avatarCallback);
+            holder.avatarCallback = null;
+        }
+        holder.avatar.setOnClickListener(null);
+        holder.avatar.setClickable(false);
+        Context context = holder.itemView.getContext();
+        String channelId = video.channelId;
+        holder.avatarChannelId = channelId;
+        if (holder.style != STYLE_VIDEO || channelId == null || channelId.isEmpty()
+                || !MobileCardAvatarPrefs.isEnabled(context)) {
+            holder.avatar.setVisibility(View.GONE);
+            return;
+        }
+        String cached = loader.peek(context, channelId);
+        if (cached != null) {
+            showAvatar(holder, channelId, cached);
+            return;
+        }
+        holder.avatar.setVisibility(View.GONE);
+        holder.avatarCallback = (id, url) -> {
+            if (id.equals(holder.avatarChannelId)) {
+                showAvatar(holder, id, url);
+            }
+        };
+        loader.request(context, video, holder.avatarCallback);
+    }
+
+    private void showAvatar(ViewHolder holder, String channelId, String url) {
+        Context context = holder.itemView.getContext();
+        holder.avatar.setVisibility(View.VISIBLE);
+        Glide.with(context).load(url).circleCrop()
+                .placeholder(R.color.mobile_thumbnail_placeholder).into(holder.avatar);
+        holder.avatar.setOnClickListener(v -> ChannelPresenter.instance(context).openChannel(channelId));
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        if (holder.avatarCallback != null) {
+            ChannelAvatarLoader.instance().cancel(holder.avatarCallback);
+            holder.avatarCallback = null;
+        }
+        holder.avatarChannelId = null;
     }
 
     /**
@@ -283,6 +343,9 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
         final ProgressBar progress;
         final TextView title;
         final TextView author;
+        final ImageView avatar; // null on Shorts/playlist cards
+        String avatarChannelId;
+        ChannelAvatarLoader.Callback avatarCallback;
 
         ViewHolder(View itemView, int style) {
             super(itemView);
@@ -293,6 +356,7 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
             progress = itemView.findViewById(R.id.card_progress);
             title = itemView.findViewById(R.id.card_title);
             author = itemView.findViewById(R.id.card_author);
+            avatar = itemView.findViewById(R.id.card_avatar);
         }
     }
 }

@@ -13,6 +13,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.data.SettingsItem;
 import com.liskovsoft.smartyoutubetv2.mobile.notifications.NotificationPollWorker;
 import com.liskovsoft.smartyoutubetv2.mobile.stats.StatsDialogs;
 import com.liskovsoft.smartyoutubetv2.mobile.stats.StatsReporter;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobileCardAvatarPrefs;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobileNotificationPrefs;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobilePlayerStylePrefs;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobileThemePrefs;
@@ -73,6 +74,10 @@ final class MobileSettingsRows {
                     context.getString(R.string.mobile_notifications_title),
                     () -> showNotificationsToggle(context),
                     R.drawable.settings_notifications));
+            items.add(new SettingsItem(
+                    context.getString(R.string.mobile_card_avatars_title),
+                    () -> showCardAvatarsToggle(context),
+                    R.drawable.settings_player_style));
             if (StatsReporter.isConfigured(context)) {
                 items.add(new SettingsItem(
                         context.getString(R.string.mobile_stats_title),
@@ -230,6 +235,22 @@ final class MobileSettingsRows {
                     if (turnOn) {
                         requestPostNotificationsPermission(context);
                     }
+                })
+                .show();
+    }
+
+    /** Phone-only on/off for channel avatars on feed cards; cards pick it up the next time they bind. */
+    private static void showCardAvatarsToggle(Activity context) {
+        String[] labels = {
+                context.getString(R.string.mobile_notifications_option_off),
+                context.getString(R.string.mobile_notifications_option_on),
+        };
+        int checked = MobileCardAvatarPrefs.isEnabled(context) ? 1 : 0;
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.mobile_card_avatars_title)
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    MobileCardAvatarPrefs.setEnabled(context, which == 1);
+                    dialog.dismiss();
                 })
                 .show();
     }

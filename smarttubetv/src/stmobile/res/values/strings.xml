@@ -105,6 +105,7 @@
     <string name="channel_avatar">Channel avatar</string>
 
     <!-- Upload notifications (Part 2 - push) -->
+    <string name="mobile_card_avatars_title">Channel avatars on cards</string>
     <string name="mobile_notifications_title">Upload notifications</string>
     <string name="mobile_notifications_summary">Get notified when channels you follow upload</string>
     <string name="mobile_notifications_option_on">On</string>
