@@ -1,5 +1,8 @@
 package com.liskovsoft.smartyoutubetv2.mobile.ui.dialogs;
 
+import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,6 +28,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Flat list of section headers + option rows, built from a list of
@@ -67,6 +71,107 @@ class MobileAppDialogAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         mCategories = categories;
         mIsExpandable = isExpandable;
         rebuild();
+        applySearchTarget();
+    }
+
+    // ----- Settings search jump: expand, scroll to and flash the row a search result points at -----
+
+    private static final long HIGHLIGHT_MS = 2200;
+    private static final int HIGHLIGHT_COLOR = 0x40FFB300;
+    private final Handler mHandler = new Handler(Looper.getMainLooper());
+    private final Map<View, Drawable.ConstantState> mDefaultBackground = new WeakHashMap<>();
+    private int mHighlightPos = -1;
+    private int mScrollPos = -1;
+
+    /** Row to scroll to for a pending search jump (once), or -1. Read by the fragment after setCategories. */
+    int takeScrollPosition() {
+        int pos = mScrollPos;
+        mScrollPos = -1;
+        return pos;
+    }
+
+    private void applySearchTarget() {
+        SettingsSearchTarget target = SettingsSearchTarget.peek();
+        if (target == null || mCategories == null) {
+            return;
+        }
+        OptionCategory match = null;
+        for (OptionCategory category : mCategories) {
+            if (category == null || category.options == null) {
+                continue;
+            }
+            boolean titleMatches = !target.category.isEmpty()
+                    && TextUtils.equals(target.category, String.valueOf(category.title).trim());
+            if (titleMatches || (target.category.isEmpty() && containsOption(category, target.optionTitle))) {
+                match = category;
+                break;
+            }
+        }
+        if (match == null) {
+            return; // not this dialog (yet): stays pending until it expires
+        }
+        SettingsSearchTarget.clear();
+        if (match.title != null) {
+            // A collapsed section has to be opened for the option row to exist at all.
+            mExpandedByTitle.put(String.valueOf(match.title), true);
+            rebuild();
+        }
+        int found = -1;
+        for (int i = 0; i < mRows.size(); i++) {
+            Row row = mRows.get(i);
+            if (!target.optionTitle.isEmpty()) {
+                if (row.kind == Kind.OPTION && row.item != null
+                        && (row.siblings == match.options || row.siblings == null)
+                        && TextUtils.equals(target.optionTitle, String.valueOf(row.item.getTitle()).trim())) {
+                    found = i;
+                    break;
+                }
+            } else if (row.category == match) {
+                found = i; // slider / value row, or the section header
+                break;
+            }
+        }
+        if (found < 0) {
+            return;
+        }
+        mHighlightPos = found;
+        mScrollPos = found;
+        notifyItemChanged(found);
+        mHandler.removeCallbacksAndMessages(null);
+        mHandler.postDelayed(() -> {
+            int pos = mHighlightPos;
+            mHighlightPos = -1;
+            if (pos >= 0 && pos < mRows.size()) {
+                notifyItemChanged(pos);
+            }
+        }, HIGHLIGHT_MS);
+    }
+
+    private static boolean containsOption(OptionCategory category, String optionTitle) {
+        if (optionTitle.isEmpty()) {
+            return false;
+        }
+        for (OptionItem option : category.options) {
+            if (TextUtils.equals(optionTitle, String.valueOf(option.getTitle()).trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void remember(View v) {
+        Drawable bg = v.getBackground();
+        mDefaultBackground.put(v, bg != null ? bg.getConstantState() : null);
+    }
+
+    private void applyHighlight(RecyclerView.ViewHolder holder, int position) {
+        View v = holder.itemView;
+        if (position == mHighlightPos) {
+            v.setBackgroundColor(HIGHLIGHT_COLOR);
+        } else {
+            Drawable.ConstantState cs = mDefaultBackground.get(v);
+            v.setBackground(cs != null ? cs.newDrawable(v.getResources()) : null);
+        }
     }
 
     private void rebuild() {
@@ -168,6 +273,12 @@ class MobileAppDialogAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        RecyclerView.ViewHolder holder = createHolder(parent, viewType);
+        remember(holder.itemView);
+        return holder;
+    }
+
+    private RecyclerView.ViewHolder createHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         switch (viewType) {
             case TYPE_HEADER:
@@ -207,6 +318,7 @@ class MobileAppDialogAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         } else if (holder instanceof OptionHolder) {
             bindOption((OptionHolder) holder, row);
         }
+        applyHighlight(holder, position);
     }
 
     private void bindHeader(HeaderHolder h, Row row) {

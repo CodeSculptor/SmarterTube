@@ -207,6 +207,17 @@ public class MobileAppDialogFragment extends Fragment implements AppDialogView {
 
         if (mAdapter != null) {
             mAdapter.setCategories(categories, isExpandable);
+            // Arrived from a Settings-search result: bring the matching row (already expanded) into view.
+            final int jumpTo = mAdapter.takeScrollPosition();
+            if (jumpTo >= 0 && mList != null) {
+                mList.post(() -> {
+                    RecyclerView.LayoutManager lm = mList.getLayoutManager();
+                    if (lm instanceof LinearLayoutManager) {
+                        ((LinearLayoutManager) lm).scrollToPositionWithOffset(jumpTo,
+                                (int) (72 * mList.getResources().getDisplayMetrics().density));
+                    }
+                });
+            }
             // A focused sub-dialog (one expandable category) that renders to just a handful of
             // rows — e.g. the Video speed slider opened from the player — reads better as a bottom
             // card at thumb height than as a sparse full screen. Multi-category settings screens

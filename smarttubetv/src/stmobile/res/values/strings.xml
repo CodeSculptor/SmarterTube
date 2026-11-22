@@ -48,6 +48,11 @@
     <!-- GitHub releases LIST endpoint (not /releases/latest, which hides prereleases/betas). -->
     <string name="mobile_about_url_releases_api" translatable="false">https://api.github.com/repos/CodeSculptor/SmarterTube/releases?per_page=30</string>
 
+    <!-- Settings search -->
+    <string name="mobile_settings_search_hint">Search settings</string>
+    <string name="mobile_settings_search_none">No settings match</string>
+    <string name="mobile_settings_search_clear">Clear search</string>
+
     <!-- Theme picker (light/dark) -->
     <string name="mobile_theme_title">Theme</string>
     <string name="mobile_theme_option_system">Follow system</string>

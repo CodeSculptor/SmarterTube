@@ -31,6 +31,21 @@ public class AppDialogPresenter extends BasePresenter<AppDialogView> {
     private boolean mIsExpandable = true;
     private int mId;
 
+    /**
+     * Lets a caller read what a settings presenter's show() would display without displaying it
+     * (used by the phone Settings search to index options). While set, showDialog() hands the
+     * assembled categories to the listener and starts no view.
+     */
+    public interface CaptureListener {
+        void onCaptured(CharSequence title, List<OptionCategory> categories);
+    }
+
+    private static CaptureListener sCaptureListener;
+
+    public static void setCaptureListener(CaptureListener listener) {
+        sCaptureListener = listener;
+    }
+
     private CharSequence mBackupTitle;
     private List<OptionCategory> mBackupCategories;
     private int mBackupId;
@@ -122,6 +137,13 @@ public class AppDialogPresenter extends BasePresenter<AppDialogView> {
     }
 
     public void showDialog(CharSequence dialogTitle, Runnable onFinish) {
+        CaptureListener capture = sCaptureListener;
+        if (capture != null) {
+            capture.onCaptured(dialogTitle, mCategories);
+            resetData();
+            return;
+        }
+
         mTitle = dialogTitle;
         mOnFinish.add(onFinish);
         
