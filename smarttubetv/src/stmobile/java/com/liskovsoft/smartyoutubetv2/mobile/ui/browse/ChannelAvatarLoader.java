@@ -37,7 +37,28 @@ import io.reactivex.disposables.Disposable;
  */
 final class ChannelAvatarLoader {
     interface Callback {
-        void onAvatar(String channelId, String url);
+        void onAvatar(String key, String url);
+    }
+
+    /**
+     * Cache/dedupe key. Standard feed items often carry no channel id (only the author name), so
+     * fall back to the author; the metadata call then supplies the real channel id for taps.
+     */
+    static String keyOf(Video video) {
+        if (video.channelId != null && !video.channelId.isEmpty()) {
+            return video.channelId;
+        }
+        String author = video.getAuthor();
+        return author != null && !author.isEmpty() ? "a:" + author : null;
+    }
+
+    /** Real channel id resolved for a key, or null. */
+    String channelIdFor(Context context, String key) {
+        if (!key.startsWith("a:")) {
+            return key;
+        }
+        String id = mChannelIds.get(key);
+        return id != null ? id : MobileCardAvatarPrefs.getUrl(context, "id_" + key);
     }
 
     private static final int MAX_CONCURRENT = 2;
@@ -46,6 +67,7 @@ final class ChannelAvatarLoader {
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private final LruCache<String, String> mUrls = new LruCache<>(500);
+    private final Map<String, String> mChannelIds = new HashMap<>();
     private final Set<String> mFailed = new HashSet<>();
     private final Map<String, List<Callback>> mWaiting = new HashMap<>();
     private final ArrayDeque<Video> mQueue = new ArrayDeque<>();
@@ -72,8 +94,8 @@ final class ChannelAvatarLoader {
 
     /** Ask for a channel's avatar; {@code cb} is called on the main thread if/when it resolves. */
     void request(Context context, Video video, Callback cb) {
-        String channelId = video.channelId;
-        if (channelId == null || channelId.isEmpty() || video.videoId == null || mFailed.contains(channelId)) {
+        String channelId = keyOf(video);
+        if (channelId == null || video.videoId == null || mFailed.contains(channelId)) {
             return;
         }
         String cached = peek(context, channelId);
@@ -103,7 +125,7 @@ final class ChannelAvatarLoader {
     private void pump(Context context) {
         while (mRunning.size() < MAX_CONCURRENT && !mQueue.isEmpty()) {
             Video video = mQueue.pollLast(); // newest first: what is on screen now
-            String channelId = video.channelId;
+            String channelId = keyOf(video);
             List<Callback> list = mWaiting.get(channelId);
             if (list == null || list.isEmpty()) {
                 mWaiting.remove(channelId); // scrolled past; may be re-requested later
@@ -123,6 +145,10 @@ final class ChannelAvatarLoader {
                                     video.playlistIndex, video.playlistParams),
                     (MediaItemMetadata metadata) -> {
                         mActions.remove(holder[0]);
+                        if (metadata != null && metadata.getChannelId() != null) {
+                            mChannelIds.put(channelId, metadata.getChannelId());
+                            MobileCardAvatarPrefs.putUrl(context, "id_" + channelId, metadata.getChannelId());
+                        }
                         finish(context, channelId, metadata != null ? metadata.getAuthorImageUrl() : null);
                     },
                     error -> {

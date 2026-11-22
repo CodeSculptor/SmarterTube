@@ -268,9 +268,9 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
         holder.avatar.setOnClickListener(null);
         holder.avatar.setClickable(false);
         Context context = holder.itemView.getContext();
-        String channelId = video.channelId;
+        String channelId = ChannelAvatarLoader.keyOf(video);
         holder.avatarChannelId = channelId;
-        if (holder.style != STYLE_VIDEO || channelId == null || channelId.isEmpty()
+        if (holder.style != STYLE_VIDEO || channelId == null
                 || !MobileCardAvatarPrefs.isEnabled(context)) {
             holder.avatar.setVisibility(View.GONE);
             return;
@@ -294,7 +294,12 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
         holder.avatar.setVisibility(View.VISIBLE);
         Glide.with(context).load(url).circleCrop()
                 .placeholder(R.color.mobile_thumbnail_placeholder).into(holder.avatar);
-        holder.avatar.setOnClickListener(v -> ChannelPresenter.instance(context).openChannel(channelId));
+        holder.avatar.setOnClickListener(v -> {
+            String id = ChannelAvatarLoader.instance().channelIdFor(context, channelId);
+            if (id != null) {
+                ChannelPresenter.instance(context).openChannel(id);
+            }
+        });
     }
 
     @Override
