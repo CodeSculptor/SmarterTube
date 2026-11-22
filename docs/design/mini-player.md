@@ -192,3 +192,44 @@ Ways forward (each needs an owner decision; none attempted):
    device spike; hacky.
 3. **Engine in a service (Option B)**: the clean answer, largest cost.
 4. Drop the feature, or ship only a bar that works while the player is expanded (no value).
+
+## 13. Option 2 (same task, REORDER_TO_FRONT): static analysis (2026-11-22)
+
+Question: after Back, can we leave `[Player(parked), Home/caller]` in one task?
+
+**Launch modes in play** (stmobile manifest): Home `MobileBrowseActivity` = singleTask,
+`MobileSearchActivity` = singleTask; Channel, ChannelUploads, About, dialogs, Settings,
+player = singleTop. `ViewManager` launches everything with `NEW_TASK`, default affinity (one task).
+
+**Finding 1 — the dominant case cannot work.** Videos are mostly opened from Home or Search, so the
+caller to bring forward is a `singleTask` activity. For a `singleTask` launch into an existing
+task, the platform's task-reuse path (AOSP `ActivityStarter.setTaskFromIntentActivity`) clears
+every activity above the target *before* it looks at `FLAG_ACTIVITY_REORDER_TO_FRONT`; the
+reorder branch is only reached for standard/singleTop targets. This is not just recalled from
+the platform: the repo's own manifest comment on Search says relaunching it "routes to the
+existing instance and clears the player off the top". So `REORDER_TO_FRONT` on Home/Search would
+destroy the parked player (engine released, playback stops) — the opposite of minimising.
+It works only for singleTop callers (Channel, ChannelUploads), a minority path.
+
+**Finding 2 — making Home/Search reorderable is not minimal.** Changing them to singleTop would
+make `ViewManager`'s plain `NEW_TASK` / `startParentView` launches stack duplicate Homes, and it
+undoes the #23 fix whose manifest comment depends on singleTask clear-top. Every screen-to-screen
+transition in the app is affected, far beyond a prototype.
+
+**Finding 3 — the re-minimise guard itself is feasible.** With `[Player, Home, Channel]`, Back
+from Home reveals the parked player; it could detect "resumed without an expand request" and
+`moveTaskToBack(true)`, which is the right "leave the app" result, at the cost of a visible
+player flash. The #23 channel<->player loop does not arise while Home/Channel sit above the player,
+because the player is at the bottom. So the guard is not the blocker; the reorder is.
+
+**Alternatives that would avoid Finding 1, all rejected as improvisation:**
+- A second Home task via `MULTIPLE_TASK`: `NEW_TASK` affinity matching then picks the front task
+  unpredictably and can create a second player instance (two engines vs one presenter singleton).
+- Relaunching Home without reorder: clears the player (same as above).
+
+**Verdict: Option 2 cannot work for Home/Search-originated playback without changing launch modes
+or common/ code. Per the instruction, no prototype was built.** What remains realistic:
+1. The small `common/` change from §12 (launch from the foreground activity, no `NEW_TASK`) plus
+   Option C. Single, targeted shared-code edit; needs a device spike.
+2. Engine in a service (Option B).
+3. Drop the feature. (A "Back keeps playing as audio" mode already exists via background mode.)
