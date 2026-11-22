@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android Auto Backup rules for API < 31 (android:fullBackupContent).
+     Keeps sign-in tokens out of cloud backups. Everything else is still backed up.
+
+     files/global_prefs/ holds GlobalPreferences' file-backed data (SharedPreferencesBase#setData):
+       oauth2_account_data        - OAuth refresh/access tokens
+       media_service_account_data - account / cookie data
+       media_service_data         - visitor cookie, PoToken, device/screen ids (session-bound)
+     After a restore the user simply signs in again.
+
+     The in-app Backup & Restore feature copies files itself and is unaffected by these rules. -->
+<full-backup-content>
+    <exclude domain="file" path="global_prefs" />
+</full-backup-content>

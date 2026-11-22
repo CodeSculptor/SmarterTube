@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ (API 31+) backup rules (android:dataExtractionRules).
+     See backup_rules.xml for what global_prefs contains. Excluded from both
+     cloud backup and device-to-device transfer: the user signs in again afterwards. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="global_prefs" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="global_prefs" />
+    </device-transfer>
+</data-extraction-rules>

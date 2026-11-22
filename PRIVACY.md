@@ -35,7 +35,7 @@ There is no other telemetry, analytics, or advertising SDK in the app.
 ## Data the app processes on your device
 
 ### Authentication
-Sign-in uses Google's standard OAuth 2.0 device-code flow. The authentication token is stored in local device storage only. It is never transmitted to the developer or any third party other than Google/YouTube.
+Sign-in uses Google's standard OAuth 2.0 device-code flow. The authentication token is stored in local device storage only. It is never transmitted to the developer or any third party other than Google/YouTube. It is excluded from Android cloud backups and device-to-device transfers, so after restoring or moving to a new phone you will need to sign in again.
 
 ### YouTube / Google
 Video content, metadata, search results, channel data, and account information are fetched directly from YouTube and Google servers to your device. This is governed by [Google's Privacy Policy](https://policies.google.com/privacy).

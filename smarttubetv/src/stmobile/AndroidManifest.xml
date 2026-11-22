@@ -31,6 +31,8 @@
         android:name="com.liskovsoft.smartyoutubetv2.mobile.ui.main.MobileApplication"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         tools:replace="android:name,android:icon,android:roundIcon">
 
         <!-- SplashActivity (launcher) is left as-is: it finishes itself right after
