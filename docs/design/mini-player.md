@@ -1,6 +1,6 @@
 # In-app mini-player (issue #96) — design
 
-Status: **PHASE 1 DESIGN, awaiting owner approval. No implementation yet.**
+Status: **Design approved (Option C, default ON, leave Recents card). PHASE 2 SPIKE FAILED statically, see section 12. Stopped; awaiting decision.**
 Branch: `claude/feat-mini-player` (cut from master `32f8da722`, 32.81 line).
 
 ## 1. Goal and user need
@@ -165,3 +165,30 @@ FEATURE_MATRIX rows (Mini-player; adjust the Back note). Release-note line under
 - Default for the Mini-player setting: on (recommended) or off.
 - Recents: leave the player's extra card (recommended) or `excludeFromRecents`.
 - v1 bar shows poster + title + play/pause + close (no live video). OK?
+
+## 12. Spike result (2026-11-22): Option C fails as designed
+
+Static check of the launch paths (no device used):
+
+- `ViewManager.startActivity()` builds `new Intent(mContext, cls)` with `mContext` = application
+  context and always `FLAG_ACTIVITY_NEW_TASK`. A `NEW_TASK` launch is routed by **taskAffinity**,
+  not by the caller's task.
+- Everything the player opens goes through it: `AppDialogPresenter` -> `startView(AppDialogView)`
+  (gear sheet, description, comments, settings dialogs), `ChannelPresenter`, `SearchPresenter`.
+- With a distinct affinity on `MobilePlaybackActivity`, all of those would open in the **Home
+  task** (default affinity), not the player's. Result: the gear/comment/description dialogs open
+  over Home instead of over the video; the player task goes behind, its activity stops (engine
+  released unless blocked); Back from a dialog or channel opened from a Short lands on Home, not
+  the video. That breaks core player flows, so the affinity approach cannot ship as written.
+
+Ways forward (each needs an owner decision; none attempted):
+
+1. **Small `common/` change**: in `ViewManager.startActivity`, launch from the foreground
+   activity (no `NEW_TASK`) when one exists, so child screens inherit the caller's task. Makes
+   Option C work, but touches shared code used by every screen (upstream merge cost, wide
+   regression surface).
+2. **Same task, Option A with a guard**: park the player and bring Home forward with
+   `REORDER_TO_FRONT`, and make the parked player re-minimise itself if revealed by Back. Needs a
+   device spike; hacky.
+3. **Engine in a service (Option B)**: the clean answer, largest cost.
+4. Drop the feature, or ship only a bar that works while the player is expanded (no value).
