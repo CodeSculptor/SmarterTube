@@ -110,3 +110,4 @@ explicitly re-tested as provisional and confirm against the release checklist be
 | No Google Play Services required | Works | Upstream capability |
 | No ads | Works | Upstream capability |
 | Official F-Droid / IzzyOnDroid listing | Not applicable | IzzyOnDroid ruled out (AI-policy); official fdroiddata deferred (F-Droid key → no in-place upgrade). Ship via GitHub Releases + Obtainium + self-hosted F-Droid repo |
+| Phone UI translations | Partially works | Phone-only strings are now all in string resources (nothing hardcoded; bottom bar/sheet labels reuse upstream's already-translated strings, uploads count is a proper plural). No `values-xx` folders yet: English fallback for the ~12 phone-only screens until the owner picks a translation workflow, see [design/translations.md](design/translations.md). IMPLEMENTED-UNVERIFIED |

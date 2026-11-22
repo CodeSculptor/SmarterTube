@@ -114,7 +114,11 @@
     <string name="mobile_notifications_prompt_yes">Turn on</string>
     <string name="mobile_notifications_prompt_no">Not now</string>
     <string name="mobile_uploads_summary_title">New uploads</string>
-    <string name="mobile_uploads_summary_text">%1$d new video(s) from your subscriptions</string>
+    <plurals name="mobile_uploads_summary_text">
+        <item quantity="one">%1$d new video from your subscriptions</item>
+        <item quantity="other">%1$d new videos from your subscriptions</item>
+    </plurals>
+    <string name="mobile_notifications_update_failed">Couldn\'t update notification preference</string>
     <string name="mobile_uploads_new_video">New video</string>
 
     <!-- Opt-in anonymous stats (usage heartbeat + crash reports). See mobile/stats/StatsReporter. -->
@@ -144,5 +148,12 @@
 
     <!-- Pinch to zoom in the landscape player (#85) -->
     <string name="mobile_zoom_fit">Original</string>
+
+    <!-- Shorts bottom bar / "You" sheet / misc (were hardcoded in fragment_playback.xml and Java) -->
+    <string name="mobile_back">Back</string>
+    <string name="mobile_nav_you">You</string>
+    <string name="mobile_account_default">Account</string>
+    <string name="mobile_my_channel">My channel</string>
+    <string name="mobile_no_playlists">No playlists yet</string>
 
 </resources>

@@ -317,7 +317,7 @@ public class MobileChannelFragment extends Fragment implements ChannelView {
                         NotificationState state = mNotificationStates.get(selected[0]);
                         MediaServiceManager.instance().setNotificationState(state,
                                 e -> MessageHelpers.showMessage(getContext(),
-                                        "Couldn't update notification preference"));
+                                        getString(R.string.mobile_notifications_update_failed)));
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, null)

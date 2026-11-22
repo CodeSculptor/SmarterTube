@@ -67,6 +67,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:text="Hello World!"
+                tools:ignore="HardcodedText"
                 style="?attr/playbackControlsTimeStyle" />
         </LinearLayout>
     </FrameLayout>

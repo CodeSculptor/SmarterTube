@@ -89,7 +89,7 @@ public final class UploadNotifier {
         Notification summary = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_small)
                 .setContentTitle(context.getString(R.string.mobile_uploads_summary_title))
-                .setContentText(context.getString(R.string.mobile_uploads_summary_text, posted))
+                .setContentText(context.getResources().getQuantityString(R.plurals.mobile_uploads_summary_text, posted, posted))
                 .setStyle(style)
                 .setGroup(GROUP_KEY)
                 .setGroupSummary(true)

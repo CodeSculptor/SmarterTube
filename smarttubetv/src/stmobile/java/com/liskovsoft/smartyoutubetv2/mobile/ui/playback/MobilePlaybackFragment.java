@@ -762,7 +762,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
                     if (selected[0] >= 0 && selected[0] < states.size()) {
                         MediaServiceManager.instance().setNotificationState(states.get(selected[0]),
                                 e -> MessageHelpers.showMessage(activity,
-                                        "Couldn't update notification preference"));
+                                        activity.getString(R.string.mobile_notifications_update_failed)));
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, null)
@@ -1761,7 +1761,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             ImageView avatarView = mShortsProfileSheet.findViewById(R.id.profile_avatar);
             if (account != null) {
                 if (nameView != null)
-                    nameView.setText(account.getName() != null ? account.getName() : "Account");
+                    nameView.setText(account.getName() != null ? account.getName() : nameView.getContext().getString(R.string.mobile_account_default));
                 if (emailView != null)
                     emailView.setText(account.getEmail() != null ? account.getEmail() : "");
                 if (avatarView != null && account.getAvatarImageUrl() != null) {
