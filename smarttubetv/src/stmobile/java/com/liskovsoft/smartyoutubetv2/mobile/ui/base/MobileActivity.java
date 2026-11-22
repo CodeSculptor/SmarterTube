@@ -39,10 +39,20 @@ public abstract class MobileActivity extends MotherActivity {
             return null;
         }
         MobileThemePrefs.Mode mode = MobileThemePrefs.getMode(base);
-        if (mode == MobileThemePrefs.Mode.SYSTEM) {
+        boolean pureBlack = MobileThemePrefs.isPureBlack(base);
+        if (mode == MobileThemePrefs.Mode.SYSTEM && !pureBlack) {
             return base; // Inherit whatever uiMode the system gave us.
         }
         Configuration overrideConfig = new Configuration();
+        if (pureBlack) {
+            // Selects values-round-night (true-black colours). `round` is otherwise unused on
+            // phones/tablets, and that directory only matches together with the night bit.
+            overrideConfig.screenLayout = base.getResources().getConfiguration().screenLayout
+                    | Configuration.SCREENLAYOUT_ROUND_YES;
+        }
+        if (mode == MobileThemePrefs.Mode.SYSTEM) {
+            return base.createConfigurationContext(overrideConfig);
+        }
         // setTo(empty) would clobber locale/density - createConfigurationContext merges
         // an empty config with the base, so we only set the bits we want to change.
         int nightBit = (mode == MobileThemePrefs.Mode.DARK)

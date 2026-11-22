@@ -7,6 +7,7 @@
         <item name="colorAccent">@color/brand_accent</item>
         <item name="android:windowBackground">@color/brand_primary</item>
         <item name="android:colorBackground">@color/brand_primary</item>
+        <item name="colorBackgroundFloating">@color/mobile_dialog_background</item>
     </style>
 
     <!-- Splash for pre-API-31 devices: the launcher activity opens with this theme so the

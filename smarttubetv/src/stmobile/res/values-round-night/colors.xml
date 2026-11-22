@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Pure-black (AMOLED) overrides for dark mode. Selected by MobileActivity when the
+    "Pure black dark theme" pref is on: it adds the otherwise-unused `round` screen
+    qualifier to the activity's configuration override, so this directory only matches
+    when that pref is on AND the resolved mode is night. Aliases in values-night
+    (mobile_background, mobile_primary, ...) re-resolve against these. Surfaces stay a
+    hair above black so cards/sheets/chips remain distinguishable from the background.
+-->
+<resources>
+    <color name="brand_primary">#000000</color>
+    <color name="mobile_surface">#141414</color>
+    <color name="mobile_chip_background">#FF1C1C1C</color>
+    <color name="mobile_divider">#3DFFFFFF</color>
+    <color name="mobile_dialog_background">#FF161616</color>
+    <color name="mobile_modern_sheet">#FF141414</color>
+</resources>

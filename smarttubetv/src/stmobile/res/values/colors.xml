@@ -34,4 +34,7 @@
     <color name="mobile_chip_background">#FFEDEDED</color>
     <color name="mobile_playlist_stack_back">#FFC4C4C4</color>
     <color name="mobile_playlist_stack_front">#FF9E9E9E</color>
+
+    <color name="mobile_dialog_background">#FFFFFFFF</color>
+    <color name="mobile_modern_sheet">#FF212121</color>
 </resources>

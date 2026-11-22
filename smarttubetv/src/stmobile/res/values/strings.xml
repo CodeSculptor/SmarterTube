@@ -53,6 +53,9 @@
     <string name="mobile_theme_option_system">Follow system</string>
     <string name="mobile_theme_option_light">Light</string>
     <string name="mobile_theme_option_dark">Dark</string>
+    <string name="mobile_pure_black_title">Pure black dark theme</string>
+    <string name="mobile_pure_black_option_off">Off (dark grey)</string>
+    <string name="mobile_pure_black_option_on">On (true black)</string>
 
     <!-- Player style (#46) -->
     <string name="mobile_player_style_title">Player style</string>

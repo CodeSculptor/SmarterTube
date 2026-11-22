@@ -54,6 +54,10 @@ final class MobileSettingsRows {
                     () -> showThemePicker(context),
                     R.drawable.settings_theme));
             items.add(new SettingsItem(
+                    context.getString(R.string.mobile_pure_black_title),
+                    () -> showPureBlackPicker(context),
+                    R.drawable.settings_theme));
+            items.add(new SettingsItem(
                     context.getString(R.string.mobile_player_style_title),
                     () -> showPlayerStylePicker(context),
                     R.drawable.settings_player_style));
@@ -112,6 +116,27 @@ final class MobileSettingsRows {
                     // new uiMode override.
                     // Screens underneath (Home under the Settings screen) re-check this when they resume.
                     sThemeChanged = true;
+                    context.recreate();
+                })
+                .show();
+    }
+
+    /** Pure-black (AMOLED) dark theme on/off. Only visible in dark mode; recreate() re-reads it. */
+    private static void showPureBlackPicker(Activity context) {
+        String[] labels = {
+                context.getString(R.string.mobile_pure_black_option_off),
+                context.getString(R.string.mobile_pure_black_option_on),
+        };
+        boolean current = MobileThemePrefs.isPureBlack(context);
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.mobile_pure_black_title)
+                .setSingleChoiceItems(labels, current ? 1 : 0, (dialog, which) -> {
+                    dialog.dismiss();
+                    if ((which == 1) == current) {
+                        return;
+                    }
+                    MobileThemePrefs.setPureBlack(context, which == 1);
+                    sThemeChanged = true; // screens underneath recreate when they resume
                     context.recreate();
                 })
                 .show();

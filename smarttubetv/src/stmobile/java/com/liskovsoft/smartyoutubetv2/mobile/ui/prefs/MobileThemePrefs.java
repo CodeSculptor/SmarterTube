@@ -29,7 +29,18 @@ public final class MobileThemePrefs {
         }
     }
 
+    private static final String KEY_PURE_BLACK = "pure_black";
+
     private MobileThemePrefs() {}
+
+    /** True when dark mode should use true-black (AMOLED) surfaces. No effect in light mode. */
+    public static boolean isPureBlack(Context context) {
+        return prefs(context).getBoolean(KEY_PURE_BLACK, false);
+    }
+
+    public static void setPureBlack(Context context, boolean enabled) {
+        prefs(context).edit().putBoolean(KEY_PURE_BLACK, enabled).apply();
+    }
 
     public static Mode getMode(Context context) {
         String raw = prefs(context).getString(KEY_MODE, Mode.SYSTEM.name());
