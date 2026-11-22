@@ -185,11 +185,31 @@ public class ViewManager {
         startActivity(lastActivity);
     }
 
+    /** MOD (phone): supplies the resumed activity to start screens from; see {@link #startActivity}. */
+    public interface ForegroundActivityProvider {
+        /** The visible, non-finishing activity, or null when there is none. */
+        Activity get();
+    }
+
+    private ForegroundActivityProvider mForegroundActivityProvider;
+
+    public void setForegroundActivityProvider(ForegroundActivityProvider provider) {
+        mForegroundActivityProvider = provider;
+    }
+
     private void startActivity(Class<?> activityClass) {
         Log.d(TAG, "Launching activity: " + activityClass.getSimpleName());
 
         mPendingActivityMs = System.currentTimeMillis();
         mPendingActivityClass = activityClass;
+
+        // MOD (phone): a flavor may ask for child screens to start from the foreground activity so
+        // they join its task. Unset (TV, upstream) = the original path below, unchanged.
+        Activity foreground = mForegroundActivityProvider != null ? mForegroundActivityProvider.get() : null;
+        if (foreground != null) {
+            safeStartActivity(foreground, new Intent(foreground, activityClass));
+            return;
+        }
 
         Intent intent = new Intent(mContext, activityClass);
 

@@ -25,6 +25,11 @@ import com.liskovsoft.smartyoutubetv2.tv.R;
  * stmobile flavor (wired in {@link com.liskovsoft.smartyoutubetv2.mobile.ui.main.MobileApplication}).
  */
 public class MobileBrowseActivity extends MobileActivity {
+    @Override
+    protected boolean hostsMiniPlayer() {
+        return true;
+    }
+
     private static final int REQ_POST_NOTIFICATIONS = 1001;
     /** Re-ask for a revoked notification permission at most once per process, not on every screen. */
     private static boolean sPermissionRechecked;

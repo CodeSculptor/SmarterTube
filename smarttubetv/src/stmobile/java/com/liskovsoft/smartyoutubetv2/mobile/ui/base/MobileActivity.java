@@ -9,6 +9,8 @@ import android.util.DisplayMetrics;
 
 import androidx.annotation.Nullable;
 
+import com.liskovsoft.smartyoutubetv2.mobile.ui.miniplayer.MiniPlayerBar;
+
 import com.liskovsoft.smartyoutubetv2.common.misc.MotherActivity;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobileThemePrefs;
 import com.liskovsoft.smartyoutubetv2.tv.R;
@@ -72,9 +74,19 @@ public abstract class MobileActivity extends MotherActivity {
         allowLandscapeOnTablets();
     }
 
+    private MiniPlayerBar mMiniPlayerBar;
+
+    /** Whether this screen shows the mini-player bar (#96) while a video is minimised. */
+    protected boolean hostsMiniPlayer() {
+        return false;
+    }
+
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
+        if (hostsMiniPlayer()) {
+            mMiniPlayerBar = MiniPlayerBar.attach(this);
+        }
         // After the subclass's setContentView. A no-op unless the OS draws us edge-to-edge (#37).
         if (appliesSystemBarInsets()) {
             SystemBarInsets.apply(this);
@@ -107,6 +119,9 @@ public abstract class MobileActivity extends MotherActivity {
     protected void onResume() {
         super.onResume();
         restoreRealDensity();
+        if (mMiniPlayerBar != null) {
+            mMiniPlayerBar.onResume();
+        }
         ImmersiveBars.apply(this); // #47: upstream's hide, with the swipe behaviour set first
         // Register in the ViewManager activity stack (the TV LeanbackActivity does the same).
         // Without this the stack only tracks TV/Leanback activities, so the player's
@@ -114,6 +129,14 @@ public abstract class MobileActivity extends MotherActivity {
         if (registersInViewStack()) {
             getViewManager().addTop(this);
         }
+    }
+
+    @Override
+    protected void onPause() {
+        if (mMiniPlayerBar != null) {
+            mMiniPlayerBar.onPause();
+        }
+        super.onPause();
     }
 
     @Override

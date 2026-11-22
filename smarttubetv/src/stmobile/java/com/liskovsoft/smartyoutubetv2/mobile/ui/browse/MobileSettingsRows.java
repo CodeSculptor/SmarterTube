@@ -66,6 +66,10 @@ final class MobileSettingsRows {
                     () -> showSwipeGesturesToggle(context),
                     R.drawable.settings_swipe_gestures));
             items.add(new SettingsItem(
+                    context.getString(R.string.mobile_mini_player_title),
+                    () -> showMiniPlayerToggle(context),
+                    R.drawable.settings_player_style));
+            items.add(new SettingsItem(
                     context.getString(R.string.mobile_notifications_title),
                     () -> showNotificationsToggle(context),
                     R.drawable.settings_notifications));
@@ -179,6 +183,22 @@ final class MobileSettingsRows {
                     if (which != 2) {
                         MobilePlayerStylePrefs.setBrightnessSwipeEnabled(context, which == 0);
                     }
+                    dialog.dismiss();
+                })
+                .show();
+    }
+
+    /** Phone-only "Mini-player" on/off (#96); the player reads it when Back is pressed. */
+    private static void showMiniPlayerToggle(Activity context) {
+        String[] labels = {
+                context.getString(R.string.mobile_mini_player_on),
+                context.getString(R.string.mobile_mini_player_off),
+        };
+        int checked = MobilePlayerStylePrefs.isMiniPlayerEnabled(context) ? 0 : 1;
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.mobile_mini_player_title)
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    MobilePlayerStylePrefs.setMiniPlayerEnabled(context, which == 0);
                     dialog.dismiss();
                 })
                 .show();

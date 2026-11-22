@@ -78,6 +78,10 @@
             tools:node="merge"
             tools:replace="android:screenOrientation,android:launchMode" />
 
+        <!-- Mini-player (#96): the player has its own task (singleTask + its own affinity) so it can
+             stay parked, still playing, behind the browse screens. Screens the player opens start
+             from the foreground activity (ViewManager hook, set in MobileApplication) so they stay
+             in the player's task; see docs/design/mini-player.md. -->
         <!-- Phone playback host. Extends the TV PlaybackActivity; screen orientation is
              chosen at runtime by video type — portrait for Shorts, landscape otherwise.
              screenOrientation="behind" makes it open in the caller's orientation (Home is
@@ -85,7 +89,8 @@
         <activity
             android:name="com.liskovsoft.smartyoutubetv2.mobile.ui.playback.MobilePlaybackActivity"
             android:exported="false"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
+            android:taskAffinity="${applicationId}.player"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|layoutDirection|keyboardHidden"
             android:screenOrientation="behind"
             android:supportsPictureInPicture="true"

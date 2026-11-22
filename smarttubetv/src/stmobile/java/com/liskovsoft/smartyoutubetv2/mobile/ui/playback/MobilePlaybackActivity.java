@@ -16,7 +16,12 @@ import androidx.lifecycle.Lifecycle;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
+import com.liskovsoft.smartyoutubetv2.common.app.views.BrowseView;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.base.ImmersiveBars;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.miniplayer.MiniPlayerPolicy;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.miniplayer.MiniPlayerState;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.miniplayer.MiniPlayerTasks;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobilePlayerStylePrefs;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.PlaybackActivity;
 
@@ -84,12 +89,79 @@ public class MobilePlaybackActivity extends PlaybackActivity {
      */
     @Override
     public void onBackPressed() {
-        if (isInPipMode() || getPlayerData().getBackgroundMode() == PlayerData.BACKGROUND_MODE_PIP) {
+        boolean pipMode = getPlayerData().getBackgroundMode() == PlayerData.BACKGROUND_MODE_PIP;
+        if (isInPipMode() || pipMode) {
             super.onBackPressed();
             return;
         }
 
+        Video video = PlaybackPresenter.instance(this).getVideo();
+        if (MiniPlayerPolicy.shouldMinimise(
+                MobilePlayerStylePrefs.isMiniPlayerEnabled(this),
+                video != null, video != null && video.isShorts,
+                false, false,
+                PlaybackPresenter.instance(this).isEngineInitialized())) {
+            minimise();
+            return;
+        }
+
         finishReally();
+    }
+
+    /**
+     * Mini-player (#96): park this player (it stays alive in its own task, engine blocked as for
+     * PiP / background audio) and bring the browse task forward as it was left. The browse
+     * screens then show the bar. With no browse task (opened by a link) Home is started instead.
+     */
+    private void minimise() {
+        MiniPlayerState.setMinimised(true);
+        if (mMobileFragment != null) {
+            mMobileFragment.blockEngine(true);
+        }
+        getViewManager().removeTop(this);
+        if (!MiniPlayerTasks.bringBrowseForward(this)) {
+            getViewManager().startView(BrowseView.class);
+        }
+    }
+
+    /**
+     * While minimised the app is not "left" in the Home sense: skip the base class's background
+     * handling, which would pin this player as the screen the app reopens to.
+     */
+    @Override
+    public void onUserLeaveHint() {
+        if (MiniPlayerState.isMinimised()) {
+            return;
+        }
+        super.onUserLeaveHint();
+    }
+
+    private boolean mFinishingForReal;
+
+    /**
+     * Closing the player (Back with the mini-player off, bar close, PiP dismiss): the base class
+     * relaunches the "parent view" from this activity. This task only holds the player, so that
+     * launch would land the parent inside it. When a browse task exists, suppress the launch (see
+     * {@link #startActivity}) and bring that task forward instead.
+     */
+    @Override
+    public void finishReally() {
+        MiniPlayerState.setMinimised(false);
+        mFinishingForReal = MiniPlayerTasks.hasBrowseTask(this);
+        super.finishReally();
+        if (mFinishingForReal) {
+            MiniPlayerTasks.bringBrowseForward(this);
+        }
+    }
+
+    @Override
+    public void startActivity(Intent intent, Bundle options) {
+        if (mFinishingForReal
+                && (intent.getComponent() == null
+                    || !MobilePlaybackActivity.class.getName().equals(intent.getComponent().getClassName()))) {
+            return;
+        }
+        super.startActivity(intent, options);
     }
 
     /**
@@ -288,6 +360,7 @@ public class MobilePlaybackActivity extends PlaybackActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        MiniPlayerState.setMinimised(false); // expanded (bar tap, notification, new video)
         reapplyFullscreen();
         if (mForcedOrientation != ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) {
             watchForMatchingOrientation();

@@ -68,6 +68,8 @@ public class MobileApplication extends MainApplication {
         NotificationPollWorker.schedule(this);
     };
 
+    private java.lang.ref.WeakReference<Activity> mForeground;
+
     @Override
     public void onCreate() {
         // Apply the persisted Theme choice (System / Light / Dark) before any activity
@@ -91,6 +93,30 @@ public class MobileApplication extends MainApplication {
             public void onActivityStarted(Activity activity) {
                 StatsReporter.onForeground(activity);
             }
+        });
+
+        // Mini-player (#96): the player lives in its own task, so every screen it opens (dialogs,
+        // channel, search) must start from the foreground activity to join that task. Track the
+        // last resumed activity for ViewManager; shared code stays on its old path without this.
+        registerActivityLifecycleCallbacks(new ActivityStartedCallback() {
+            @Override
+            public void onActivityStarted(Activity activity) {}
+
+            @Override
+            public void onActivityResumed(Activity activity) {
+                mForeground = new java.lang.ref.WeakReference<>(activity);
+            }
+
+            @Override
+            public void onActivityDestroyed(Activity activity) {
+                if (mForeground != null && mForeground.get() == activity) {
+                    mForeground = null;
+                }
+            }
+        });
+        ViewManager.instance(this).setForegroundActivityProvider(() -> {
+            Activity a = mForeground != null ? mForeground.get() : null;
+            return a != null && !a.isFinishing() ? a : null;
         });
 
         // Always surface the YouTube notifications inbox as a phone nav-drawer tab, for every

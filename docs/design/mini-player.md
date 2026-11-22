@@ -233,3 +233,73 @@ or common/ code. Per the instruction, no prototype was built.** What remains rea
    Option C. Single, targeted shared-code edit; needs a device spike.
 2. Engine in a service (Option B).
 3. Drop the feature. (A "Back keeps playing as audio" mode already exists via background mode.)
+
+## 14. Implemented design (Option C + gated common/ hook) — IMPLEMENTED-UNVERIFIED
+
+Owner chose Option C plus one minimal `common/` change. Statement for upstream-merge-cost review:
+
+**`common/` diff (one file, +20 lines, no deletions):** `ViewManager`
+- new `public interface ForegroundActivityProvider { Activity get(); }`, a field and
+  `setForegroundActivityProvider(...)`;
+- in `startActivity(Class)`: if a provider is set and returns an activity, start from it
+  (`safeStartActivity(foreground, new Intent(foreground, cls))`, no `NEW_TASK`) and return;
+  otherwise the original code path runs unchanged. TV / upstream never set a provider, so
+  their behaviour is byte-for-byte the same.
+
+**stmobile pieces:** `MobileApplication` sets the provider (last resumed, non-finishing activity,
+weak ref); manifest: `MobilePlaybackActivity` -> `singleTask` + `taskAffinity=${applicationId}.player`;
+`ui/miniplayer/` (`MiniPlayerPolicy` pure + `MiniPlayerPolicyTest`, `MiniPlayerState`,
+`MiniPlayerTasks` (AppTask lookup/moveToFront), `MiniPlayerBar` + `mobile_mini_player.xml`);
+`MobileActivity.hostsMiniPlayer()` (true for Home, Search, Channel, Channel uploads);
+`MobilePlayerStylePrefs.isMiniPlayerEnabled` (default true) + Settings row;
+`MobilePlaybackActivity`: Back -> `minimise()`, `onUserLeaveHint` skipped while minimised,
+`finishReally()` suppresses the base class's parent relaunch (it would land inside the player's
+task) and brings the browse task forward instead. `MobilePlaybackFragment` is untouched.
+
+**Static flow analysis (player is singleTask in its own affinity; others start from the
+foreground activity, so they inherit its task):**
+- *Video from Home / Search / Channel:* the caller (task H) starts the player; singleTask +
+  distinct affinity creates/reuses task P. Back: engine blocked, `AppTask.moveToFront()` on H, which
+  is exactly as left (Channel stays on top of Home). No stack mixing, no `REORDER_TO_FRONT`.
+- *Dialogs / Channel / Search opened from the player:* foreground = player (in P), no `NEW_TASK`,
+  so they start in P (Home/Search are `singleTask` with the default affinity, so those two route
+  to H by design: Search from the player goes to H, like leaving the player).
+- *Deep link / no Home task:* `hasBrowseTask()` false -> Back minimise starts Home (new task);
+  close path lets the base class launch the parent.
+- *Close (bar X):* unblock + `finishReally()`; parent relaunch suppressed; H untouched.
+- *#23 loop:* P and H are separate tasks; Back on Channel never reveals the player.
+- *Fallback without a foreground activity* (provider returns null): the old `NEW_TASK` path.
+  Known gap: a screen started that way while the player task is in front would join H.
+Everything above is static; nothing has run on a device.
+
+## 15. Device test script (for the parent; R3GL3069JMZ)
+
+Setup: Settings > Mini-player = On (default). Background mode = default (Sound), not PiP.
+1. Home > tap a regular video. Plays. Press Back. Expect: Home shows as you left it, a bar
+   (poster, title, channel, progress) docked at the bottom, audio keeps playing, no gap under the
+   list or hidden last row.
+2. Tap play/pause on the bar: audio pauses/resumes, icon flips. Progress line moves.
+3. Tap the bar body: player expands at the same position, controls normal, Back minimises again.
+4. Minimise, open a Channel from a Home card, then Back: returns to Home (never reveals the
+   player), bar stays visible on both screens.
+5. With the bar showing, open Search, search, tap a result: the new video plays in the player;
+   Back minimises; the bar shows the NEW title. Repeat from a Channel page's video.
+6. Expanded player: open the gear sheet, comments and description. They must appear over the
+   video (not over Home), and Back from each returns to the video.
+7. Expanded player (portrait, Classic style): tap the Settings gear; Settings opens over the
+   video; Back returns to the video.
+8. Tap the bar's X: audio stops, bar disappears, media notification disappears, you are still on
+   the same browse screen.
+9. Minimise, lock the screen for 30 s, unlock: audio kept playing; bar still correct.
+10. Minimise, pull the notification shade, pause/play from the media notification: bar icon follows.
+    Tap the notification: player expands.
+11. Minimise, press the Home key, then tap the app icon: opens the browse screen with the bar
+    (not the player). Recents: expect two cards (browse + player).
+12. Deep link: force-stop the app, open a youtube.com/watch link with SmarterTube. Press Back:
+    Home opens (no launcher), bar shows.
+13. Open a Short: Back closes it (no bar). With a bar already showing, open a Short: it replaces
+    the minimised video; Back closes.
+14. Settings > Mini-player > Off: Back from a video closes it and returns to the previous screen
+    (Home or the Channel it came from) as before, no bar.
+15. Background mode = PiP: Back enters PiP as before (no bar).
+16. Android 7 AVD (Phone_API24): steps 1, 3, 8.

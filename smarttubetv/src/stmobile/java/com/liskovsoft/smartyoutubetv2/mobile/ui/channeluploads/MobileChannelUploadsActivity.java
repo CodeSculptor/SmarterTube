@@ -13,6 +13,11 @@ import com.liskovsoft.smartyoutubetv2.tv.R;
  */
 public class MobileChannelUploadsActivity extends MobileActivity {
     @Override
+    protected boolean hostsMiniPlayer() {
+        return true;
+    }
+
+    @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.mobile_channel_uploads_activity);

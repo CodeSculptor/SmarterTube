@@ -21,6 +21,7 @@ public final class MobilePlayerStylePrefs {
     private static final String KEY_STYLE = "style";
     private static final String KEY_SWIPE_GESTURES = "swipe_gestures";
     private static final String KEY_SWIPE_BRIGHTNESS = "swipe_brightness";
+    private static final String KEY_MINI_PLAYER = "mini_player";
 
     public enum Style {
         CLASSIC, MODERN, TAP_TO_PAUSE;
@@ -78,6 +79,15 @@ public final class MobilePlayerStylePrefs {
 
     public static void setBrightnessSwipeEnabled(Context context, boolean enabled) {
         prefs(context).edit().putBoolean(KEY_SWIPE_BRIGHTNESS, enabled).apply();
+    }
+
+    /** Mini-player (#96): Back minimises the video to a bar instead of closing it. On by default. */
+    public static boolean isMiniPlayerEnabled(Context context) {
+        return prefs(context).getBoolean(KEY_MINI_PLAYER, true);
+    }
+
+    public static void setMiniPlayerEnabled(Context context, boolean enabled) {
+        prefs(context).edit().putBoolean(KEY_MINI_PLAYER, enabled).apply();
     }
 
     private static SharedPreferences prefs(Context context) {
