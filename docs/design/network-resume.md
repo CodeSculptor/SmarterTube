@@ -19,8 +19,13 @@ Episode starts only on a real connectivity loss while the engine is alive and pl
 On return: 3 s grace, then if not playing and user did not pause: restart engine (position kept),
 re-check after 2/4/8/16 s, max 4 restarts, then give up with a hint. Paused/closed at any check: stop.
 
-## Known limit
-Upstream's loop still runs while offline (see above). Guarding it would need a small common/ change.
+## common/ guard (small, 2 files)
+`Utils.isOffline(Context)` (true only when the device positively reports no connectivity; any
+doubt, e.g. no ACCESS_NETWORK_STATE on TV flavors, returns false = old behavior). `ErrorFixerController`
+skips its fix in `onEngineError`, `onLongBuffering` and `runFormatErrorAction` while offline, so
+there is no reload loop, no engine/client/DNS switching and no `fixRetrofitErrors` app restart.
+The phone helper restarts the (idle) engine after the network returns. Extra device step 13:
+airplane ON during playback, wait 30 s, OFF: check Settings engine/DNS were not changed.
 
 ## Device test script (airplane mode via quick settings)
 1. Play a regular video ~30 s in. Airplane ON. After ~2 s expect "Waiting for connection...". Airplane OFF: within ~3-10 s expect "Reconnected" and playback continuing from roughly the same position.

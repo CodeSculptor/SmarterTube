@@ -1310,6 +1310,27 @@ public class Utils {
         return AppInfoHelpers.getRealSdkVersion(context) > 29;
     }
 
+    /**
+     * True only when the device positively reports no connectivity. Any doubt (missing
+     * ACCESS_NETWORK_STATE permission, no service) returns false, i.e. the old behavior.
+     */
+    public static boolean isOffline(Context context) {
+        if (context == null) {
+            return false;
+        }
+        try {
+            android.net.ConnectivityManager cm = (android.net.ConnectivityManager)
+                    context.getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm == null) {
+                return false;
+            }
+            android.net.NetworkInfo info = cm.getActiveNetworkInfo();
+            return info == null || !info.isConnected();
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
     public static boolean fixRetrofitErrors(@NonNull Context context, Throwable error) {
         if (error != null && Helpers.contains(error.getMessage(), "No address associated with hostname")) {
             // java.net.UnknownHostException: Unable to resolve host "www.youtube.com": No address associated with hostname

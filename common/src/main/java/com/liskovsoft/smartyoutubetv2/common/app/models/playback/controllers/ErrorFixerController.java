@@ -39,6 +39,10 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
 
     @Override
     public void onEngineError(int type, int rendererIndex, Throwable error) {
+        if (isOfflineSkipFix("Player error occurred")) {
+            return;
+        }
+
         Log.e(TAG, "Player error occurred: %s. Trying to fix…", type);
 
         mBufferingDetector.reset();
@@ -48,6 +52,10 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
     @Override
     public void onLongBuffering() {
         if (getPlayer() == null) {
+            return;
+        }
+
+        if (isOfflineSkipFix("Long buffering")) {
             return;
         }
 
@@ -136,6 +144,19 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
     @Override
     public void onEngineReleased() {
         mBufferingDetector.reset();
+    }
+
+    /**
+     * No connectivity: every "fix" (reload loop, engine/client/DNS switching, app restart) is
+     * pointless and some persist settings or restart the app. Leave the player as is; the
+     * network-return handling (phone: NetworkResumeHelper) or the user restarts playback.
+     */
+    private boolean isOfflineSkipFix(String what) {
+        if (getContext() != null && Utils.isOffline(getContext())) {
+            Log.d(TAG, "%s while offline. Skipping the fix.", what);
+            return true;
+        }
+        return false;
     }
 
     private void runEngineErrorAction(int type, int rendererIndex, Throwable error) {
@@ -390,6 +411,10 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
 
     public void runFormatErrorAction(Throwable error) {
         if (getPlayer() == null) {
+            return;
+        }
+
+        if (isOfflineSkipFix("Format loading error")) {
             return;
         }
 
