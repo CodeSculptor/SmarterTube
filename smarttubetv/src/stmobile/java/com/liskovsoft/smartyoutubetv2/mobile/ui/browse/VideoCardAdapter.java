@@ -273,10 +273,10 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
         holder.avatarChannelId = channelId;
         if (holder.style != STYLE_VIDEO || channelId == null || video.videoId == null
                 || !MobileCardAvatarPrefs.isEnabled(context)) {
-            // Keep the slot on standard cards (channel tiles, setting off) so text columns align.
+            // No avatar possible (playlist/chart/channel tiles without a video id, Shorts/playlist
+            // styles, setting off): collapse the slot so the text starts at the card edge.
             holder.avatar.setImageDrawable(null);
-            holder.avatar.setVisibility(holder.style == STYLE_VIDEO && MobileCardAvatarPrefs.isEnabled(context)
-                    ? View.INVISIBLE : View.GONE);
+            holder.avatar.setVisibility(View.GONE);
             return;
         }
         String cached = loader.peek(context, channelId);
