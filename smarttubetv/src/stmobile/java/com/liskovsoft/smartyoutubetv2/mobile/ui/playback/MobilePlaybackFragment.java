@@ -241,6 +241,32 @@ public class MobilePlaybackFragment extends PlaybackFragment {
      */
     private final List<VideoGroup> mSuggestionGroups = new ArrayList<>();
 
+    /** Resumes from the same position when the network returns after a drop. See NetworkResumeHelper. */
+    private final NetworkResumeHelper mNetworkResume = new NetworkResumeHelper(new NetworkResumeHelper.Host() {
+        @Override public Context getContext() { return MobilePlaybackFragment.this.getContext(); }
+        @Override public boolean isEngineActive() { return isEngineInitialized(); }
+        @Override public boolean getPlayWhenReady() { return isEngineInitialized() && MobilePlaybackFragment.this.getPlayWhenReady(); }
+        @Override public boolean isPlaying() { return isEngineInitialized() && MobilePlaybackFragment.this.isPlaying(); }
+        @Override public void restartEngine() { MobilePlaybackFragment.this.restartEngine(); }
+        @Override public void showHint(int stringResId) {
+            Context ctx = MobilePlaybackFragment.this.getContext();
+            if (ctx != null) MessageHelpers.showMessage(ctx, ctx.getString(stringResId));
+        }
+    });
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        mNetworkResume.start();
+    }
+
+    @Override
+    public void onDestroy() {
+        // Not onStop: background audio / mini-player must keep recovering while stopped.
+        mNetworkResume.stop();
+        super.onDestroy();
+    }
+
     @Override
     public void onResume() {
         super.onResume();

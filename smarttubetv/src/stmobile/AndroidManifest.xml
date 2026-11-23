@@ -14,6 +14,9 @@
           xmlns:tools="http://schemas.android.com/tools"
           package="com.liskovsoft.smartyoutubetv2.tv">
 
+    <!-- Network-return auto-resume (NetworkResumeHelper) -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!-- Make the app installable on non-TV (phone/tablet) devices -->
     <uses-feature
         android:name="android.software.leanback"

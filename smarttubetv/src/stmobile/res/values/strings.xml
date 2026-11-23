@@ -160,5 +160,8 @@
     <string name="mobile_account_default">Account</string>
     <string name="mobile_my_channel">My channel</string>
     <string name="mobile_no_playlists">No playlists yet</string>
+    <string name="mobile_net_waiting">Waiting for connection…</string>
+    <string name="mobile_net_reconnected">Reconnected</string>
+    <string name="mobile_net_gave_up">Couldn\'t resume. Tap play to retry.</string>
 
 </resources>
