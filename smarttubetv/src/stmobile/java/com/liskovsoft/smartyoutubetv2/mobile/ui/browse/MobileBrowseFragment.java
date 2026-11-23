@@ -126,7 +126,7 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
         });
 
         int screenWidth = getResources().getDisplayMetrics().widthPixels;
-        mGridSpan = getResources().getInteger(R.integer.mobile_grid_span);
+        mGridSpan = getResources().getInteger(R.integer.mobile_feed_span);
         mGridCardWidth = screenWidth / mGridSpan;
         mShelfCardWidth = (int) (screenWidth * 0.42f);
 
@@ -446,7 +446,7 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        mGridSpan = getResources().getInteger(R.integer.mobile_grid_span);
+        mGridSpan = getResources().getInteger(R.integer.mobile_feed_span);
         mGridCardWidth = getResources().getDisplayMetrics().widthPixels / mGridSpan;
         if (mContentList != null && mContentList.getLayoutManager() instanceof GridLayoutManager) {
             ((GridLayoutManager) mContentList.getLayoutManager()).setSpanCount(mGridSpan);

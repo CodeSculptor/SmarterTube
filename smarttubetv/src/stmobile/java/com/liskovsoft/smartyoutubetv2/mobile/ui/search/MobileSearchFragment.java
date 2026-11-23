@@ -108,7 +108,7 @@ public class MobileSearchFragment extends Fragment implements SearchView {
         });
         view.findViewById(R.id.btn_voice).setOnClickListener(v -> startVoiceRecognition());
 
-        int span = getResources().getInteger(R.integer.mobile_grid_span);
+        int span = getResources().getInteger(R.integer.mobile_feed_span);
         int cardWidth = getResources().getDisplayMetrics().widthPixels / span;
         mResultsAdapter = new VideoCardAdapter(cardWidth, mVideoClick, mVideoLongClick);
         mResultsList.setLayoutManager(new GridLayoutManager(getContext(), span));
@@ -421,7 +421,7 @@ public class MobileSearchFragment extends Fragment implements SearchView {
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        int span = getResources().getInteger(R.integer.mobile_grid_span);
+        int span = getResources().getInteger(R.integer.mobile_feed_span);
         if (mResultsList != null && mResultsList.getLayoutManager() instanceof GridLayoutManager) {
             ((GridLayoutManager) mResultsList.getLayoutManager()).setSpanCount(span);
         }

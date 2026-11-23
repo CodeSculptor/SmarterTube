@@ -2,6 +2,7 @@ package com.liskovsoft.smartyoutubetv2.mobile.ui.browse;
 
 import android.content.Context;
 import android.os.Handler;
+import android.util.Log;
 import android.os.Looper;
 import android.util.LruCache;
 
@@ -136,6 +137,7 @@ final class ChannelAvatarLoader {
                 finish(context, channelId, null);
                 continue;
             }
+            Log.d("CardAvatar", "fetch key=" + channelId + " videoId=" + video.videoId);
             mRunning.add(channelId);
             Disposable[] holder = new Disposable[1];
             holder[0] = RxHelper.execute(
@@ -160,6 +162,7 @@ final class ChannelAvatarLoader {
     }
 
     private void finish(Context context, String channelId, String url) {
+        Log.d("CardAvatar", "result key=" + channelId + " url=" + url);
         mRunning.remove(channelId);
         List<Callback> list = mWaiting.remove(channelId);
         if (url == null || url.isEmpty()) {

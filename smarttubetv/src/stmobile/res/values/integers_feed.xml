@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Columns for the Home/Search feed grids only (channel grids keep mobile_grid_span). Phone portrait is a single full-width column (YouTube-style); phone landscape 2. -->
+<resources>
+    <integer name="mobile_feed_span">2</integer>
+</resources>

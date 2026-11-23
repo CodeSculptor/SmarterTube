@@ -1,6 +1,7 @@
 package com.liskovsoft.smartyoutubetv2.mobile.ui.browse;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -270,17 +271,25 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
         Context context = holder.itemView.getContext();
         String channelId = ChannelAvatarLoader.keyOf(video);
         holder.avatarChannelId = channelId;
-        if (holder.style != STYLE_VIDEO || channelId == null
+        if (holder.style != STYLE_VIDEO || channelId == null || video.videoId == null
                 || !MobileCardAvatarPrefs.isEnabled(context)) {
-            holder.avatar.setVisibility(View.GONE);
+            // Keep the slot on standard cards (channel tiles, setting off) so text columns align.
+            holder.avatar.setImageDrawable(null);
+            holder.avatar.setVisibility(holder.style == STYLE_VIDEO && MobileCardAvatarPrefs.isEnabled(context)
+                    ? View.INVISIBLE : View.GONE);
             return;
         }
         String cached = loader.peek(context, channelId);
+        Log.d("CardAvatar", "bind key=" + channelId + " video.channelId=" + video.channelId
+                + " author=" + video.getAuthor() + " cached=" + (cached != null));
         if (cached != null) {
             showAvatar(holder, channelId, cached);
             return;
         }
-        holder.avatar.setVisibility(View.GONE);
+        // Placeholder circle keeps the text from reflowing when the avatar arrives.
+        Glide.with(context).clear(holder.avatar);
+        holder.avatar.setImageResource(R.drawable.mobile_avatar_placeholder);
+        holder.avatar.setVisibility(View.VISIBLE);
         holder.avatarCallback = (id, url) -> {
             if (id.equals(holder.avatarChannelId)) {
                 showAvatar(holder, id, url);
@@ -293,7 +302,7 @@ public class VideoCardAdapter extends RecyclerView.Adapter<VideoCardAdapter.View
         Context context = holder.itemView.getContext();
         holder.avatar.setVisibility(View.VISIBLE);
         Glide.with(context).load(url).circleCrop()
-                .placeholder(R.color.mobile_thumbnail_placeholder).into(holder.avatar);
+                .placeholder(R.drawable.mobile_avatar_placeholder).into(holder.avatar);
         holder.avatar.setOnClickListener(v -> {
             String id = ChannelAvatarLoader.instance().channelIdFor(context, channelId);
             if (id != null) {
