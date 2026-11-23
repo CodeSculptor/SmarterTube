@@ -42,6 +42,7 @@ import com.liskovsoft.sharedutils.helpers.Helpers;
 import com.liskovsoft.sharedutils.rx.RxHelper;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.VideoGroup;
+import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.ChatReceiver;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.SeekBarSegment;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.controllers.SuggestionsController;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerUI;
@@ -370,6 +371,67 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         mAwaitingShortsLoop = false;
     }
 
+    // ---- Live chat (read-only) -------------------------------------------------------------
+
+    private final MobileLiveChat mLiveChat = new MobileLiveChat();
+    /** Survives the fragment being destroyed by the mini-player, so the chat can be re-attached. */
+    private static ChatReceiver sLiveChatReceiver;
+    private boolean mLiveChatEntry;
+
+    /** ChatController hands us the chat feed; the phone shows it in its own panel, not the TV overlay. */
+    @Override
+    public void setChatReceiver(ChatReceiver chatReceiver) {
+        sLiveChatReceiver = chatReceiver;
+        initPanelViews();
+        mLiveChat.bind(getActivity());
+        mLiveChat.setReceiver(chatReceiver);
+        updateLiveChatEntryLabel();
+        applyMobileLayout();
+    }
+
+    @Override
+    public void onDestroyView() {
+        mLiveChat.release();
+        if (!MiniPlayerState.isMinimised()) {
+            sLiveChatReceiver = null;
+        }
+        super.onDestroyView();
+    }
+
+    /** Where the chat shows for the current layout; called from applyMobileLayout. */
+    private void applyLiveChatLayout(boolean portraitPanel, boolean strip, boolean inPip, boolean hasVideo) {
+        mLiveChat.bind(getActivity());
+        if (!mLiveChat.isActive() && sLiveChatReceiver != null && !MiniPlayerState.isMinimised()) {
+            mLiveChat.setReceiver(sLiveChatReceiver); // re-expanded from the mini-player
+        }
+        mLiveChat.layout(portraitPanel, hasVideo && !strip && !inPip,
+                inPip || MiniPlayerState.isMinimised());
+    }
+
+    /** Live streams with chat turn the Comments card into a chat toggle; no chat + live = hide it. */
+    private void updateLiveChatEntry(MediaItemMetadata metadata) {
+        Activity activity = getActivity();
+        View card = activity != null ? activity.findViewById(R.id.mobile_video_comments_card) : null;
+        TextView title = activity != null ? activity.findViewById(R.id.mobile_video_comments_title) : null;
+        if (card == null || title == null) {
+            return;
+        }
+        boolean hasChat = metadata != null && metadata.getLiveChatKey() != null;
+        mLiveChatEntry = hasChat;
+        title.setText(hasChat ? R.string.mobile_player_live_chat : R.string.mobile_player_comments);
+        card.setVisibility(metadata != null && metadata.isLive() && !hasChat ? View.GONE : View.VISIBLE);
+        updateLiveChatEntryLabel();
+    }
+
+    private void updateLiveChatEntryLabel() {
+        Activity activity = getActivity();
+        TextView arrow = activity != null ? activity.findViewById(R.id.mobile_video_comments_arrow) : null;
+        if (arrow != null) {
+            arrow.setText(!mLiveChatEntry ? "›" : getString(mLiveChat.isActive()
+                    ? R.string.mobile_live_chat_hide : R.string.mobile_live_chat_show));
+        }
+    }
+
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
@@ -524,6 +586,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             mExactViews = null;
             mUploadDate = null;
             setDescriptionExpanded(false);
+            updateLiveChatEntry(null);
             loadAvatar(video);
         }
 
@@ -584,6 +647,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
                 (MediaItemMetadata metadata) -> {
                     if (!isAdded() || !TextUtils.equals(fetchId, mAvatarVideoId)) return;
                     if (metadata != null) {
+                        updateLiveChatEntry(metadata);
                         mExactViews = metadata.getViewCount();
                         mUploadDate = metadata.getPublishedDate();
                         refreshInfoLine(PlaybackPresenter.instance(getContext()).getVideo());
@@ -1377,6 +1441,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             mModernChrome.sync();
         }
         updateExitFullscreenButton();
+        applyLiveChatLayout(showPanel, strip, inPip, video != null);
 
         // Keyed on the 3-value state (not just the boolean) so a regular<->Shorts switch — both of
         // which are "strip" — still re-applies the new dimension ratio.

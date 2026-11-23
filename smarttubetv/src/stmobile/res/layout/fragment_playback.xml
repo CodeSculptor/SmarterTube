@@ -487,6 +487,7 @@
             android:paddingEnd="16dp">
 
             <TextView
+                android:id="@+id/mobile_video_comments_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -496,12 +497,22 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/mobile_video_comments_arrow"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="›"
                 android:textColor="#FFCCCCCC"
                 android:textSize="20sp" />
         </LinearLayout>
+
+        <!-- Read-only live chat (live streams only; shown/hidden by MobileLiveChat). -->
+        <include
+            android:id="@+id/mobile_live_chat_portrait"
+            layout="@layout/mobile_live_chat_view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="2"
+            android:visibility="gone" />
 
         <View
             android:layout_width="match_parent"
@@ -515,6 +526,18 @@
             android:layout_weight="1"
             android:paddingTop="6dp" />
     </LinearLayout>
+
+    <!-- Landscape / full-screen live chat: a translucent side overlay (MobileLiveChat). -->
+    <include
+        android:id="@+id/mobile_live_chat_landscape"
+        layout="@layout/mobile_live_chat_view"
+        android:layout_width="280dp"
+        android:layout_height="0dp"
+        android:background="#66000000"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!--
         Shorts bottom navigation bar: Home / Shorts / Subscriptions / Playlists / You.

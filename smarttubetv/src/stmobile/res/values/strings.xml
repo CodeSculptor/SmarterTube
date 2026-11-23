@@ -80,6 +80,12 @@
     <string name="mobile_player_like">Like</string>
     <string name="mobile_player_dislike">Dislike</string>
     <string name="mobile_player_comments">Comments</string>
+    <string name="mobile_player_live_chat">Live chat</string>
+    <string name="mobile_live_chat_waiting">Waiting for chat messages…</string>
+    <string name="mobile_live_chat_show">Show</string>
+    <string name="mobile_live_chat_hide">Hide</string>
+    <string name="mobile_live_chat_jump">Jump to latest</string>
+    <string name="mobile_live_chat_jump_count">%1$d new messages ↓</string>
     <string name="mobile_player_save">Save to playlist</string>
     <string name="mobile_player_share">Share</string>
     <string name="mobile_share_link_start_at">Share link (start at %1$s)</string>
