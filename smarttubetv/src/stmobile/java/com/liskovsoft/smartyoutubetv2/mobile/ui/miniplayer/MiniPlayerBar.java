@@ -121,6 +121,7 @@ public final class MiniPlayerBar {
     private void expand() {
         // The player task is brought forward; the player clears the minimised flag when it resumes.
         ViewManager.instance(mActivity).startView(PlaybackView.class);
+        MiniPlayerTransitions.fade(mActivity, true);
     }
 
     private void togglePlayback() {

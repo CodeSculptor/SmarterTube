@@ -23,6 +23,7 @@ import com.liskovsoft.smartyoutubetv2.mobile.ui.base.ImmersiveBars;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.miniplayer.MiniPlayerPolicy;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.miniplayer.MiniPlayerState;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.miniplayer.MiniPlayerTasks;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.miniplayer.MiniPlayerTransitions;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobilePlayerStylePrefs;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.PlaybackActivity;
@@ -177,6 +178,7 @@ public class MobilePlaybackActivity extends PlaybackActivity {
         if (!moved) {
             getViewManager().startView(BrowseView.class);
         }
+        MiniPlayerTransitions.fade(this, false);
     }
 
     @Override
