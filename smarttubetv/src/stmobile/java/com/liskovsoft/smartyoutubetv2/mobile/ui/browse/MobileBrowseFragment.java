@@ -128,7 +128,7 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
         int screenWidth = getResources().getDisplayMetrics().widthPixels;
         mGridSpan = getResources().getInteger(R.integer.mobile_feed_span);
         mGridCardWidth = screenWidth / mGridSpan;
-        mShelfCardWidth = (int) (screenWidth * 0.42f);
+        mShelfCardWidth = screenWidth * getResources().getInteger(R.integer.mobile_shelf_card_percent) / 100;
 
         mSectionAdapter = new SectionAdapter(this::onSectionPicked);
         RecyclerView sectionList = view.findViewById(R.id.section_list);
@@ -453,6 +453,11 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
         }
         if (mGridAdapter != null) {
             mGridAdapter.setCardWidth(mGridCardWidth);
+        }
+        mShelfCardWidth = getResources().getDisplayMetrics().widthPixels
+                * getResources().getInteger(R.integer.mobile_shelf_card_percent) / 100;
+        if (mShelfAdapter != null) {
+            mShelfAdapter.setCardWidth(mShelfCardWidth);
         }
     }
 

@@ -30,7 +30,7 @@ public class ShelfAdapter extends RecyclerView.Adapter<ShelfAdapter.ViewHolder> 
         void onShelfScrollEnd(Video lastVideo);
     }
 
-    private final int mCardWidth;
+    private int mCardWidth;
     private final VideoCardAdapter.OnVideoAction mClick;
     private final VideoCardAdapter.OnVideoAction mLongClick;
     private final OnShelfScrollEnd mScrollEnd;
@@ -86,6 +86,14 @@ public class ShelfAdapter extends RecyclerView.Adapter<ShelfAdapter.ViewHolder> 
             mAdapters.add(adapter);
             mGroups.add(group);
             notifyItemInserted(mAdapters.size() - 1);
+        }
+    }
+
+    /** Resize every shelf's cards (rotation changes the screen width the cards are a share of). */
+    public void setCardWidth(int cardWidth) {
+        mCardWidth = cardWidth;
+        for (VideoCardAdapter adapter : mAdapters) {
+            adapter.setCardWidth(cardWidth);
         }
     }
 

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Width of a Home shelf card as % of screen width. Phone portrait ~66% (1.5 cards visible, next one peeks) so title and stats fit beside the avatar; landscape / tablets use smaller values since the screen is wider. -->
+<resources>
+    <integer name="mobile_shelf_card_percent">66</integer>
+</resources>
