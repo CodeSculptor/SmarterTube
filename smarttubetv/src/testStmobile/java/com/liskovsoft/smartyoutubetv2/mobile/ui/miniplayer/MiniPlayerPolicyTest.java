@@ -6,32 +6,37 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public class MiniPlayerPolicyTest {
-    // enabled, hasVideo, isShorts, inPip, pipBackgroundMode, engineInitialized
+    // enabled, hasVideo, isShorts, inPip, engineInitialized
     @Test
     public void minimisesRegularVideo() {
-        assertTrue(MiniPlayerPolicy.shouldMinimise(true, true, false, false, false, true));
+        assertTrue(MiniPlayerPolicy.shouldMinimise(true, true, false, false, true));
     }
 
     @Test
     public void settingOffKeepsOldBack() {
-        assertFalse(MiniPlayerPolicy.shouldMinimise(false, true, false, false, false, true));
+        assertFalse(MiniPlayerPolicy.shouldMinimise(false, true, false, false, true));
     }
 
     @Test
     public void shortsAreNotMinimised() {
-        assertFalse(MiniPlayerPolicy.shouldMinimise(true, true, true, false, false, true));
+        assertFalse(MiniPlayerPolicy.shouldMinimise(true, true, true, false, true));
     }
 
     @Test
-    public void pipKeepsItsOwnBack() {
-        assertFalse(MiniPlayerPolicy.shouldMinimise(true, true, false, true, false, true));
-        assertFalse(MiniPlayerPolicy.shouldMinimise(true, true, false, false, true, true));
+    public void alreadyInPipWindowKeepsItsOwnBack() {
+        assertFalse(MiniPlayerPolicy.shouldMinimise(true, true, false, true, true));
+    }
+
+    @Test
+    public void pipBackgroundModeDoesNotVeto() {
+        // Background mode = PiP is not an input any more: the call below is the PiP-mode case.
+        assertTrue(MiniPlayerPolicy.shouldMinimise(true, true, false, false, true));
     }
 
     @Test
     public void needsVideoAndLiveEngine() {
-        assertFalse(MiniPlayerPolicy.shouldMinimise(true, false, false, false, false, true));
-        assertFalse(MiniPlayerPolicy.shouldMinimise(true, true, false, false, false, false));
+        assertFalse(MiniPlayerPolicy.shouldMinimise(true, false, false, false, true));
+        assertFalse(MiniPlayerPolicy.shouldMinimise(true, true, false, false, false));
     }
 
     @Test

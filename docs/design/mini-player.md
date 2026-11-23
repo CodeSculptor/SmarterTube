@@ -92,7 +92,7 @@ cost; if the spike shows one is unavoidable I will stop and ask rather than make
 ## 5. Behaviour spec
 
 - **Back in player** (portrait or landscape, regular video, Mini-player on, background mode ≠ PiP):
-  minimise; playback continues. Background mode = PiP keeps today's PiP-on-Back.
+  minimise; playback continues. Owner decision (2026-11-23): the mini-player takes precedence over Background mode = PiP for Back; PiP is still entered via the Home key / leave hint as before. Only an already-open PiP window, Shorts, or the setting being off keep the old Back.
 - **Shorts:** Back closes as today (no bar). A Short opened while a bar is up replaces the
   minimised video (new intent, normal path).
 - **Bar visible on** Home, Search, Channel, Channel uploads while a video is loaded and the engine
@@ -301,5 +301,5 @@ Setup: Settings > Mini-player = On (default). Background mode = default (Sound),
     the minimised video; Back closes.
 14. Settings > Mini-player > Off: Back from a video closes it and returns to the previous screen
     (Home or the Channel it came from) as before, no bar.
-15. Background mode = PiP: Back enters PiP as before (no bar).
+15. Background mode = PiP: Back minimises to the bar (mini-player wins); pressing the Home key from the expanded player still enters PiP. With Mini-player Off, Back enters PiP as before.
 16. Android 7 AVD (Phone_API24): steps 1, 3, 8.

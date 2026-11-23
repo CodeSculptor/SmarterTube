@@ -116,8 +116,8 @@ public class MobilePlaybackActivity extends PlaybackActivity {
     private void handleBack(String source) {
         boolean pipMode = getPlayerData().getBackgroundMode() == PlayerData.BACKGROUND_MODE_PIP;
         boolean inPip = isInPipMode();
-        if (inPip || pipMode) {
-            Log.d(TAG_MINI, "Back(" + source + "): PiP path inPip=" + inPip + " bgModePip=" + pipMode);
+        if (inPip) {
+            Log.d(TAG_MINI, "Back(" + source + "): already in PiP window -> base");
             // The base class must run without this callback re-entering handleBack().
             mBackCallback.setEnabled(false);
             try {
@@ -134,7 +134,19 @@ public class MobilePlaybackActivity extends PlaybackActivity {
         boolean hasVideo = video != null;
         boolean shorts = video != null && video.isShorts;
         boolean engine = presenter.isEngineInitialized();
-        boolean minimise = MiniPlayerPolicy.shouldMinimise(enabled, hasVideo, shorts, false, false, engine);
+        boolean minimise = MiniPlayerPolicy.shouldMinimise(enabled, hasVideo, shorts, false, engine);
+        if (!minimise && pipMode && !shorts) {
+            // Mini-player off (or no live engine) with Background mode = PiP: the base class
+            // enters PiP on Back, as it always did.
+            Log.d(TAG_MINI, "Back(" + source + "): enabled=" + enabled + " bgModePip -> base (PiP)");
+            mBackCallback.setEnabled(false);
+            try {
+                super.onBackPressed();
+            } finally {
+                mBackCallback.setEnabled(true);
+            }
+            return;
+        }
         Log.d(TAG_MINI, "Back(" + source + "): enabled=" + enabled + " hasVideo=" + hasVideo
                 + " shorts=" + shorts + " engineInit=" + engine + " bgMode="
                 + getPlayerData().getBackgroundMode() + " -> " + (minimise ? "minimise" : "finishReally"));
