@@ -50,4 +50,16 @@ public class VerticalFullscreenPolicyTest {
         assertFalse(VerticalFullscreenPolicy.stillValid(true, true, false, false));
         assertFalse(VerticalFullscreenPolicy.stillValid(false, true, false, true));
     }
+
+    @Test public void formatSizeWinsOverStaleCallback() {
+        // callback wiped to 0x0, format knows it is vertical
+        assertTrue(VerticalFullscreenPolicy.isVertical(1080, 1920, 0, 0));
+        // stale vertical callback, format says landscape
+        assertFalse(VerticalFullscreenPolicy.isVertical(1920, 1080, 1080, 1920));
+    }
+
+    @Test public void callbackUsedWhenFormatUnknown() {
+        assertTrue(VerticalFullscreenPolicy.isVertical(0, 0, 1080, 1920));
+        assertFalse(VerticalFullscreenPolicy.isVertical(0, 0, 0, 0));
+    }
 }

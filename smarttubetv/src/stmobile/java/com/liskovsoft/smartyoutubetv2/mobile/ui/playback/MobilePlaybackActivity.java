@@ -394,8 +394,12 @@ public class MobilePlaybackActivity extends PlaybackActivity {
         boolean portrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
         if (mMobileFragment != null) {
             // Vertical video: upright full-screen instead of landscape bars (and back again).
-            switch (VerticalFullscreenPolicy.onFullscreenButton(portrait,
-                    mMobileFragment.isVideoVertical(), mMobileFragment.isUprightFullscreen())) {
+            boolean vertical = mMobileFragment.isVideoVertical();
+            VerticalFullscreenPolicy.Action action = VerticalFullscreenPolicy.onFullscreenButton(portrait,
+                    vertical, mMobileFragment.isUprightFullscreen());
+            Log.d("VerticalFs", "fullscreen tap: " + mMobileFragment.videoSizeDebug() + " vertical=" + vertical
+                    + " portrait=" + portrait + " -> " + action);
+            switch (action) {
                 case ENTER_PORTRAIT_FULL:
                     mMobileFragment.setUprightFullscreen(true);
                     return;

@@ -14,6 +14,17 @@ final class VerticalFullscreenPolicy {
         return width > 0 && height > 0 && height * 100L >= width * 110L;
     }
 
+    /**
+     * Pick the frame size to judge by: the player's selected video format (read on demand, cannot
+     * be wiped by callback ordering) when it has a size, else the last size callback.
+     */
+    static boolean isVertical(int formatW, int formatH, int callbackW, int callbackH) {
+        if (formatW > 0 && formatH > 0) {
+            return isVertical(formatW, formatH);
+        }
+        return isVertical(callbackW, callbackH);
+    }
+
     static Action onFullscreenButton(boolean screenPortrait, boolean videoVertical, boolean inPortraitFull) {
         if (!screenPortrait) {
             return Action.EXIT_LANDSCAPE;

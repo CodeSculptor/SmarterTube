@@ -1,5 +1,6 @@
 package com.liskovsoft.smartyoutubetv2.mobile.ui.playback;
 
+import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.FormatItem;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
@@ -104,6 +105,8 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     private boolean mUprightFullscreen;
     private int mVideoWidth;
     private int mVideoHeight;
+    private int mLastFormatW;
+    private int mLastFormatH;
     /** Applied layout: 0 = full-screen, 1 = regular 16:9 strip, 2 = Shorts 9:16 strip. */
     private int mLayoutState;
     /** Shorts strip sized from the available height and centred (wide portrait screens, #30). */
@@ -398,7 +401,27 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     }
 
     public boolean isVideoVertical() {
-        return VerticalFullscreenPolicy.isVertical(mVideoWidth, mVideoHeight);
+        int fw = 0;
+        int fh = 0;
+        try {
+            // On-demand size from the player's selected format: unlike the cached callback size,
+            // a setVideo()/glue-rebuild ordering can't wipe it.
+            FormatItem format = getVideoFormat();
+            if (format != null) {
+                fw = format.getWidth();
+                fh = format.getHeight();
+            }
+        } catch (RuntimeException ignored) {
+            // engine not ready: fall back to the callback size
+        }
+        mLastFormatW = fw;
+        mLastFormatH = fh;
+        return VerticalFullscreenPolicy.isVertical(fw, fh, mVideoWidth, mVideoHeight);
+    }
+
+    /** For the fullscreen-tap debug log. */
+    public String videoSizeDebug() {
+        return "format=" + mLastFormatW + "x" + mLastFormatH + " callback=" + mVideoWidth + "x" + mVideoHeight;
     }
 
     public boolean isUprightFullscreen() {
