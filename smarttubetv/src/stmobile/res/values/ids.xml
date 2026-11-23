@@ -2,6 +2,8 @@
 <resources>
     <!-- Modern player sheet row that opens the app's Settings screen. -->
     <item name="action_mobile_app_settings" type="id" />
+    <item name="action_mobile_audio_track" type="id" />
+    <item name="action_mobile_audio_track_item" type="id" />
     <!-- Modern player sheet row that opens the second level of rarely used actions. -->
     <item name="action_mobile_more" type="id" />
     <!-- Back row at the top of the player sheet's "More" list. -->

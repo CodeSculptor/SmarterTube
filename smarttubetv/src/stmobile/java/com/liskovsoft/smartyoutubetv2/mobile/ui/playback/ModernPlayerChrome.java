@@ -26,7 +26,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerUI;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.SeekBarSegment;
+import android.text.TextUtils;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
+import com.liskovsoft.smartyoutubetv2.common.app.views.PlaybackView;
+import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.FormatItem;
+import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.track.SubtitleTrack;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.other.VideoPlayerGlue;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.previewtimebar.StoryboardManager;
@@ -429,6 +433,9 @@ final class ModernPlayerChrome {
         Action subtitles = new Action(R.id.lb_control_closed_captioning, mActivity.getString(R.string.subtitle_category_title));
         subtitles.setIcon(mCc.getDrawable());
         actions.add(subtitles);
+        if (audioTrackChoices().size() > 1) { // dubbed / multi-language audio only
+            actions.add(new Action(R.id.action_mobile_audio_track, mActivity.getString(R.string.mobile_player_audio_track)));
+        }
         List<Action> more = new ArrayList<>();
         for (Action action : rowActions()) {
             // AFR is a TV feature; the video actions have the landscape "..." button (portrait: the panel).
@@ -451,6 +458,67 @@ final class ModernPlayerChrome {
         mSheetTitle.setText(R.string.mobile_player_settings);
         mSheetList.setAdapter(new ActionAdapter(actions));
         showSheet(Math.min(actions.size() * dp(SHEET_ROW_HEIGHT_DP), maxSheetListHeight()));
+    }
+
+    /** One entry per audio language of the current video (best-sorted track of each), selected one flagged. */
+    private List<FormatItem> audioTrackChoices() {
+        List<FormatItem> result = new ArrayList<>();
+        PlaybackView player = PlaybackPresenter.instance(mActivity).getPlayer();
+        List<FormatItem> formats = player != null && player.isEngineInitialized() ? player.getAudioFormats() : null;
+        if (formats == null) {
+            return result;
+        }
+        List<String> seen = new ArrayList<>();
+        for (FormatItem format : formats) {
+            if (format == null || format.getFormatId() == null) { // skips the fake "disabled" entry
+                continue;
+            }
+            String key = SubtitleTrack.trim(format.getLanguage());
+            key = key == null ? "" : key;
+            if (!seen.contains(key)) {
+                seen.add(key);
+                result.add(format);
+            }
+        }
+        return result;
+    }
+
+    private void openAudioTrackSheet() {
+        PlaybackView player = PlaybackPresenter.instance(mActivity).getPlayer();
+        FormatItem current = player != null ? player.getAudioFormat() : null;
+        String currentKey = current != null && current.getLanguage() != null ? SubtitleTrack.trim(current.getLanguage()) : "";
+        List<Action> rows = new ArrayList<>();
+        rows.add(new Action(R.id.action_mobile_back, mActivity.getString(R.string.mobile_player_back_to_settings)));
+        for (FormatItem format : audioTrackChoices()) {
+            String language = SubtitleTrack.trim(format.getLanguage());
+            String name = TextUtils.isEmpty(language) ? mActivity.getString(R.string.original_lang) : language;
+            boolean selected = (language == null ? "" : language).equals(currentKey);
+            rows.add(new AudioTrackAction(format, selected ? "✓  " + name : name));
+        }
+        mSheetTitle.setText(R.string.mobile_player_audio_track);
+        mSheetList.setAdapter(new ActionAdapter(rows));
+        showSheet(Math.min(rows.size() * dp(SHEET_ROW_HEIGHT_DP), maxSheetListHeight()));
+    }
+
+    /** Applies for this video only; the persisted audio preference (Video settings) is left alone. */
+    private void applyAudioTrack(FormatItem format) {
+        PlaybackView player = PlaybackPresenter.instance(mActivity).getPlayer();
+        if (player == null) {
+            return;
+        }
+        player.setFormat(format);
+        if (!player.containsMedia()) {
+            player.reloadPlayback();
+        }
+    }
+
+    private static final class AudioTrackAction extends Action {
+        final FormatItem format;
+
+        AudioTrackAction(FormatItem format, String label) {
+            super(R.id.action_mobile_audio_track_item, label);
+            this.format = format;
+        }
     }
 
     /** The landscape "..." button: things to do with this video, as opposed to the gear's player settings. */
@@ -673,6 +741,15 @@ final class ModernPlayerChrome {
                 }
                 if (action.getId() == R.id.action_mobile_more) {
                     openMoreSheet(); // swap the list in place
+                    return;
+                }
+                if (action.getId() == R.id.action_mobile_audio_track) {
+                    openAudioTrackSheet();
+                    return;
+                }
+                if (action instanceof AudioTrackAction) {
+                    closeSheet();
+                    applyAudioTrack(((AudioTrackAction) action).format);
                     return;
                 }
                 closeSheet();
