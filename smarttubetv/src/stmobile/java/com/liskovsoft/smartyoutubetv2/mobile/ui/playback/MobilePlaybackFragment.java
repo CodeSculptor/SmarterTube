@@ -213,6 +213,8 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     // Swipe gestures in the landscape player (#48): volume right, brightness left.
     private SwipeGestures mSwipe;
     private boolean mSwipeEnabled;
+    private boolean mHoldSpeedEnabled = true;
+    private HoldSpeed mHoldSpeed;
     // Pinch to zoom in the landscape player (#85): fit <-> fill via the player's resize mode.
     private PinchZoom mPinch;
     // Set once a pinch changed the resize mode, so leaving the landscape player puts the saved one back.
@@ -250,6 +252,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         // The player style may have changed in Settings while we were away (#46).
         mStyle = MobilePlayerStylePrefs.getStyle(requireContext());
         mSwipeEnabled = MobilePlayerStylePrefs.isSwipeGesturesEnabled(requireContext());
+        mHoldSpeedEnabled = MobilePlayerStylePrefs.isHoldSpeedEnabled(requireContext());
         applyMobileLayout();
         if (mModernChrome != null) mModernChrome.start();
         updateSettingsButton();
@@ -329,6 +332,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         mChromeHandler.removeCallbacks(mShortsLoopPoll);
         mChromeHandler.removeCallbacks(mShortsLoopTimeout);
         if (mModernChrome != null) mModernChrome.stop();
+        if (mHoldSpeed != null) mHoldSpeed.release();
         mAwaitingShortsFrame = false;
         mAwaitingShortsLoop = false;
     }
@@ -881,6 +885,13 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             return mModernChrome.handleSheetTouch(event);
         }
 
+        // Press and hold: 2x while held. Watches first; once it fires it owns the gesture.
+        if (mHoldSpeed != null && mLayoutState != 2 && !mReplayingTouch
+                && mHoldSpeed.handle(event, event.getActionMasked() == MotionEvent.ACTION_DOWN
+                        && holdSpeedCanStart(event, playerView))) {
+            return true;
+        }
+
         // Shorts: all touch is managed here (drag pager + tap-to-toggle).
         if (mLayoutState == 2) {
             return handleShortsTouchEvent(event);
@@ -1011,6 +1022,21 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         requireActivity().getWindow().superDispatchTouchEvent(cancel);
         cancel.recycle();
     }
+
+    /** A hold may start on the video itself, not on a visible control. */
+    private boolean holdSpeedCanStart(MotionEvent down, View playerView) {
+        boolean onVideo = down.getY() <= playerView.getBottom()
+                && !(isOverlayShown() && hitsPlayerControl(requireActivity().getWindow().getDecorView(),
+                        down.getRawX(), down.getRawY(), playerView.getWidth() * playerView.getHeight() / 2));
+        return HoldSpeedPolicy.canWatch(mHoldSpeedEnabled, mLayoutState == 2, isInPipMode(),
+                getPlayWhenReady(), onVideo);
+    }
+
+    private final HoldSpeed.Host mHoldSpeedHost = new HoldSpeed.Host() {
+        @Override public float getSpeed() { return MobilePlaybackFragment.this.getSpeed(); }
+        @Override public void setSpeed(float speed) { MobilePlaybackFragment.this.setSpeed(speed); }
+        @Override public void onHoldStarted(MotionEvent down) { cancelForPinch(down); }
+    };
 
     /** PinchZoom's target: the video view (the aspect-ratio frame holding the surface). */
     private final PinchZoom.Target mPinchTarget = () -> getView() != null ? getView().findViewById(R.id.surface_root) : null;
@@ -2375,6 +2401,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         initTapDetector(activity);
         mSwipe = SwipeGestures.create(activity);
         mPinch = PinchZoom.create(activity, mPinchTarget);
+        mHoldSpeed = HoldSpeed.create(activity, mHoldSpeedHost);
         initCutoutGuard(activity);
 
         return true;

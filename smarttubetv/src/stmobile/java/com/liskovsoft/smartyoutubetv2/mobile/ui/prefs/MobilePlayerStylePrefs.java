@@ -22,6 +22,7 @@ public final class MobilePlayerStylePrefs {
     private static final String KEY_SWIPE_GESTURES = "swipe_gestures";
     private static final String KEY_SWIPE_BRIGHTNESS = "swipe_brightness";
     private static final String KEY_MINI_PLAYER = "mini_player";
+    private static final String KEY_HOLD_SPEED = "hold_speed";
 
     public enum Style {
         CLASSIC, MODERN, TAP_TO_PAUSE;
@@ -79,6 +80,15 @@ public final class MobilePlayerStylePrefs {
 
     public static void setBrightnessSwipeEnabled(Context context, boolean enabled) {
         prefs(context).edit().putBoolean(KEY_SWIPE_BRIGHTNESS, enabled).apply();
+    }
+
+    /** Press and hold the video to play at 2x while held. On by default. */
+    public static boolean isHoldSpeedEnabled(Context context) {
+        return prefs(context).getBoolean(KEY_HOLD_SPEED, true);
+    }
+
+    public static void setHoldSpeedEnabled(Context context, boolean enabled) {
+        prefs(context).edit().putBoolean(KEY_HOLD_SPEED, enabled).apply();
     }
 
     /** Mini-player (#96): Back minimises the video to a bar instead of closing it. On by default. */

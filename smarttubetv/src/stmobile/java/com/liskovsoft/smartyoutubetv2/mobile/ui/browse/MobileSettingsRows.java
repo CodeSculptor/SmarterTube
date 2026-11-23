@@ -67,6 +67,10 @@ final class MobileSettingsRows {
                     () -> showSwipeGesturesToggle(context),
                     R.drawable.settings_swipe_gestures));
             items.add(new SettingsItem(
+                    context.getString(R.string.mobile_hold_speed_title),
+                    () -> showHoldSpeedToggle(context),
+                    R.drawable.settings_swipe_gestures));
+            items.add(new SettingsItem(
                     context.getString(R.string.mobile_mini_player_title),
                     () -> showMiniPlayerToggle(context),
                     R.drawable.settings_player_style));
@@ -188,6 +192,22 @@ final class MobileSettingsRows {
                     if (which != 2) {
                         MobilePlayerStylePrefs.setBrightnessSwipeEnabled(context, which == 0);
                     }
+                    dialog.dismiss();
+                })
+                .show();
+    }
+
+    /** Phone-only "Hold for 2x" on/off; the player reads it when it resumes. */
+    private static void showHoldSpeedToggle(Activity context) {
+        String[] labels = {
+                context.getString(R.string.mobile_hold_speed_on),
+                context.getString(R.string.mobile_hold_speed_off),
+        };
+        int checked = MobilePlayerStylePrefs.isHoldSpeedEnabled(context) ? 0 : 1;
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.mobile_hold_speed_title)
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    MobilePlayerStylePrefs.setHoldSpeedEnabled(context, which == 0);
                     dialog.dismiss();
                 })
                 .show();
