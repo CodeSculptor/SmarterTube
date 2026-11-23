@@ -5,11 +5,13 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.OrientationEventListener;
 import android.view.View;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 
@@ -62,6 +64,7 @@ public class MobilePlaybackActivity extends PlaybackActivity {
 
         applyOrientationForCurrentVideo();
         watchSystemBars();
+        registerBackCallback();
     }
 
     @Override
@@ -89,24 +92,61 @@ public class MobilePlaybackActivity extends PlaybackActivity {
      */
     @Override
     public void onBackPressed() {
+        handleBack("onBackPressed");
+    }
+
+    /**
+     * Back can arrive two ways: the legacy {@link #onBackPressed()}, or (predictive back, target
+     * SDK 33+/Android 14+) the AndroidX dispatcher, which does NOT call a subclass's
+     * onBackPressed override — it runs enabled callbacks and otherwise falls back to the
+     * platform's own onBackPressed. Registering a callback makes both routes share this logic.
+     */
+    private void registerBackCallback() {
+        mBackCallback = new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                handleBack("dispatcher");
+            }
+        };
+        getOnBackPressedDispatcher().addCallback(this, mBackCallback);
+    }
+
+    private OnBackPressedCallback mBackCallback;
+
+    private void handleBack(String source) {
         boolean pipMode = getPlayerData().getBackgroundMode() == PlayerData.BACKGROUND_MODE_PIP;
-        if (isInPipMode() || pipMode) {
-            super.onBackPressed();
+        boolean inPip = isInPipMode();
+        if (inPip || pipMode) {
+            Log.d(TAG_MINI, "Back(" + source + "): PiP path inPip=" + inPip + " bgModePip=" + pipMode);
+            // The base class must run without this callback re-entering handleBack().
+            mBackCallback.setEnabled(false);
+            try {
+                super.onBackPressed();
+            } finally {
+                mBackCallback.setEnabled(true);
+            }
             return;
         }
 
-        Video video = PlaybackPresenter.instance(this).getVideo();
-        if (MiniPlayerPolicy.shouldMinimise(
-                MobilePlayerStylePrefs.isMiniPlayerEnabled(this),
-                video != null, video != null && video.isShorts,
-                false, false,
-                PlaybackPresenter.instance(this).isEngineInitialized())) {
+        PlaybackPresenter presenter = PlaybackPresenter.instance(this);
+        Video video = presenter.getVideo();
+        boolean enabled = MobilePlayerStylePrefs.isMiniPlayerEnabled(this);
+        boolean hasVideo = video != null;
+        boolean shorts = video != null && video.isShorts;
+        boolean engine = presenter.isEngineInitialized();
+        boolean minimise = MiniPlayerPolicy.shouldMinimise(enabled, hasVideo, shorts, false, false, engine);
+        Log.d(TAG_MINI, "Back(" + source + "): enabled=" + enabled + " hasVideo=" + hasVideo
+                + " shorts=" + shorts + " engineInit=" + engine + " bgMode="
+                + getPlayerData().getBackgroundMode() + " -> " + (minimise ? "minimise" : "finishReally"));
+        if (minimise) {
             minimise();
             return;
         }
 
         finishReally();
     }
+
+    private static final String TAG_MINI = "MiniPlayer";
 
     /**
      * Mini-player (#96): park this player (it stays alive in its own task, engine blocked as for
@@ -119,9 +159,26 @@ public class MobilePlaybackActivity extends PlaybackActivity {
             mMobileFragment.blockEngine(true);
         }
         getViewManager().removeTop(this);
-        if (!MiniPlayerTasks.bringBrowseForward(this)) {
+        boolean moved = MiniPlayerTasks.bringBrowseForward(this);
+        Log.d(TAG_MINI, "minimise(): fragment=" + (mMobileFragment != null) + " browseTaskMoved=" + moved
+                + (moved ? "" : " -> starting Home"));
+        if (!moved) {
             getViewManager().startView(BrowseView.class);
         }
+    }
+
+    @Override
+    protected void onStop() {
+        Log.d(TAG_MINI, "player onStop: minimised=" + MiniPlayerState.isMinimised() + " finishing="
+                + isFinishing() + " engineBlocked=" + PlaybackPresenter.instance(this).isEngineBlocked()
+                + " engineInit=" + PlaybackPresenter.instance(this).isEngineInitialized());
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.d(TAG_MINI, "player onDestroy: minimised=" + MiniPlayerState.isMinimised() + " finishing=" + isFinishing());
+        super.onDestroy();
     }
 
     /**
@@ -146,6 +203,7 @@ public class MobilePlaybackActivity extends PlaybackActivity {
      */
     @Override
     public void finishReally() {
+        Log.d(TAG_MINI, "finishReally(): browseTask=" + MiniPlayerTasks.hasBrowseTask(this));
         MiniPlayerState.setMinimised(false);
         mFinishingForReal = MiniPlayerTasks.hasBrowseTask(this);
         super.finishReally();

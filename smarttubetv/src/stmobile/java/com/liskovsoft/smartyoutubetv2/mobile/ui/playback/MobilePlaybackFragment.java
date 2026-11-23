@@ -49,6 +49,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.ChannelPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
 import com.liskovsoft.smartyoutubetv2.mobile.notifications.MediaNotificationService;
+import com.liskovsoft.smartyoutubetv2.mobile.ui.miniplayer.MiniPlayerState;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.utils.AppDialogUtil;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.base.CutoutGuard;
@@ -293,6 +294,29 @@ public class MobilePlaybackFragment extends PlaybackFragment {
             // Session released: drop the notification rather than leave a dead, control-less card.
             MediaNotificationService.stop(ctx);
         }
+    }
+
+    /** Mini-player (#96): log engine blocking so a failed minimise can be read from logcat. */
+    @Override
+    public void blockEngine(boolean block) {
+        super.blockEngine(block);
+        android.util.Log.d("MiniPlayer", "blockEngine(" + block + ") minimised="
+                + MiniPlayerState.isMinimised());
+    }
+
+    /**
+     * Mini-player (#96): never release the engine while the player is minimised, whatever the
+     * block flag says (the flag is cleared by several unrelated resume paths).
+     */
+    @Override
+    public void maybeReleasePlayer() {
+        boolean minimised = MiniPlayerState.isMinimised();
+        android.util.Log.d("MiniPlayer", "maybeReleasePlayer(): minimised=" + minimised
+                + " blocked=" + isEngineBlocked() + (minimised ? " -> kept" : ""));
+        if (minimised) {
+            return;
+        }
+        super.maybeReleasePlayer();
     }
 
     @Override
