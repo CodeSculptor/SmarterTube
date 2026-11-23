@@ -129,6 +129,11 @@ public class MobilePlaybackActivity extends PlaybackActivity {
             return;
         }
 
+        if (mMobileFragment != null && mMobileFragment.isUprightFullscreen()) {
+            mMobileFragment.setUprightFullscreen(false); // Back leaves upright full-screen first
+            return;
+        }
+
         PlaybackPresenter presenter = PlaybackPresenter.instance(this);
         Video video = presenter.getVideo();
         boolean enabled = MobilePlayerStylePrefs.isMiniPlayerEnabled(this);
@@ -387,6 +392,20 @@ public class MobilePlaybackActivity extends PlaybackActivity {
      */
     public void toggleFullscreen() {
         boolean portrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
+        if (mMobileFragment != null) {
+            // Vertical video: upright full-screen instead of landscape bars (and back again).
+            switch (VerticalFullscreenPolicy.onFullscreenButton(portrait,
+                    mMobileFragment.isVideoVertical(), mMobileFragment.isUprightFullscreen())) {
+                case ENTER_PORTRAIT_FULL:
+                    mMobileFragment.setUprightFullscreen(true);
+                    return;
+                case EXIT_PORTRAIT_FULL:
+                    mMobileFragment.setUprightFullscreen(false);
+                    return;
+                default:
+                    break;
+            }
+        }
         mForcedOrientation = portrait
                 ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                 : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;

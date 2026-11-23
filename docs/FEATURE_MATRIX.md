@@ -101,6 +101,7 @@ explicitly re-tested as provisional and confirm against the release checklist be
 |---|---|---|
 | Phone portrait | Works | Primary target |
 | Phone landscape | Works | #25 audit (v0.6.0-beta.1): only the player and its sheets/dialogs rotate on phones; browse, search, channel and settings are portrait-locked by design. Landscape player, controls and settings sheets verified on device (#29 fixed) |
+| Vertical video full-screen | Works | A normal (non-Shorts) vertical video goes full-screen upright from portrait: the strip and panel drop away and the picture fills the screen, no landscape bars. Button again or Back returns to the strip; rotating the phone ends it. Unknown frame size or a normal video keeps the old landscape behaviour; Shorts unchanged. Test script: [design/vertical-fullscreen-test-script.md](design/vertical-fullscreen-test-script.md). IMPLEMENTED-UNVERIFIED |
 | Tablet portrait | Works | #25 audit on a 1536x2048 sw768dp emulator (API 36): Home rows, side menu, search grid (3 columns), channel page + tabs, settings, portrait player strip + up-next, Shorts (fitted, #30). Light-theme side-menu icons fixed (tinted to the text colour) |
 | Tablet landscape | Works | #25 audit (same emulator): Home rows, side menu (scrolls), search, channel, settings, full-screen player + settings sheet (#29 fixed). Channel grid re-flows to 4 columns on rotation, like Home (fixed) |
 | TV / leanback interface | Not applicable | Phone/tablet product; use upstream SmartTube for TV |

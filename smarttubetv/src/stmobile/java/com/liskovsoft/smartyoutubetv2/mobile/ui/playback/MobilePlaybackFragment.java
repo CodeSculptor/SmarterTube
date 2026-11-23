@@ -100,6 +100,10 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     private RecyclerView mUpNextList;
     private UpNextRowAdapter mUpNextAdapter;
     private boolean mStripMode;
+    // Vertical-video upright full-screen (VerticalFullscreenPolicy): portrait without the strip.
+    private boolean mUprightFullscreen;
+    private int mVideoWidth;
+    private int mVideoHeight;
     /** Applied layout: 0 = full-screen, 1 = regular 16:9 strip, 2 = Shorts 9:16 strip. */
     private int mLayoutState;
     /** Shorts strip sized from the available height and centred (wide portrait screens, #30). */
@@ -351,6 +355,11 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     @Override
     protected void onVideoSizeChanged(int width, int height) {
         super.onVideoSizeChanged(width, height);
+        mVideoWidth = width;
+        mVideoHeight = height;
+        if (mUprightFullscreen && !isVideoVertical()) {
+            setUprightFullscreen(false);
+        }
 
         Video video = PlaybackPresenter.instance(getContext()).getVideo();
         if (video != null && video.isShorts && width > height) {
@@ -388,9 +397,27 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         applyMobileLayout();
     }
 
+    public boolean isVideoVertical() {
+        return VerticalFullscreenPolicy.isVertical(mVideoWidth, mVideoHeight);
+    }
+
+    public boolean isUprightFullscreen() {
+        return mUprightFullscreen;
+    }
+
+    public void setUprightFullscreen(boolean on) {
+        if (mUprightFullscreen != on) {
+            mUprightFullscreen = on;
+            applyMobileLayout();
+        }
+    }
+
     @Override
     public void setVideo(Video video) {
         super.setVideo(video);
+        mVideoWidth = 0; // new video: size unknown until its first frame size arrives
+        mVideoHeight = 0;
+        mUprightFullscreen = false;
 
         // Drop the aspect ratio left over from the previous video (see setAspectRatio): a Short
         // follows its own frame size, a regular video goes back to the user's setting.
@@ -1283,7 +1310,9 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         // Strip mode now also covers Shorts: the player becomes a top-aligned aspect-ratio strip
         // instead of a vertically-centered full-screen surface. Regular videos get a 16:9 strip with
         // the up-next panel below; a Short gets a 9:16 strip with the Shorts info bar + action rail.
-        boolean strip = portrait && !inPip && video != null;
+        mUprightFullscreen = VerticalFullscreenPolicy.stillValid(mUprightFullscreen, portrait, isShorts,
+                isVideoVertical());
+        boolean strip = portrait && !inPip && video != null && !mUprightFullscreen;
         boolean showPanel = strip && !isShorts;
         String ratio = isShorts ? "H,9:16" : "H,16:9";
 
@@ -1613,7 +1642,7 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         // Landscape from the window's own size: mLayoutState starts at 0 before the first layout,
         // and the resources' orientation can lag behind a rotation (see PR #76).
         View decor = getActivity() != null ? getActivity().getWindow().getDecorView() : null;
-        boolean landscape = decor != null && decor.getWidth() > decor.getHeight();
+        boolean landscape = (decor != null && decor.getWidth() > decor.getHeight()) || mUprightFullscreen;
         int visibility = landscape && mLayoutState == 0 && !mStyle.isModern() && !isInPipMode()
                 ? View.VISIBLE : View.GONE;
         if (button.getVisibility() != visibility) button.setVisibility(visibility);
