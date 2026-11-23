@@ -23,7 +23,6 @@ import com.liskovsoft.smartyoutubetv2.mobile.ui.base.ImmersiveBars;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.miniplayer.MiniPlayerPolicy;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.miniplayer.MiniPlayerState;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.miniplayer.MiniPlayerTasks;
-import com.liskovsoft.smartyoutubetv2.mobile.ui.miniplayer.MiniPlayerTransitions;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.prefs.MobilePlayerStylePrefs;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.PlaybackActivity;
@@ -172,13 +171,12 @@ public class MobilePlaybackActivity extends PlaybackActivity {
             mMobileFragment.blockEngine(true);
         }
         getViewManager().removeTop(this);
-        boolean moved = MiniPlayerTasks.bringBrowseForward(this);
+        boolean moved = MiniPlayerTasks.bringBrowseForwardSliding(this);
         Log.d(TAG_MINI, "minimise(): fragment=" + (mMobileFragment != null) + " browseTaskMoved=" + moved
                 + (moved ? "" : " -> starting Home"));
         if (!moved) {
             getViewManager().startView(BrowseView.class);
         }
-        MiniPlayerTransitions.fade(this, false);
     }
 
     @Override

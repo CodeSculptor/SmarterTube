@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Player slides down off screen over the browse screen (minimise, #96). -->
+<translate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="250"
+    android:fromYDelta="0%"
+    android:interpolator="@android:interpolator/accelerate_quad"
+    android:toYDelta="100%"
+    android:zAdjustment="top" />
