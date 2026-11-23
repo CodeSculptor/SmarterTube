@@ -120,7 +120,7 @@ public final class MiniPlayerBar {
 
     private void expand() {
         // The player task is brought forward; the player clears the minimised flag when it resumes.
-        MiniPlayerTasks.expandPlayerSliding(mActivity);
+        MiniPlayerTasks.expandPlayer(mActivity);
     }
 
     private void togglePlayback() {

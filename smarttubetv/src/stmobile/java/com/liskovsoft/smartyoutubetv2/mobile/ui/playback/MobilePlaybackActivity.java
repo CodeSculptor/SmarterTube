@@ -70,6 +70,7 @@ public class MobilePlaybackActivity extends PlaybackActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        mSlideUpPending = intent != null && intent.getBooleanExtra(MiniPlayerTasks.EXTRA_EXPAND, false);
         applyOrientationForCurrentVideo();
     }
 
@@ -166,16 +167,83 @@ public class MobilePlaybackActivity extends PlaybackActivity {
      * screens then show the bar. With no browse task (opened by a link) Home is started instead.
      */
     private void minimise() {
+        if (mSlidingDown) {
+            return; // a second Back during the slide
+        }
         MiniPlayerState.setMinimised(true);
         if (mMobileFragment != null) {
             mMobileFragment.blockEngine(true);
         }
         getViewManager().removeTop(this);
-        boolean moved = MiniPlayerTasks.bringBrowseForwardSliding(this);
-        Log.d(TAG_MINI, "minimise(): fragment=" + (mMobileFragment != null) + " browseTaskMoved=" + moved
-                + (moved ? "" : " -> starting Home"));
-        if (!moved) {
-            getViewManager().startView(BrowseView.class);
+        slideDownThen(() -> {
+            boolean moved = MiniPlayerTasks.bringBrowseForward(this);
+            Log.d(TAG_MINI, "minimise(): fragment=" + (mMobileFragment != null) + " browseTaskMoved=" + moved
+                    + (moved ? "" : " -> starting Home"));
+            if (!moved) {
+                getViewManager().startView(BrowseView.class);
+            }
+            suppressSystemTransition();
+        });
+    }
+
+    private static final long SLIDE_MS = 220;
+    private boolean mSlidingDown;
+    private boolean mSlideUpPending;
+
+    /**
+     * The system task animation (a sideways slide on Samsung / WM Shell) can't be replaced by an
+     * app, so the player slides itself down off screen first, and the task switch then only shows
+     * the browse screen arriving (#96).
+     */
+    private void slideDownThen(Runnable then) {
+        View decor = getWindow().getDecorView();
+        int height = decor.getHeight();
+        if (height <= 0 || mSlidingDown) {
+            then.run();
+            return;
+        }
+        mSlidingDown = true;
+        decor.animate().cancel();
+        decor.animate().translationY(height).setDuration(SLIDE_MS)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                .withEndAction(() -> {
+                    mSlidingDown = false;
+                    then.run();
+                }).start();
+    }
+
+    /** Play the entry slide-up once, when the bar asked to expand (see onNewIntent / onResume). */
+    private void slideUpIfRequested() {
+        View decor = getWindow().getDecorView();
+        decor.animate().cancel();
+        int height = decor.getHeight();
+        if (mSlideUpPending && height > 0) {
+            decor.setTranslationY(height);
+            decor.animate().translationY(0).setDuration(SLIDE_MS)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+        } else {
+            decor.setTranslationY(0);
+        }
+        mSlideUpPending = false;
+    }
+
+    private void resetSlide() {
+        View decor = getWindow().getDecorView();
+        decor.animate().cancel();
+        decor.setTranslationY(0);
+        mSlidingDown = false;
+    }
+
+    @SuppressWarnings("deprecation")
+    private void suppressSystemTransition() {
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= 34) {
+                overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0);
+            } else {
+                overridePendingTransition(0, 0);
+            }
+        } catch (RuntimeException ignored) {
+            // cosmetic only
         }
     }
 
@@ -184,6 +252,7 @@ public class MobilePlaybackActivity extends PlaybackActivity {
         Log.d(TAG_MINI, "player onStop: minimised=" + MiniPlayerState.isMinimised() + " finishing="
                 + isFinishing() + " engineBlocked=" + PlaybackPresenter.instance(this).isEngineBlocked()
                 + " engineInit=" + PlaybackPresenter.instance(this).isEngineInitialized());
+        resetSlide(); // parked / stopped: never leave the player offset
         super.onStop();
     }
 
@@ -423,6 +492,7 @@ public class MobilePlaybackActivity extends PlaybackActivity {
 
     @Override
     protected void onPause() {
+        getWindow().getDecorView().animate().cancel(); // never leave a slide running while paused
         super.onPause();
         stopOrientationWatch();
     }
@@ -431,6 +501,7 @@ public class MobilePlaybackActivity extends PlaybackActivity {
     protected void onResume() {
         super.onResume();
         MiniPlayerState.setMinimised(false); // expanded (bar tap, notification, new video)
+        slideUpIfRequested();
         reapplyFullscreen();
         if (mForcedOrientation != ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) {
             watchForMatchingOrientation();

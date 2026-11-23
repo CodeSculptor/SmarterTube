@@ -1,14 +1,11 @@
 package com.liskovsoft.smartyoutubetv2.mobile.ui.miniplayer;
 
 import android.app.ActivityManager;
-import android.app.ActivityOptions;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 
 import com.liskovsoft.smartyoutubetv2.mobile.ui.playback.MobilePlaybackActivity;
-import com.liskovsoft.smartyoutubetv2.tv.R;
 
 import java.util.List;
 
@@ -46,41 +43,13 @@ public final class MiniPlayerTasks {
         return findBrowseTask(context) != null;
     }
 
-    /**
-     * Minimise: bring the browse task forward with the player sliding down over it (#96). A plain
-     * task move ignores custom animations, so on Android 10+ (where the task's top activity is
-     * known) the top activity is re-delivered with a custom-animation start instead; that is the
-     * same "relaunch the screen below" the player's Back always did. Older versions, or any
-     * failure, use the plain move.
-     */
-    public static boolean bringBrowseForwardSliding(Context context) {
-        ActivityManager.AppTask task = findBrowseTask(context);
-        if (task == null) {
-            return false;
-        }
-        try {
-            ActivityManager.RecentTaskInfo info = task.getTaskInfo();
-            ComponentName top = Build.VERSION.SDK_INT >= 29 && info != null ? info.topActivity : null;
-            if (top != null) {
-                Intent intent = new Intent().setComponent(top)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                android.os.Bundle options = ActivityOptions.makeCustomAnimation(
-                        context, R.anim.mini_hold, R.anim.mini_slide_down).toBundle();
-                context.startActivity(intent, options);
-                return true;
-            }
-        } catch (RuntimeException e) {
-            // fall through to the plain move
-        }
-        return bringBrowseForward(context);
-    }
+    /** Extra on the expand intent: the player slides up into view (see MobilePlaybackActivity). */
+    public static final String EXTRA_EXPAND = "mini_player_expand";
 
-    /** Expand: bring the player forward sliding up over the browse screen. */
-    public static void expandPlayerSliding(Context context) {
-        Intent intent = new Intent(context, MobilePlaybackActivity.class);
-        android.os.Bundle options = ActivityOptions.makeCustomAnimation(
-                context, R.anim.mini_slide_up, R.anim.mini_hold).toBundle();
-        context.startActivity(intent, options);
+    /** Expand: bring the (parked) player to the front; it animates itself in. */
+    public static void expandPlayer(Context context) {
+        Intent intent = new Intent(context, MobilePlaybackActivity.class).putExtra(EXTRA_EXPAND, true);
+        context.startActivity(intent);
     }
 
     /** Bring the browse task to the front as it was left. False when there is none. */
