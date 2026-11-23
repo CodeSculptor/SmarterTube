@@ -2,6 +2,8 @@ package com.liskovsoft.smartyoutubetv2.mobile.ui.playback;
 
 import android.app.Activity;
 import android.graphics.Typeface;
+import android.os.SystemClock;
+import android.util.Log;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.StyleSpan;
@@ -32,6 +34,9 @@ final class MobileLiveChat {
     /** Messages kept in memory; older ones are dropped. */
     static final int MAX_MESSAGES = 150;
 
+    private static final String TAG = "LiveChat";
+
+    private final LiveChatBatchCounter mBatches = new LiveChatBatchCounter(1_000);
     private final LiveChatBuffer mBuffer = new LiveChatBuffer(MAX_MESSAGES);
     private final ChatAdapter mAdapter = new ChatAdapter();
     private final ChatList mPortrait = new ChatList();
@@ -66,8 +71,11 @@ final class MobileLiveChat {
 
     /** ChatController hands over a new receiver, or null when the chat was closed. */
     void setReceiver(ChatReceiver receiver) {
+        Log.d(TAG, "setReceiver " + (receiver != null ? "new" : "null") + " (was "
+                + (mReceiver != null ? "set" : "null") + ")");
         detach();
         clearMessages();
+        mBatches.reset();
         mReceiver = receiver;
         attach();
         applyVisibility();
@@ -84,6 +92,7 @@ final class MobileLiveChat {
         mOverlayPanel = overlay;
         if (suspended != mSuspended) {
             mSuspended = suspended;
+            Log.d(TAG, "suspended=" + suspended);
             if (suspended) {
                 detach();
                 clearMessages();
@@ -97,6 +106,7 @@ final class MobileLiveChat {
 
     /** Leaving the player: stop listening and free the messages. */
     void release() {
+        Log.d(TAG, "release");
         detach();
         mReceiver = null;
         clearMessages();
@@ -113,7 +123,19 @@ final class MobileLiveChat {
     private void attach() {
         if (mReceiver != null && !mSuspended) {
             final ChatReceiver receiver = mReceiver;
-            receiver.setCallback(item -> post(receiver, item));
+            receiver.setCallback(item -> {
+                // Runs on the engine's polling thread: an exception here would make the engine
+                // stop (NPE) or restart the poll from the first page, so never let one escape.
+                try {
+                    int finished = mBatches.onItem(SystemClock.elapsedRealtime());
+                    if (finished > 0) {
+                        Log.d(TAG, "poll batch size=" + finished);
+                    }
+                    post(receiver, item);
+                } catch (RuntimeException e) {
+                    Log.e(TAG, "chat item failed", e);
+                }
+            });
         }
     }
 
@@ -134,6 +156,8 @@ final class MobileLiveChat {
         host.post(() -> {
             // Dropped (chat closed, replaced, or minimised) between the engine thread and now.
             if (source != mReceiver || mSuspended) {
+                Log.d(TAG, "dropped item: receiver replaced=" + (source != mReceiver)
+                        + " suspended=" + mSuspended);
                 return;
             }
             int dropped = mBuffer.add(message);

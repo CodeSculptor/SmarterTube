@@ -392,7 +392,10 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     @Override
     public void onDestroyView() {
         mLiveChat.release();
-        if (!MiniPlayerState.isMinimised()) {
+        // Keep the receiver while the view is merely recreated or minimised: ChatController keeps
+        // feeding it and never re-sends it. Drop it only when the player is really being left.
+        Activity activity = getActivity();
+        if (!MiniPlayerState.isMinimised() && (activity == null || activity.isFinishing())) {
             sLiveChatReceiver = null;
         }
         super.onDestroyView();

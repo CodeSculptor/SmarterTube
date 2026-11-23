@@ -137,7 +137,10 @@ public class ChatController extends BasePlayerController {
     private void disposeActions() {
         if (RxHelper.isAnyActionRunning(mChatAction)) {
             RxHelper.disposeActions(mChatAction);
-            getPlayer().setChatReceiver(null);
+            // The player view may already be gone (mini-player closed, engine released).
+            if (getPlayer() != null) {
+                getPlayer().setChatReceiver(null);
+            }
         }
     }
 
