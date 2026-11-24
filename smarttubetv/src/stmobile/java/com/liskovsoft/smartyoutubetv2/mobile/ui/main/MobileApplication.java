@@ -198,16 +198,19 @@ public class MobileApplication extends MainApplication {
      * Stop the player shrinking behind settings dialogs (#29). Upstream's "resize video to fit
      * dialog" zooms the video to ~63% and pins it to the left so a TV side-panel dialog doesn't
      * cover it; phone dialogs are bottom sheets or full screen, so in landscape it just leaves a
-     * small video in the corner. Turning on "Don't resize video to fit dialog" skips it. Done once
-     * so a user who deliberately turns it back off keeps their choice. stmobile-only; shared common
-     * code is untouched, keeping the fork upstream-mergeable.
+     * small video in the corner (#29), and in the portrait player opening Comments shrank the video
+     * to the top-left with black space around it (#115). Turning on "Don't resize video to fit
+     * dialog" skips it. Re-applied on every launch: the old one-shot flag left the zoom on for
+     * anyone whose tweaks were reset/restored afterwards. stmobile-only; shared common code is
+     * untouched, keeping the fork upstream-mergeable.
      */
     private void keepVideoSizeUnderDialogsOnce() {
-        SharedPreferences prefs = getSharedPreferences("mobile_player_prefs", MODE_PRIVATE);
-        if (!prefs.getBoolean("dialog_resize_disabled", false)) {
-            PlayerTweaksData.instance(this).setDontResizeVideoToFitDialogEnabled(true);
-            prefs.edit().putBoolean("dialog_resize_disabled", true).apply();
+        PlayerTweaksData tweaks = PlayerTweaksData.instance(this);
+        if (!tweaks.isDontResizeVideoToFitDialogEnabled()) {
+            tweaks.setDontResizeVideoToFitDialogEnabled(true);
         }
+        getSharedPreferences("mobile_player_prefs", MODE_PRIVATE).edit()
+                .putBoolean("dialog_resize_disabled", true).apply();
     }
 
     @Override
