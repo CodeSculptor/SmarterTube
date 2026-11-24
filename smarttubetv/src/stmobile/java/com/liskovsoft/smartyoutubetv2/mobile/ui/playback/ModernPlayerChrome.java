@@ -24,6 +24,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
+import com.liskovsoft.smartyoutubetv2.mobile.offline.OfflineDownloads;
+import com.liskovsoft.smartyoutubetv2.mobile.offline.OfflineSupport;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerUI;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.SeekBarSegment;
 import android.text.TextUtils;
@@ -451,6 +453,11 @@ final class ModernPlayerChrome {
             actions.add(moreRow);
             mMoreActions = more;
         }
+        if (OfflineSupport.isSupported() && canSaveOffline()) {
+            Action saveOffline = new Action(R.id.action_mobile_save_offline, mActivity.getString(R.string.mobile_offline_player_row));
+            saveOffline.setIcon(ContextCompat.getDrawable(mActivity, R.drawable.ic_modern_save));
+            actions.add(saveOffline);
+        }
         // The app's Settings screen, opened over the player so Back returns to this video.
         Action appSettings = new Action(R.id.action_mobile_app_settings, mActivity.getString(R.string.mobile_app_settings));
         appSettings.setIcon(ContextCompat.getDrawable(mActivity, R.drawable.ic_modern_settings));
@@ -458,6 +465,21 @@ final class ModernPlayerChrome {
         mSheetTitle.setText(R.string.mobile_player_settings);
         mSheetList.setAdapter(new ActionAdapter(actions));
         showSheet(Math.min(actions.size() * dp(SHEET_ROW_HEIGHT_DP), maxSheetListHeight()));
+    }
+
+    /** Offline saving needs a regular (not live) video with an id. */
+    private boolean canSaveOffline() {
+        PlaybackView player = PlaybackPresenter.instance(mActivity).getPlayer();
+        Video video = player != null ? player.getVideo() : null;
+        return video != null && video.videoId != null && !video.isLive;
+    }
+
+    private void saveCurrentOffline() {
+        PlaybackView player = PlaybackPresenter.instance(mActivity).getPlayer();
+        Video video = player != null ? player.getVideo() : null;
+        if (video != null) {
+            OfflineDownloads.saveWithNotice(mActivity, video.videoId, video.title, video.author);
+        }
     }
 
     /** One entry per audio language of the current video (best-sorted track of each), selected one flagged. */
@@ -757,6 +779,10 @@ final class ModernPlayerChrome {
                     // Subtitle language picker, not the on/off toggle.
                     PlaybackPresenter.instance(mActivity).onButtonLongClicked(R.id.lb_control_closed_captioning,
                             isOn(R.id.lb_control_closed_captioning) ? PlayerUI.BUTTON_ON : PlayerUI.BUTTON_OFF);
+                    return;
+                }
+                if (action.getId() == R.id.action_mobile_save_offline) {
+                    saveCurrentOffline();
                     return;
                 }
                 if (action.getId() == R.id.action_mobile_app_settings) {

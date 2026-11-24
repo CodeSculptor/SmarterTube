@@ -180,6 +180,19 @@
             android:background="@color/mobile_divider" />
 
         <TextView
+            android:id="@+id/drawer_saved"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp"
+            android:text="@string/mobile_offline_drawer_entry"
+            android:textColor="@color/mobile_text_primary"
+            android:textSize="15sp"
+            android:background="?android:attr/selectableItemBackground" />
+
+        <TextView
             android:id="@+id/drawer_about"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

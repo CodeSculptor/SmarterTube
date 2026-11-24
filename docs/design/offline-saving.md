@@ -388,3 +388,111 @@ Recommendations first.
   Recommend **Yes after M1**, since both are additive and tiny; otherwise stay with D3-A.
 - **D10. Offline mode hides Up-next/Comments/SponsorBlock, and saves no subtitles in v1?** Recommend
   **Yes**.
+
+---
+
+# M0 results (2026-11-24) and what changed in the plan
+
+Harness: `docs/design/offline-m0-spike.py` (Python, unauthenticated, one PC and IP, the public player
+endpoint with the client constants from MediaServiceCore). One run; 29 distinct video ids across
+music (12 popular clips), long talks and films (7, up to about 4 h), a tutorial, kids, gaming, and
+2 live streams. **Not sampled:** Shorts, age-restricted, signed-in-only and members videos (I had no
+reliable ids; the age-restricted guess turned out unavailable). Those remain unverified.
+
+| Result | Count |
+|---|---|
+| Distinct ids | 29 |
+| Unavailable or private (excluded) | 5 |
+| Live (not saveable by rule) | 2 |
+| Regular videos that resolved | 22 |
+| **Saveable as a plain file (muxed 360p MP4, itag 18, direct URL)** | **22 of 22 (100%)** |
+
+Per client, for those 22:
+- **ANDROID** returns the muxed 360p stream with a direct URL every time, and it downloads in 1 MB
+  ranged chunks well past the first megabyte (a full 37 MB file took 6.8 s, about 44 Mbit/s).
+- **IOS** and **ANDROID_VR** return direct audio-only and higher-resolution URLs, but those are cut
+  off after about the first megabyte (HTTP 403 from offset ~1,000,000 on) and need a PO token to go
+  further.
+- **TV** and **WEB** returned no direct URLs without sign-in or a token.
+
+Consequences (this changes sections 1 and 4 above):
+- **Only the muxed 360p MP4 is saveable without a PO token.** A quality picker and true audio-only
+  saves are **not possible in M1**; the "audio-only first" idea is dropped. A saved 360p file still
+  plays with the screen off.
+- We do **not** use PO tokens or any other workaround to get past the one-megabyte cut-off. That is
+  the line drawn in section 1.
+- The 70% bar is cleared for regular videos, but only for **360p**, from one unauthenticated
+  vantage point. The notice and README must say 360p plainly. D7 (720p default) is moot for now.
+- URLs carry `expire`; the worker re-resolves once on 403/410.
+
+# M1 as built (IMPLEMENTED-UNVERIFIED)
+
+All code is stmobile-only (`smarttubetv/src/stmobile/.../mobile/offline/`). **No `common/` change and
+no `MobilePlaybackFragment` change.**
+
+| Piece | File |
+|---|---|
+| Parse the response and decide saveability | `OfflinePlayerResponse` |
+| Resolver (own innertube Android call) | `OfflineResolver` |
+| Chunked, resumable worker and its rules | `OfflineDownloadWorker`, `OfflineDownloadPlan` |
+| Queue, pause, resume, delete, first-use notice | `OfflineDownloads` |
+| Storage `<externalFiles>/offline/<id>/{meta.json,video.mp4,thumb.jpg}` | `OfflineStore`, `SavedVideo`, `OfflinePrefs` |
+| Library screen | `MobileOfflineActivity` |
+| Offline player | `MobileOfflinePlayerActivity` |
+| Minimum API gate (21) | `OfflineSupport` |
+
+Deviations from the design, and why:
+1. **Playback does not use the streaming player.** `VideoLoaderController.loadVideo` always asks the
+   network for format info and, offline, falls into upstream's retry loop; bypassing that needs a
+   `common/` change (decision D9). M1 plays the file in a small separate activity (ExoPlayer
+   `PlayerView`, resume position kept in `meta.json`, pauses when backgrounded). So: **no
+   mini-player, no media notification or background audio, no Modern chrome for saved items in
+   M1.** D9 (a small guarded bypass in `VideoLoaderController` plus a flag on `Video`) would add them.
+2. **The entry point is the Modern player's gear sheet ("Save offline")**, not the long-press card
+   menu: that menu lives in `common/` (`VideoMenuPresenter`), also D9. Classic style and Shorts have
+   no entry yet.
+3. **The library is a side-drawer entry ("Saved videos")**, not a bottom-nav tab (D4).
+4. Downloads for different videos may run in parallel (WorkManager default), not strictly one at a
+   time.
+5. 360p only; no audio-only; no subtitles (D10).
+6. Minimum API 21: the player row and the drawer entry are hidden below it. Not run on any emulator.
+7. `NetworkResumeHelper` needs no change: the offline player is its own activity and never reaches it.
+
+How it behaves: tap a downloading row to pause, tap a paused or failed row to resume, long-press to
+delete. The notification has Cancel, which stops the transfer and leaves the partial file listed as
+waiting; long-press deletes it.
+
+## Device test script (M1)
+
+Setup: `assembleStmobileDebug`, Wi-Fi on, Modern player style (the default).
+
+1. Open a normal 3-5 min video. Tap the settings gear. Expect a **Save offline** row above App
+   settings. Open a live stream: expect no such row.
+2. Tap it. Expect the one-time notice (360p, private storage, respect creators). Tap Save. Expect a
+   toast "Saving will run on Wi-Fi...". Save the same video again later: no dialog this time, and
+   once it is finished a toast "Already saved".
+3. Open the side drawer. Expect **Saved videos**. Open it. Expect the item with a thumbnail within a
+   few seconds, "Saving NN%" with a progress bar, and "N MB used, M GB free" at the top.
+4. Expect an ongoing "Saving video" notification with a progress bar and Cancel.
+5. Wait for completion. Expect "360p - NN MB - m:ss" on the row and a "Saved for offline" notification.
+6. Turn **airplane mode on**. Tap the item. Expect it to play at once, with sound. Seek, pause, rotate
+   to landscape and back.
+7. Press Home, return: expect it paused, and resumable. Back out and reopen the item: expect it to
+   start near where you left off, not from 0.
+8. Online again. Save a **long video (1 h or more)**. At about 20%, switch Wi-Fi off. Expect "Waiting
+   for connection" and the size on disk not to reset. Wi-Fi on: expect it to continue and finish.
+9. Untick "Download over Wi-Fi only", switch to mobile data, save a short video: expect it to run.
+   Tick it again, mobile data only, save another: expect it to wait.
+10. Tap a downloading row: expect Paused with the size so far. Tap again: expect it to continue.
+11. Force-stop the app during a download, then reopen the library: expect it to continue by itself.
+12. Try a members, age-restricted or private video if you have one: expect "Could not save" with a
+    reason on its row and nothing broken.
+13. Long-press a saved item, confirm Delete: expect it gone and the used-space figure to drop. Try
+    **Delete all**.
+14. Nearly-full phone (or a very long video): expect "Not enough free space".
+15. Regression: normal online playback, the Modern gear sheet (Subtitles, Audio track, App settings
+    unchanged), Shorts, mini-player, the drawer's other entries.
+16. Android 7 emulator (Phone_API24): steps 1-8.
+
+Known gaps to expect: 360p only; no mini-player or background audio for saved items; the library
+refreshes once per second; Cancel in the notification keeps the partial file.

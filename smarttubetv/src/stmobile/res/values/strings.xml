@@ -170,4 +170,35 @@
     <string name="mobile_net_reconnected">Reconnected</string>
     <string name="mobile_net_gave_up">Couldn\'t resume. Tap play to retry.</string>
 
+
+    <!-- Offline saving (stmobile). -->
+    <string name="mobile_offline_drawer_entry">Saved videos</string>
+    <string name="mobile_offline_player_row">Save offline</string>
+    <string name="mobile_offline_title">Saved videos</string>
+    <string name="mobile_offline_back">Back</string>
+    <string name="mobile_offline_delete_all">Delete all</string>
+    <string name="mobile_offline_delete">Delete</string>
+    <string name="mobile_offline_delete_one">Delete \"%1$s\" from this device?</string>
+    <string name="mobile_offline_delete_all_confirm">Delete all saved videos from this device? This cannot be undone.</string>
+    <string name="mobile_offline_wifi_only">Download over Wi-Fi only</string>
+    <string name="mobile_offline_empty">Nothing saved yet. Open a video, tap the settings gear, then Save offline.</string>
+    <string name="mobile_offline_usage">%1$s used, %2$s free</string>
+    <string name="mobile_offline_status_saving">Saving %1$d%% (%2$s of %3$s). Tap to pause.</string>
+    <string name="mobile_offline_status_paused">Paused (%1$s saved). Tap to resume.</string>
+    <string name="mobile_offline_status_failed">Could not save: %1$s Tap to retry.</string>
+    <string name="mobile_offline_status_waiting">Waiting for connection. Tap to pause.</string>
+    <string name="mobile_offline_channel">Saved videos</string>
+    <string name="mobile_offline_saving">Saving video</string>
+    <string name="mobile_offline_saved">Saved for offline</string>
+    <string name="mobile_offline_cancel">Cancel</string>
+    <string name="mobile_offline_already">Already saved.</string>
+    <string name="mobile_offline_started">Saving started. Find it under Saved videos in the menu.</string>
+    <string name="mobile_offline_started_wifi">Saving will run on Wi-Fi. Find it under Saved videos in the menu.</string>
+    <string name="mobile_offline_cant_live">Live streams can\'t be saved.</string>
+    <string name="mobile_offline_cant_generic">This video can\'t be saved right now.</string>
+    <string name="mobile_offline_no_space">Not enough free space.</string>
+    <string name="mobile_offline_damaged">This saved video is damaged. Delete it from Saved videos and save it again.</string>
+    <string name="mobile_offline_notice_title">Save for offline viewing</string>
+    <string name="mobile_offline_notice_message">Saved videos are kept on this device for your own offline use, in standard quality (360p). They are stored in the app\'s private storage, can\'t be shared from here, and are removed if you uninstall the app. Please respect creators: only save what you would be fine to watch normally. Some videos can\'t be saved.</string>
+    <string name="mobile_offline_notice_save">Save</string>
 </resources>

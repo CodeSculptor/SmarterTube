@@ -164,6 +164,20 @@
             android:screenOrientation="behind"
             android:theme="@style/Theme.SmarterTube.Mobile.TranslucentPanel" />
 
+        <!-- Offline library and its plain file player. -->
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.mobile.offline.MobileOfflineActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|layoutDirection|keyboardHidden"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.SmarterTube.Mobile" />
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.mobile.offline.MobileOfflinePlayerActivity"
+            android:exported="false"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|layoutDirection|keyboardHidden"
+            android:theme="@style/Theme.SmarterTube.Mobile" />
+
         <!-- Native phone About screen (fork-attribution surface). -->
         <activity
             android:name="com.liskovsoft.smartyoutubetv2.mobile.ui.about.MobileAboutActivity"

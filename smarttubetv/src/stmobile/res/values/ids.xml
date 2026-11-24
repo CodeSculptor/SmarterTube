@@ -8,4 +8,6 @@
     <item name="action_mobile_more" type="id" />
     <!-- Back row at the top of the player sheet's "More" list. -->
     <item name="action_mobile_back" type="id" />
+    <!-- Modern player sheet row: save the current video for offline viewing. -->
+    <item name="action_mobile_save_offline" type="id" />
 </resources>

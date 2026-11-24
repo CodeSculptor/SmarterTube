@@ -29,6 +29,8 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.bumptech.glide.Glide;
 import com.liskovsoft.mediaserviceinterfaces.oauth.Account;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.BrowseSection;
+import com.liskovsoft.smartyoutubetv2.mobile.offline.MobileOfflineActivity;
+import com.liskovsoft.smartyoutubetv2.mobile.offline.OfflineSupport;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.SettingsGroup;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.VideoGroup;
@@ -117,6 +119,18 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
         });
         MediaServiceManager.instance().addAccountListener(this);
         updateAccountIcon();
+
+        View savedEntry = view.findViewById(R.id.drawer_saved);
+        if (OfflineSupport.isSupported()) {
+            savedEntry.setOnClickListener(v -> {
+                if (mDrawer != null) {
+                    mDrawer.closeDrawer(GravityCompat.START);
+                }
+                startActivity(new Intent(getContext(), MobileOfflineActivity.class));
+            });
+        } else {
+            savedEntry.setVisibility(View.GONE);
+        }
 
         view.findViewById(R.id.drawer_about).setOnClickListener(v -> {
             if (mDrawer != null) {
