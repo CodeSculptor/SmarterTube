@@ -16,7 +16,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -105,7 +104,7 @@ public class MobileOfflineActivity extends AppCompatActivity {
     }
 
     private void confirmDelete(SavedVideo v) {
-        new AlertDialog.Builder(this)
+        OfflineDialogs.builder(this)
                 .setMessage(getString(R.string.mobile_offline_delete_one, v.title != null ? v.title : v.videoId))
                 .setPositiveButton(R.string.mobile_offline_delete, (d, w) -> {
                     OfflineDownloads.delete(this, v.videoId);
@@ -117,7 +116,7 @@ public class MobileOfflineActivity extends AppCompatActivity {
 
     private void confirmDeleteAll() {
         if (mItems.isEmpty()) return;
-        new AlertDialog.Builder(this)
+        OfflineDialogs.builder(this)
                 .setMessage(R.string.mobile_offline_delete_all_confirm)
                 .setPositiveButton(R.string.mobile_offline_delete, (d, w) -> {
                     OfflineDownloads.deleteAll(this);

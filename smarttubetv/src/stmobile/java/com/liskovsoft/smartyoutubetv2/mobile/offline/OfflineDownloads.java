@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
 import androidx.work.Data;
@@ -94,7 +93,7 @@ public final class OfflineDownloads {
             return;
         }
         if (!OfflinePrefs.isNoticeShown(activity)) {
-            new AlertDialog.Builder(activity)
+            OfflineDialogs.builder(activity)
                     .setTitle(R.string.mobile_offline_notice_title)
                     .setMessage(R.string.mobile_offline_notice_message)
                     .setPositiveButton(R.string.mobile_offline_notice_save, (d, w) -> {

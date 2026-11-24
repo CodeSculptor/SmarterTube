@@ -213,6 +213,19 @@ public class OfflineLogicTest {
         assertEquals("", OfflineFormat.duration(0));
     }
 
+    /** Guard: every dialog must come from OfflineDialogs (the player activity is not AppCompat). */
+    @Test
+    public void noDirectDialogBuildersInOfflineCode() throws Exception {
+        File dir = new File("src/stmobile/java/com/liskovsoft/smartyoutubetv2/mobile/offline");
+        File[] files = dir.listFiles();
+        if (files == null) return; // run from an unexpected working dir: skip rather than fail
+        for (File f : files) {
+            if (f.getName().equals("OfflineDialogs.java") || !f.getName().endsWith(".java")) continue;
+            String src = new String(java.nio.file.Files.readAllBytes(f.toPath()), "UTF-8");
+            assertFalse(f.getName() + " builds an AlertDialog directly", src.contains("AlertDialog.Builder"));
+        }
+    }
+
     @Test
     public void minApiGate() {
         assertFalse(OfflineSupport.isSupported(20));
