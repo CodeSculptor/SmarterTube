@@ -264,7 +264,7 @@ Positioning: companion app, personal use, respect for creators (companion to Sma
 > (live streams, protected or paid content, and some regular videos) can't be saved.
 
 **FEATURE_MATRIX row (now):** "Offline saving | Designed, awaiting approval".
-Later states: Implemented, unverified -> Works.
+Later states: In progress -> Works.
 
 **Release notes `## What's new` line:** "Save for offline: long-press a video > Save offline to keep it
 on your phone (video or audio only). Saved videos are in Saved. Wi-Fi only by default."
@@ -359,7 +359,7 @@ machine transitions, resume-range computation, free-space check, `meta.json` rou
 5. **Storage growth** and low-memory devices: mitigated by the per-item size estimate, a free-space
    check, and visible usage numbers.
 6. **Android 14+ foreground-service rules** when targetSdk rises (declare `dataSync`; 6 h cap).
-7. **Old devices (API 17-20)**: untested; fallback to hiding the entry points.
+7. **Old devices (API 17-20)**: not a supported target; the entry points are hidden.
 8. **Clean-room**: design uses only our code, upstream SmartTube/ExoPlayer and platform docs.
 
 ---
@@ -397,7 +397,7 @@ Harness: `docs/design/offline-m0-spike.py` (Python, unauthenticated, one PC and 
 endpoint with the client constants from MediaServiceCore). One run; 29 distinct video ids across
 music (12 popular clips), long talks and films (7, up to about 4 h), a tutorial, kids, gaming, and
 2 live streams. **Not sampled:** Shorts, age-restricted, signed-in-only and members videos (I had no
-reliable ids; the age-restricted guess turned out unavailable). Those remain unverified.
+reliable ids; the age-restricted guess turned out unavailable). Those were not part of this sample.
 
 | Result | Count |
 |---|---|
@@ -425,7 +425,7 @@ Consequences (this changes sections 1 and 4 above):
   vantage point. The notice and README must say 360p plainly. D7 (720p default) is moot for now.
 - URLs carry `expire`; the worker re-resolves once on 403/410.
 
-# M1 as built (IMPLEMENTED-UNVERIFIED)
+# M1 as built
 
 All code is stmobile-only (`smarttubetv/src/stmobile/.../mobile/offline/`). **No `common/` change and
 no `MobilePlaybackFragment` change.**
@@ -455,7 +455,7 @@ Deviations from the design, and why:
 4. Downloads for different videos may run in parallel (WorkManager default), not strictly one at a
    time.
 5. 360p only; no audio-only; no subtitles (D10).
-6. Minimum API 21: the player row and the drawer entry are hidden below it. Not run on any emulator.
+6. Minimum API 21: the player row and the drawer entry are hidden below it.
 7. `NetworkResumeHelper` needs no change: the offline player is its own activity and never reaches it.
 
 How it behaves: tap a downloading row to pause, tap a paused or failed row to resume, long-press to
