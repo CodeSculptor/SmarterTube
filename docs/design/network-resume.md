@@ -40,3 +40,11 @@ airplane ON during playback, wait 30 s, OFF: check Settings engine/DNS were not 
 10. Quick blip: toggle airplane ON then OFF within 1 s. Expect no hints.
 11. Shorts: repeat step 1 on a Short.
 12. Android 7 emulator (Phone_API24): repeat step 1.
+14. Dead-player case (found on device): pause, seek to an unbuffered spot, wifi+data off 45 s, back on. Expect the player to restart from the seek position within ~3-10 s, stay PAUSED, and Play works. Playing variant: same while playing/stalled, expect it to keep playing.
+15. Tap Play while still offline on a dead player: expect "Waiting for connection..." hint.
+
+## Dead player after an offline error
+`ErrorFixerController.isErrorSkippedOffline()` (static flag, cleared on engine release / new video)
+tells the phone helper the engine is in ERROR even if the user had paused. The helper then starts
+an episode on network return, restarts the engine, and re-pauses (polling up to 15 s) if the user
+had paused, since the reloaded video autoplays: expect a possible brief blip of audio.

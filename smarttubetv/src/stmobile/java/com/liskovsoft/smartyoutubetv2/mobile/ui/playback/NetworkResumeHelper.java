@@ -31,12 +31,17 @@ final class NetworkResumeHelper {
     private static final String TAG = NetworkResumeHelper.class.getSimpleName();
     /** Ignore sub-second drops, e.g. a wifi to cellular handover. */
     private static final long LOSS_DEBOUNCE_MS = 1_500;
+    private static final long REPAUSE_TICK_MS = 300;
+    private static final int REPAUSE_MAX_TICKS = 50;
 
     interface Host {
         Context getContext();
         boolean isEngineActive();
         boolean getPlayWhenReady();
         boolean isPlaying();
+        /** An error fix was skipped while offline (common/ErrorFixerController) and is still pending. */
+        boolean isErrorSkipped();
+        void pause();
         /** Restart the engine; position is preserved by the engine restart. */
         void restartEngine();
         void showHint(int stringResId);
@@ -53,6 +58,8 @@ final class NetworkResumeHelper {
 
     private final Runnable mLossRunnable = this::handleLoss;
     private final Runnable mCheckRunnable = this::handleCheck;
+    private final Runnable mRepauseRunnable = this::handleRepause;
+    private int mRepauseTicks;
 
     NetworkResumeHelper(Host host) {
         mHost = host;
@@ -99,7 +106,9 @@ final class NetworkResumeHelper {
     void stop() {
         mHandler.removeCallbacks(mLossRunnable);
         mHandler.removeCallbacks(mCheckRunnable);
+        mHandler.removeCallbacks(mRepauseRunnable);
         mPolicy.reset();
+        mPolicy.clearPauseAfterRestart();
         if (!mStarted) {
             return;
         }
@@ -133,7 +142,7 @@ final class NetworkResumeHelper {
             mNetworkUp = up;
             if (up) {
                 mHandler.removeCallbacks(mLossRunnable); // blip: never became an outage
-                if (mPolicy.onNetworkAvailable() == Action.SCHEDULE_CHECK) {
+                if (mPolicy.onNetworkAvailable(mHost.isEngineActive(), mHost.isErrorSkipped()) == Action.SCHEDULE_CHECK) {
                     schedule(NetworkResumePolicy.GRACE_MS);
                 }
             } else {
@@ -147,14 +156,15 @@ final class NetworkResumeHelper {
         if (mNetworkUp) {
             return;
         }
-        if (mPolicy.onNetworkLost(mHost.isEngineActive(), engineWantsPlay()) == Action.SHOW_WAITING) {
+        if (mPolicy.onNetworkLost(mHost.isEngineActive(), engineWantsPlay(), mHost.isErrorSkipped()) == Action.SHOW_WAITING) {
             mHost.showHint(R.string.mobile_net_waiting);
         }
     }
 
     private void handleCheck() {
         boolean active = mHost.isEngineActive();
-        Action action = mPolicy.onCheck(active, active && mHost.getPlayWhenReady(), active && mHost.isPlaying(), mNetworkUp);
+        Action action = mPolicy.onCheck(active, active && mHost.getPlayWhenReady(), active && mHost.isPlaying(), mNetworkUp,
+                active && mHost.isErrorSkipped());
         switch (action) {
             case SHOW_RECONNECTED:
                 mHost.showHint(R.string.mobile_net_reconnected);
@@ -163,12 +173,49 @@ final class NetworkResumeHelper {
                 Log.d(TAG, "Network is back, restarting the engine (attempt %s)", mPolicy.getAttempts());
                 mHost.restartEngine();
                 schedule(NetworkResumePolicy.backoffMs(mPolicy.getAttempts() - 1));
+                if (mPolicy.shouldPauseAfterRestart()) {
+                    mRepauseTicks = 0;
+                    mHandler.removeCallbacks(mRepauseRunnable);
+                    mHandler.postDelayed(mRepauseRunnable, REPAUSE_TICK_MS);
+                }
                 break;
             case GIVE_UP:
                 mHost.showHint(R.string.mobile_net_gave_up);
                 break;
             default:
                 break;
+        }
+    }
+
+    /**
+     * The user had paused when the player died. The reloaded video autoplays, so pause it again
+     * as soon as the new engine is up (bounded; stays paused and playable).
+     */
+    private void handleRepause() {
+        if (mHost.isEngineActive() && mHost.getPlayWhenReady()) {
+            mHost.pause();
+            mPolicy.clearPauseAfterRestart();
+            return;
+        }
+        if (++mRepauseTicks < REPAUSE_MAX_TICKS) {
+            mHandler.postDelayed(mRepauseRunnable, REPAUSE_TICK_MS);
+        } else {
+            mPolicy.clearPauseAfterRestart();
+        }
+    }
+
+    /** The user pressed play. Shows the waiting hint offline, or recovers a dead player at once. */
+    void onPlayRequested() {
+        if (!mStarted) {
+            return;
+        }
+        boolean errorSkipped = mHost.isErrorSkipped();
+        if (!mNetworkUp) {
+            mHost.showHint(R.string.mobile_net_waiting);
+            return;
+        }
+        if (mPolicy.onPlayRequested(mHost.isEngineActive(), errorSkipped, true) == Action.SCHEDULE_CHECK) {
+            schedule(0);
         }
     }
 

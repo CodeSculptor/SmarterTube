@@ -31,6 +31,13 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
     private VideoLoaderController mVideoLoaderController;
     private String mSabrErrorFixVideoId;
     private int mSabrErrorFixAttempts;
+    /** An error/stall fix was skipped because the device was offline; the player may be dead (ERROR state). */
+    private static volatile boolean sErrorSkippedOffline;
+
+    /** Lets the network-return handling (phone) know the player needs a restart. */
+    public static boolean isErrorSkippedOffline() {
+        return sErrorSkippedOffline;
+    }
 
     @Override
     public void onInit() {
@@ -133,6 +140,7 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
 
     @Override
     public void onNewVideo(Video item) {
+        sErrorSkippedOffline = false;
         mBufferingDetector.start();
     }
 
@@ -143,6 +151,7 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
 
     @Override
     public void onEngineReleased() {
+        sErrorSkippedOffline = false;
         mBufferingDetector.reset();
     }
 
@@ -154,6 +163,7 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
     private boolean isOfflineSkipFix(String what) {
         if (getContext() != null && Utils.isOffline(getContext())) {
             Log.d(TAG, "%s while offline. Skipping the fix.", what);
+            sErrorSkippedOffline = true;
             return true;
         }
         return false;

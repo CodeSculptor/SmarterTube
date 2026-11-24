@@ -36,6 +36,7 @@ import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItemMetadata;
 import com.liskovsoft.mediaserviceinterfaces.data.NotificationState;
 import com.liskovsoft.sharedutils.helpers.MessageHelpers;
+import com.liskovsoft.smartyoutubetv2.common.app.models.playback.controllers.ErrorFixerController;
 import com.liskovsoft.mediaserviceinterfaces.data.PlaylistInfo;
 import com.liskovsoft.mediaserviceinterfaces.oauth.Account;
 import com.liskovsoft.sharedutils.helpers.Helpers;
@@ -248,6 +249,8 @@ public class MobilePlaybackFragment extends PlaybackFragment {
         @Override public boolean isEngineActive() { return isEngineInitialized(); }
         @Override public boolean getPlayWhenReady() { return isEngineInitialized() && MobilePlaybackFragment.this.getPlayWhenReady(); }
         @Override public boolean isPlaying() { return isEngineInitialized() && MobilePlaybackFragment.this.isPlaying(); }
+        @Override public boolean isErrorSkipped() { return ErrorFixerController.isErrorSkippedOffline(); }
+        @Override public void pause() { MobilePlaybackFragment.this.setPlayWhenReady(false); }
         @Override public void restartEngine() { MobilePlaybackFragment.this.restartEngine(); }
         @Override public void showHint(int stringResId) {
             Context ctx = MobilePlaybackFragment.this.getContext();
@@ -259,6 +262,14 @@ public class MobilePlaybackFragment extends PlaybackFragment {
     public void onStart() {
         super.onStart();
         mNetworkResume.start();
+    }
+
+    @Override
+    public void setPlayWhenReady(boolean play) {
+        if (play) {
+            mNetworkResume.onPlayRequested(); // offline hint / revive a player that died offline
+        }
+        super.setPlayWhenReady(play);
     }
 
     @Override
