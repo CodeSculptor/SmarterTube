@@ -755,9 +755,12 @@ public class SuggestionsController extends BasePlayerController {
 
         List<Video> videos = group.getVideos();
         boolean found = false;
+        // #113: a Short must be followed by a Short. A Home/channel group mixes long videos in
+        // (and its continuations add more), which flipped the player to the long-video layout.
+        boolean shortsOnly = video.isShorts;
 
         for (Video current : videos) {
-            if (found && current.hasVideo() && !current.isUpcoming) {
+            if (found && current.hasVideo() && !current.isUpcoming && (!shortsOnly || current.isShorts)) {
                 mNextRetryCount = 0;
                 mNextSectionVideo = current;
                 getPlayer().setNextTitle(mNextSectionVideo);
@@ -769,7 +772,8 @@ public class SuggestionsController extends BasePlayerController {
             }
         }
 
-        if (mNextRetryCount > 0) {
+        // Shorts: keep paging a few times, the first continuation is often all long videos.
+        if (mNextRetryCount >= (shortsOnly ? 3 : 1)) {
             mNextRetryCount = 0;
         } else {
             continueGroup(group, continuation -> findNextSectionVideoIfNeeded(video), getPlayer().isSuggestionsShown());
