@@ -64,7 +64,7 @@
             android:id="@+id/mini_player_play_pause"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:background="@drawable/bg_borderless_feedback"
             android:contentDescription="@string/mobile_mini_player_play_pause"
             android:src="@drawable/ic_mini_pause"
             android:tint="@color/mobile_text_primary" />
@@ -73,7 +73,7 @@
             android:id="@+id/mini_player_close"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:background="@drawable/bg_borderless_feedback"
             android:contentDescription="@string/mobile_mini_player_close"
             android:src="@drawable/ic_mini_close"
             android:tint="@color/mobile_text_primary" />
