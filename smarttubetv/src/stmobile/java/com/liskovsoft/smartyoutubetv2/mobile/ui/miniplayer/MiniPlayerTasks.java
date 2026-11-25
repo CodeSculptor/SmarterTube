@@ -4,7 +4,9 @@ import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 
+import com.liskovsoft.smartyoutubetv2.mobile.ui.browse.MobileBrowseActivity;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.playback.MobilePlaybackActivity;
 
 import java.util.List;
@@ -18,6 +20,9 @@ public final class MiniPlayerTasks {
 
     /** The app's browse task (any task whose root is not the player), or null when there is none. */
     private static ActivityManager.AppTask findBrowseTask(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return null; // getAppTasks() is API 21 (#116)
+        }
         try {
             ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
             List<ActivityManager.AppTask> tasks = am != null ? am.getAppTasks() : null;
@@ -54,6 +59,12 @@ public final class MiniPlayerTasks {
 
     /** Bring the browse task to the front as it was left. False when there is none. */
     public static boolean bringBrowseForward(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            // No task list on Android 4.4: Home is singleTask, so starting it brings its task forward.
+            context.startActivity(new Intent(context, MobileBrowseActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            return true;
+        }
         ActivityManager.AppTask task = findBrowseTask(context);
         if (task == null) {
             return false;

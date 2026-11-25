@@ -4,6 +4,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.OptionCatego
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.OptionItem;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -140,7 +141,7 @@ final class SettingsSearchIndex {
             }
             scored.add(new int[]{score, i});
         }
-        scored.sort((a, b) -> a[0] != b[0] ? Integer.compare(a[0], b[0]) : Integer.compare(a[1], b[1]));
+        Collections.sort(scored, (a, b) -> a[0] != b[0] ? Integer.compare(a[0], b[0]) : Integer.compare(a[1], b[1])); // List.sort is API 24 (#116)
         for (int[] s : scored) {
             out.add(all.get(s[1]));
             if (out.size() >= MAX_RESULTS) {
