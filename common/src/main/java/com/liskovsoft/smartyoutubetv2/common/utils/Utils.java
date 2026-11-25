@@ -1314,6 +1314,7 @@ public class Utils {
      * True only when the device positively reports no connectivity. Any doubt (missing
      * ACCESS_NETWORK_STATE permission, no service) returns false, i.e. the old behavior.
      */
+    @SuppressLint("MissingPermission") // declared by the stmobile manifest; a missing grant throws SecurityException, caught below
     public static boolean isOffline(Context context) {
         if (context == null) {
             return false;
