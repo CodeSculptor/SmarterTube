@@ -34,6 +34,7 @@ import com.liskovsoft.smartyoutubetv2.mobile.offline.OfflineSupport;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.SettingsGroup;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.VideoGroup;
+import com.liskovsoft.smartyoutubetv2.common.app.models.errors.CategoryEmptyError;
 import com.liskovsoft.smartyoutubetv2.common.app.models.errors.ErrorFragmentData;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.BrowsePresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.SearchPresenter;
@@ -41,6 +42,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.dialogs.AccountSelec
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.settings.AccountSettingsPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.BrowseView;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
+import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
 import com.liskovsoft.smartyoutubetv2.mobile.ui.about.MobileAboutActivity;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 
@@ -374,7 +376,12 @@ public class MobileBrowseFragment extends Fragment implements BrowseView, MediaS
         if (mEmptyContainer == null) {
             return;
         }
-        mEmptyMessage.setText(data != null ? data.getMessage() : "");
+        // CategoryEmptyError's message is a raw stack trace; say what's wrong when offline.
+        if (data instanceof CategoryEmptyError && Utils.isOffline(getContext())) {
+            mEmptyMessage.setText(R.string.mobile_net_offline);
+        } else {
+            mEmptyMessage.setText(data != null ? data.getMessage() : "");
+        }
         if (data != null && data.getActionText() != null) {
             mEmptyButton.setText(data.getActionText());
             mEmptyButton.setOnClickListener(v -> data.onAction());
