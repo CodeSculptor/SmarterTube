@@ -112,6 +112,10 @@ public final class MiniPlayerBar {
         mProgress.setProgress(duration > 0 ? (int) (1000L * view.getPositionMs() / duration) : 0);
 
         String url = video.cardImageUrl != null ? video.cardImageUrl : video.bgImageUrl;
+        if (url == null && video.videoId != null) {
+            // Videos opened from a link carry only their id.
+            url = "https://i.ytimg.com/vi/" + video.videoId + "/mqdefault.jpg";
+        }
         if (url != null && !url.equals(mPosterUrl)) {
             mPosterUrl = url;
             Glide.with(mActivity).load(url).centerCrop().into(mPoster);
